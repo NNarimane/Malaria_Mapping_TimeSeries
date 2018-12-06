@@ -65,40 +65,40 @@ prop.table(table(BRA_VO$species_plain))
 # Get shape file for Brazil
 
 # # admin0
-# BRA_shp_lvl0_df=getShp(country = "Brazil", admin_level = "admin0", format = "df")
-# BRA_shp_lvl0_sp=getShp(country = "Brazil", admin_level = "admin0", format = "spatialpolygon")
+BRA_shp_lvl0_df=getShp(country = "Brazil", admin_level = "admin0", format = "df")
+BRA_shp_lvl0_sp=getShp(country = "Brazil", admin_level = "admin0", format = "spatialpolygon")
 # # Plot
-# autoplot(BRA_shp_lvl0_df)
+autoplot(BRA_shp_lvl0_df)
 # # Save
 # save(BRA_shp_lvl0_df, file="BRA_shp_lvl0_df.RData")
 # save(BRA_shp_lvl0_sp, file="BRA_shp_lvl0_sp.RData")
 # Load
-load(file = "BRA_shp_lvl0_df.RData")
-load(file = "BRA_shp_lvl0_sp.RData")
+# load(file = "BRA_shp_lvl0_df.RData")
+# load(file = "BRA_shp_lvl0_sp.RData")
 
 # # admin1
-# BRA_shp_lvl1_df=getShp(country = "Brazil", admin_level = "admin1", format = "df")
-# BRA_shp_lvl1_sp=getShp(country = "Brazil", admin_level = "admin1", format = "spatialpolygon")
+BRA_shp_lvl1_df=getShp(country = "Brazil", admin_level = "admin1", format = "df")
+BRA_shp_lvl1_sp=getShp(country = "Brazil", admin_level = "admin1", format = "spatialpolygon")
 # # Plot
-# autoplot(BRA_shp_lvl1_df)
+autoplot(BRA_shp_lvl1_df)
 # # Save
 # save(BRA_shp_lvl1_df, file="BRA_shp_lvl1_df.RData")
 # save(BRA_shp_lvl1_sp, file="BRA_shp_lvl1_sp.RData")
 # Load
-load(file = "BRA_shp_lvl1_df.RData")
-load(file = "BRA_shp_lvl1_sp.RData")
+# load(file = "BRA_shp_lvl1_df.RData")
+# load(file = "BRA_shp_lvl1_sp.RData")
 
 # # admin2
-# BRA_shp_lvl2_df=getShp(country = "Brazil", admin_level = "admin2", format = "df")
-# BRA_shp_lvl2_sp=getShp(country = "Brazil", admin_level = "admin2", format = "spatialpolygon")
+BRA_shp_lvl2_df=getShp(country = "Brazil", admin_level = "admin2", format = "df")
+BRA_shp_lvl2_sp=getShp(country = "Brazil", admin_level = "admin2", format = "spatialpolygon")
 # # Plot
-# autoplot(BRA_shp_lvl2_df)
+autoplot(BRA_shp_lvl2_df)
 # # Save
 # save(BRA_shp_lvl2_df, file="BRA_shp_lvl2_df.RData")
 # save(BRA_shp_lvl2_sp, file="BRA_shp_lvl2_sp.RData")
 # Load
-load(file = "BRA_shp_lvl2_df.RData")
-load(file = "BRA_shp_lvl2_sp.RData")
+# load(file = "BRA_shp_lvl2_df.RData")
+# load(file = "BRA_shp_lvl2_sp.RData")
 
 # admin3: checked and same as admin2 = municipalities
 
@@ -205,7 +205,7 @@ Vec3=getRasterPlots(title = "Anopheles darlingi Root, 1926",
 Vec3
 
 #Vector4
-Vec4=getRasterPlots(title = "Anopheles marajoara Galvão & Damasceno, 1942",
+Vec4=getRasterPlots(title = "Anopheles marajoara Galv?o & Damasceno, 1942",
                     shp = BRA_shp_lvl1_sp,
                     df = BRA_shp_lvl1_df)
 #Plot
