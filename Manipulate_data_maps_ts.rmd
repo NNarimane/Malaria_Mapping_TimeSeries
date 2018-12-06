@@ -1,0 +1,82 @@
+---
+title: "Manipulate_data_maps_ts"
+author: "Raquel Lana and Narimane"
+date: "6 de dezembro de 2018"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+# Aggregating SIVEP data for year to build API maps
+
+- Packages
+```{r}
+library(foreign)
+library('stringr')
+library(tidyverse)
+
+```
+
+### Loading SIVEP RData
+Environment: NN or RL - RL is **F**.
+```{r}
+envNN = F
+
+if(envNN){
+  load("/SIVEP_clean.RData")
+}else{load("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/SIVEP_clean.RData")
+}
+
+```
+
+
+Precisamos ter uma tabela com:DT_NOTIF, LEVEL (só municipio agora: MU), MUN_COD, UF_COD, VIVAX_Feminino, ViVAX_Mas, FALC_F, FALC_V, VIVAX_FAIX<0...
+
+### Creating the continuos age by year and after by categories (age range) from IBGE
+- Continuos age in year
+```{r}
+df <- df %>% 
+  filter(ID_PACIE < 30 & ID_DIMEA == "D" | ID_PACIE < 12 & ID_DIMEA == "M" | ID_PACIE <= 100 & ID_DIMEA == "A")
+
+df$ID_PACIE <- as.double(df$ID_PACIE) 
+
+df <- df %>% 
+          mutate(AGE_CONT = if_else(ID_DIMEA == "A", ID_PACIE, 0))
+```
+
+- Age range
+```{r}
+df$AGE_RANGE <- NA 
+
+df[which(df$AGE_CONT <= 4),]$AGE_RANGE <- "0-4"
+df[which(df$AGE_CONT >= 5 & df$AGE_CONT <= 9),]$AGE_RANGE <- "5-9"
+df[which(df$AGE_CONT >= 10 & df$AGE_CONT <= 14),]$AGE_RANGE <- "10-14"
+df[which(df$AGE_CONT >= 15 & df$AGE_CONT <= 19),]$AGE_RANGE <- "15-19"
+df[which(df$AGE_CONT >= 20 & df$AGE_CONT <= 24),]$AGE_RANGE <- "20-24"
+df[which(df$AGE_CONT >= 25 & df$AGE_CONT <= 29),]$AGE_RANGE <- "25-29"
+df[which(df$AGE_CONT >= 30 & df$AGE_CONT <= 34),]$AGE_RANGE <- "30-34"
+df[which(df$AGE_CONT >= 35 & df$AGE_CONT <= 39),]$AGE_RANGE <- "35-39"
+df[which(df$AGE_CONT >= 40 & df$AGE_CONT <= 44),]$AGE_RANGE <- "40-44"
+df[which(df$AGE_CONT >= 45 & df$AGE_CONT <= 49),]$AGE_RANGE <- "45-49"
+df[which(df$AGE_CONT >= 50 & df$AGE_CONT <= 54),]$AGE_RANGE <- "50-54"
+df[which(df$AGE_CONT >= 55 & df$AGE_CONT <= 59),]$AGE_RANGE <- "55-59"
+df[which(df$AGE_CONT >= 60 & df$AGE_CONT <= 64),]$AGE_RANGE <- "60-64"
+df[which(df$AGE_CONT >= 65 & df$AGE_CONT <= 69),]$AGE_RANGE <- "65-69"
+df[which(df$AGE_CONT >= 70 & df$AGE_CONT <= 74),]$AGE_RANGE <- "70-74"
+df[which(df$AGE_CONT >= 75 & df$AGE_CONT <= 79),]$AGE_RANGE <- "75-79"
+df[which(df$AGE_CONT >= 80),]$AGE_RANGE <- "80+"
+
+df$AGE_RANGE = factor(df$AGE_RANGE, label=c("0-4","5-9","10-14","15-19","20-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64","65-69","70-74","75-79","80+"), levels= c("0-4","5-9","10-14","15-19","20-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64","65-69","70-74","75-79","80+"))
+
+```
+
+### Counting malaria cases by day, UF, municipality and malaria type.
+```{r}
+day_malaria_type <- df %>%
+                      group_by(DT_NOTIF, UF_NOTIF, MUN_NOTI) %>%
+                      count(RES_EXAM)
+                      
+names(day_malaria_type)[2:5] <- c("UF", "MUN_COD", "MALARIA_TYPE", "CASES_N")
+  
+```
+
