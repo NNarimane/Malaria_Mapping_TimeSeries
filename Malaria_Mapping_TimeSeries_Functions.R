@@ -14,13 +14,13 @@
 # Get P. vivax raw time series data function
 getPV_Raw_Data=function(FilePath, StartYear, EndYear){
   # Upload time series raw data
-  TS_Raw = read.csv(file = FilePath, header=TRUE, stringsAsFactors=FALSE)
+  TS_Raw = fread(file = FilePath, encoding = "UTF-8")
   
   # Fix all municipality names of time series data (remove accents)
-  TS_Raw$MUN_NAME=gsub("Ã", "a", TS_Raw$MUN_NAME)
-  TS_Raw$MUN_NAME=gsub("¡", "", TS_Raw$MUN_NAME)
-  TS_Raw$MUN_NAME=iconv(TS_Raw$MUN_NAME, from = "ISO-8859-1", to = "ASCII//TRANSLIT")
-  # TS_Raw$MUN_NAME=str_replace_all(TS_Raw$MUN_NAME, "[[:punct:]]", "")
+  # TS_Raw$MUN_NAME=gsub("Ã", "a", TS_Raw$MUN_NAME)
+  # TS_Raw$MUN_NAME=gsub("¡", "", TS_Raw$MUN_NAME)
+  # TS_Raw$MUN_NAME=iconv(TS_Raw$MUN_NAME, from = "ISO-8859-1", to = "ASCII//TRANSLIT")
+  # # TS_Raw$MUN_NAME=str_replace_all(TS_Raw$MUN_NAME, "[[:punct:]]", "")
   
   # Date formatting
   TS_Raw$DT_NOTIF=as.Date(TS_Raw$DT_NOTIF)
@@ -30,7 +30,7 @@ getPV_Raw_Data=function(FilePath, StartYear, EndYear){
                           week=floor_date(TS_Raw$DT_NOTIF, unit = "week"),
                           year_num=year(ymd(TS_Raw$DT_NOTIF)),
                           month_num=month(ymd(TS_Raw$DT_NOTIF)),
-                          week_num=week(ymd(TS_Raw$DT_NOTIF))))
+                          week_num=epiweek(ymd(TS_Raw$DT_NOTIF))))
   
   # Column names
   colnames(TS_Raw) = c("MU_CODE","MU_NAME","STATE","DT","VIVAX","DT_YEAR", "DT_MONTH", "DT_WEEK",

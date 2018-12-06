@@ -103,28 +103,28 @@ TS=getPV_Raw_Data(FilePath, StartYear, EndYear)
 ################
 
 # Daily number of cases, bar graph
-DailyPlot=ggplot(data = TS, aes(Date, VIVAX)) +
+DailyPlot=ggplot(data = TS, aes(DT, VIVAX)) +
   stat_summary(fun.y = sum, geom = "line") +
   scale_x_date(breaks = "year", 
                date_labels = "%Y") +
   labs(title = paste0("Daily P. vivax cases in 10 BAR Municipalities ", StartYear, "-", EndYear), x = "Year", y = "Number of Cases")
 
 # Weekly number of cases, bar graph
-WeeklyPlot=ggplot(data = TS, aes(DT_Week, VIVAX)) +
+WeeklyPlot=ggplot(data = TS, aes(DT_WEEK, VIVAX)) +
   stat_summary(fun.y = sum, geom = "line") +
   scale_x_date(date_breaks= "year", 
                date_labels = "%Y") +
   labs(title = paste0("Weekly P. vivax cases in 10 BAR Municipalities ", StartYear, "-", EndYear), x = "Year", y = "Number of Cases")
 
 # Monthly number of cases, line graph
-MonthlyPlot=ggplot(data = TS, aes(DT_Month, VIVAX)) +
+MonthlyPlot=ggplot(data = TS, aes(DT_MONTH, VIVAX)) +
   stat_summary(fun.y = sum, geom = "line") +
   scale_x_date(date_breaks= "year", 
                date_labels = "%Y") +
   labs(title = paste0("Monthly P. vivax cases in 10 BAR Municipalities ", StartYear, "-", EndYear), x = "Year", y = "Number of Cases")
 
 # Yearly number of cases, line graph
-YearlyPlot=ggplot(data = TS, aes(DT_Year, VIVAX)) +
+YearlyPlot=ggplot(data = TS, aes(DT_YEAR, VIVAX)) +
   stat_summary(fun.y = sum, geom = "line") +
   scale_x_date(date_breaks= "year", 
                date_minor_breaks = "year", 
@@ -155,10 +155,10 @@ if(SavePlots){
 ## Plots by State
 #################
 
-DailyPlot_ST=DailyPlot + facet_wrap(~UF, ncol = 5) + theme(axis.text.x = element_text(angle = 90, hjust = 1))
-WeeklyPlot_ST=WeeklyPlot + facet_wrap(~UF, ncol = 5) + theme(axis.text.x = element_text(angle = 90, hjust = 1))
-MonthlyPlot_ST=MonthlyPlot + facet_wrap(~UF, ncol = 5) + theme(axis.text.x = element_text(angle = 90, hjust = 1))
-YearlyPlot_ST=YearlyPlot + facet_wrap(~UF, ncol = 5) + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+DailyPlot_ST=DailyPlot + facet_wrap(~STATE, ncol = 5) + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+WeeklyPlot_ST=WeeklyPlot + facet_wrap(~STATE, ncol = 5) + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+MonthlyPlot_ST=MonthlyPlot + facet_wrap(~STATE, ncol = 5) + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+YearlyPlot_ST=YearlyPlot + facet_wrap(~STATE, ncol = 5) + theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
 # Plot together
 grid.arrange(DailyPlot_ST, WeeklyPlot_ST, MonthlyPlot_ST, YearlyPlot_ST, nrow=2)
@@ -185,16 +185,16 @@ if(SavePlots){
 ########################
 
 # Daily
-DailyPlot_MU = DailyPlot + facet_wrap(~Name, ncol = 5) + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+DailyPlot_MU = DailyPlot + facet_wrap(~MU_NAME, ncol = 5) + theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
 # Weekly
-WeeklyPlot_MU = WeeklyPlot + facet_wrap(~Name, ncol = 5) + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+WeeklyPlot_MU = WeeklyPlot + facet_wrap(~MU_NAME, ncol = 5) + theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
 # Monthly
-MonthlyPlot_MU = MonthlyPlot + facet_wrap(~Name, ncol = 5) + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+MonthlyPlot_MU = MonthlyPlot + facet_wrap(~MU_NAME, ncol = 5) + theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
 # Yearly
-YearlyPlot_MU = YearlyPlot + facet_wrap(~Name, ncol = 5) + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+YearlyPlot_MU = YearlyPlot + facet_wrap(~MU_NAME, ncol = 5) + theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
 
 
