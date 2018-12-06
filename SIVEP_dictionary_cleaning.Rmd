@@ -1,0 +1,159 @@
+---
+title: "SIVEP dictionary and cleaning"
+author: "Raquel Lana"
+date: "5 de dezembro de 2018"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+# SIVEP - Epidemiological Surveillance Information System
+This file was done to share details of SIVEP variables and register all dropped variables and modifications we did on kept variables.  
+  
+## SIVEP time and space resolution  
+
+SIVEP started in 2003 January. We have complete data from 2003 to 2017 and initial months of 2018. The database has entries, permitting to aggregate into **daily case numbers** (reported date in year/month/day) and **epidemiological week**. These can later be aggregated to a different temporal resolution if needed.   
+
+### Spatial resolution  
+SIVEP is database for malaria notification that is mandatory in Brazil. Before 2003, the database was named SISMAL, which was a different database in relation to variables and categories.  
+
+Each notification is associated with a federal unity, municipality, zone type (urban/rural) and a locality, which gives a finer resolution. Localities might be on the size of census tract or, more generally, smaller. Information from localities can be linked to IBGE census. SIVEP database has a complementary databe with localities information. This information will be listed below.
+
+## Confirmation of malaria cases
+Cases in Brazil are mostly confirmed by microscopy. The detection is of three types: passive, active and LVC (Cure Verification Thick Smear). **Passive case detection** corresponds to a diagnosis done when an individual looks for health assistance. **Active case detection** corresponds to a diagnosis done by a screening after finding a case. The protocol is described as an active search, when a case is reported, such that the neighboorhood around 1 km radius is investigated. LVC cases are notifications done when individuals return to health units. We still need to investigate more about numbers of LVC cases.  
+
+## Treatment data     
+SIVEP provides the **treatment schema for reported cases**. Completeness is > 85% and after 2011, > 95%. We have just requested more information about it, because is in a complementary database. 
+
+
+## Variables book
+
+### Kept variables
+
+- **COD_NOTI**: notification number. 
+- **DT_NOTIF**: date of notification (yyyy-mm-dd).    
+- **TIPO_LAM**: type of detection (PCD/ACD/LVC).  
+- **UF_NOTI**: state of notification.   
+- **MUN_NOTI**: municipality of notification.  
+- **DT_NASCI**: date of birth (yyyy-mm-dd).      
+- **ID_PACIE**: numeric variable for age.    
+- **ID_DIMEA**: if the age is per days, months and years.    
+- **SEXO**: gender (Male/Female/Ignored).      
+- **PAIS_RES**: informs the country code referring to the address of the patient according to IBGE.     
+- **UF_RESID**: informs the state code referring to the address of the patient according to IBGE.  
+- **MUN_RESI**: informs the municipality code referring to the address of the patient according to IBGE.  
+- **LOC_RESI**: informs the locality code of residence according to the complementary database.  
+- **SINTOMAS**: informs whether or not the patient had malaria symptoms (Yes/No).  
+- **DT_SINTO**: informs the date when the patient felt the first symptoms of malaria (yyyy-mm-dd).  
+- **COD_OCUP**: code of the main activity performed by the patient in the last 15 days (agriculture/livestock/domestic/turism/artisanal and small mining/exploration plant/hunting and fishing/Construction of Roads and Dams/mining/"traveler"/Others/Ignored).  
+- **UF_INFEC**: informs the probable state of infection according to the code provided by IBGE.  
+- **PAIS_INF**: informs the probable country of infection according to the code provided by IBGE.  
+- **MUN_INFE**: informs the probable municipality of infection according to the code provided by IBGE.
+- **LOC_INFE**: informs the probable locality of infection according to the complementary database.  
+- **DT_EXAME**: date the exam was performed.  
+- **RES_EXAM**: result of the exame stratified by Negativa (negative exam), Falciparum, F+FG, Vivax, F+V, V+FG, FG, Malariae, F+M, Ovale, Não F.  
+- **QTD_PARA**: reports the number of parasites per mm3.  
+- **QTD_CRUZ**: it reports the amount of parasitemia in crosses, according to the following table: "< +/2" (minor than 1/2 cross), "+/2" (1/2 cross), "+" (one cross), "++" (two crosses), "+++" (three crosses), "++++" (four crosses).  
+- **DT_TRATA**: informs date of start of treatment (FORMATO).
+- **ID_LVC**: informs when notification is a case of LVC (Notification is a case of LVC/Notification is not a case of LVC).
+- **GESTANTE_**: informs if the patient is pregnant (1st Quarter/2nd Quarter/3rd Quarter/Ignored gestational age/No/Not applicable).  
+- **NIV_ESCO**: informs the level of education of the patient (Illiterate/1st to 4th incomplete series of Elementary School/4th complete series of Elementary School/5th to 8th grade incomplete elementary school/Complete primary school/incomplete high school/Complete high school/Incomplete higher education/Complete higher education/Not applicable).  
+
+
+### Dropped variables
+- **DT_ENVLO**: reports the date the lot of notifications was received in the national data file (yyyy-mm-dd).
+- **DT_DIGIT**: informs the date the notification was entered (yyyy-mm-dd).  
+- **SEM_NOTI**: informs the date of notification in epidemiological week (SE/YEAR). Dropped because I have been extracted the epidemiological week and year before.
+- **COD_UNIN**: informs the code of the Notifying Unit.
+- **COD_AGEN**: informs the code of the agent who made the notification of the exam.  
+- **RACA**: race/color (White/Black/Yellow/Brown/Indigenous).  
+- **GESTANTE1**: pregnant (Yes/Not/Not applicable).  
+- **NIV_ESCO_1**: schooling in years.
+- **ESQUEMA_1**: Informs the treatment scheme used, based on old database.
+- **ESQUEMA**: informs the code of the treatment scheme used based on a complementary database we have been requested.
+- **HEMOPARASI**: reports the results of the examination for other hemoparasites screened according to the table below (Negative/Trypanosoma sp./Microfilaria/Trypanosoma sp. + Microfilariae/Not searched).  
+- **EXAME**: informs the type of examination carried out (thick smear/RPD).  
+- **EXAMINADOR**: inform the code of the professional who took the exam.  
+- **VIVAX**: informs if the patient received treatment for vivax malaria in the last 60 days prior to notification.  
+- **FALCIPARUM**: informs if the patient received treatment for falciparum malaria in the last 40 days prior to notification.
+
+
+- Loading RData file 
+```{r}
+library(foreign)
+library('stringr')
+library("tidyverse")
+library(lubridate)
+
+load("RData_full.RData")
+
+```
+
+### Removing variables  
+**Obs.**: RES_EXAM = 0 happens only in 2003 in 17 entries. I removed because this category does not exist.  
+```{r}
+df <- df %>% 
+      select(-DT_ENVLO, -DT_DIGIT, -SEM_NOTI, -COD_UNIN, -COD_AGEN, -RACA, -GESTANTE1, -NIV_ESCO_1, -ESQUEMA_1, -ESQUEMA, -HEMOPARASI, -EXAME_, -EXAMINADOR, -VIVAX, -FALCIPARUM) %>% 
+      filter(RES_EXAM == "2" | RES_EXAM == "3" | RES_EXAM == "4" | RES_EXAM == "5" | RES_EXAM == "6" | RES_EXAM == "7" | RES_EXAM == "9")
+
+```
+
+### Filtering and grouping to falciparum and vivax types.
+RES_EXAM categories:  
+2 - Falciparum    
+3 - F+FG    
+4 - Vivax    
+5 - F+V  
+6 - V+FG   
+7 - FG    
+8 - Malariae    
+9 - F+M    
+10 – Ovale    
+11 – Não F      
+
+
+- Categorizing variables and transforming to factor.
+```{r}
+df <- df %>% 
+      mutate(RES_EXAM = if_else(RES_EXAM == "2" | RES_EXAM == "3" | RES_EXAM == "7" | RES_EXAM == "9", "F", 
+                                if_else(RES_EXAM == "4" | RES_EXAM == "6", "V",
+                                        if_else(RES_EXAM == "5", "F+V", RES_EXAM)))) %>%
+      mutate(SINTOMAS = if_else(SINTOMAS == "1", "YES", "NO")) %>%
+      mutate(QTD_CRUZ = if_else(QTD_CRUZ == "1", "< +/2", 
+                                if_else(QTD_CRUZ == "2", "+/2",
+                                        if_else(QTD_CRUZ == "3", "+",
+                                                if_else(QTD_CRUZ == "4", "++",
+                                                        if_else(QTD_CRUZ == "5", "+++",
+                                                                if_else(QTD_CRUZ == "6", "++++", "NA"))))))) %>%
+      mutate(ID_LVC_ = if_else(ID_LVC_ == "1", "YES", "NO")) %>%
+      mutate(GESTANTE_ = if_else(GESTANTE_ == "1", "1qtr", 
+                                  if_else(GESTANTE_ == "2", "2qtr",
+                                          if_else(GESTANTE_ == "3", "3qtr",
+                                                  if_else(GESTANTE_ == "4", "Ignored",
+                                                          if_else(GESTANTE_ == "5", "NO",
+                                                                  if_else(GESTANTE_ == "6", "NA", "NA"))))))) %>%
+    mutate(TIPO_LAM = if_else(TIPO_LAM == "1", "PCD",
+                              if_else(TIPO_LAM == "2", "ACD", "CV")))
+
+
+            
+df <- df %>% 
+      mutate(SEXO = as.factor(SEXO),
+             RES_EXAM = as.factor(RES_EXAM),
+             SINTOMAS = as.factor(SINTOMAS),
+             QTD_CRUZ = as.factor(QTD_CRUZ),
+             ID_LVC_ = as.factor(ID_LVC_),
+             GESTANTE_ = as.factor(GESTANTE_),
+             TIPO_LAM = as.factor(TIPO_LAM),
+             COD_OCUP = as.factor(COD_OCUP),
+             NIV_ESCO = as.factor(NIV_ESCO)
+             )
+
+
+```
+
+Saving RData.
+```{r}
+save.image(file = "SIVEP_clean.RData")
+
+```
