@@ -1,0 +1,1229 @@
+---
+title: "SIVEP 2003-2018"
+author: "Raquel Lana e Daniel Villela"
+date: "April 04, 2018"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+# Dados do SIVEP-malária  
+1- Verificação e manipulação dos dados
+2- Agregação dos casos de vivax por município
+3- Exportação das tabelas de vivax por munícípio para geração de mapas
+4- Criação das variáveis semana epidemiológica e ano
+4- Agregação por idade, sexo
+5- Exames, tipo de lâmina, sintomas
+6- Tratamento.
+
+
+### Bibliotecas
+```{r}
+library(foreign)
+library('stringr')
+library(tidyverse)
+
+```
+
+
+## Banco SIVEP  
+Erro no cabeçalho: sexo invertido com raça em todos os anos. Fiz a troca e salvei o banco em um novo dbf.   
+
+### Redução do banco:  
+As colunas que retirei antes de juntar os bancos são:    
+DT_ENVLO - Informa a data em que o lote das notificações digitadas foi recebido no arquivo de
+dados nacional  - **se depois quisermos fazer algo que mostre o atraso disso, aí voltamos ao banco, mas não acho que é o caso no momento.**    
+DT_DIGIT - Informa a data em que foi digitada a notificação - **penso o mesmo acima.**    
+COD_UNIN - Informa o código da Unidade Notificante - **Não acho que precisamos disso agora**, penso que o municipio basta.  
+COD_AGEN – Informa código do agente que realizou a notificação do exame - **não acho que precisamos agora, pelo menos por enquanto não acho que faremos validade interna do banco.**  
+EXAMINADOR - Informa o código do profissional que realizou o exame - **também não acho que precisamos**.  
+HEMOPARASI - Informa o resultado do exame para outros hemoparasitas pesquisados - **também não acho que precisamos**.   
+
+### As colunas que precisamos ou retirar uma delas (com pior preenchimento) ou agregar são:  
+- GESTANTE1 (ficha antiga)
+1 – Sim  
+2 – Não  
+3 – Não se aplica  
+
+- GESTANTE_  
+1 = 1o Trimestre  
+2 = 2o Trimestre  
+3 = 3o Trimestre  
+4 = Idade gestacional ignorada  
+5 = Não  
+6 = Não se aplica  
+
+Obs.: Daria para agregar as duas, mas usando a antiga.  
+
+- NIV_ESCO_1 (ficha antiga):  
+1 Nenhuma  
+2 De 1 a 3 anos    
+3 De 4 a 7 anos  
+4 De 8 a 11 anos    
+5 De 12 anos a mais    
+6 Não se aplica  
+9 Ignorado  
+
+NIV_ESCO:  
+0 = Analfabeto  
+1 = 1a a 4a série incompleta do EF  
+2 = 4a série completa do EF  
+3 = 5a a 8a série incompleta do EF  
+4 = Ensino fundamental completo  
+5 = Ensino médio incompleto  
+6 = Ensino médio completo  
+7 = Educação superior incompleto  
+8 = Educação superior completa  
+10 = Não se aplica  
+
+Obs.: Daria para agregar as duas, mas usando a antiga.  
+
+- ESQUEMA_1 e ESQUEMA: esperar o banco completar que solicitamos.  
+
+
+
+<!-- Importação dos bancos por ano, correção do cabeçalho de raça e sexo e novo banco salvo e importado novamente para análises. -->
+```{r setup, include=FALSE}
+#d03 <- read.dbf("Dados/NOTIPO03.DBF", as.is = T)
+#names(d03)[c(14, 15)] <- c("RACA", "SEXO")
+#write.dbf(d03, "Dados/NOTIPO03.DBF")
+#d03 <- read.dbf("Dados/NOTIPO03.dbf", as.is = T)
+#str(d03)
+
+# d04 <- read.dbf("Dados/NOTIPO04.DBF", as.is = T)
+# names(d04)[c(14, 15)] <- c("RACA", "SEXO")
+# write.dbf(d04, "Dados/NOTIPO04.dbf")
+#d04 <- read.dbf("Dados/NOTIPO04.dbf", as.is = T)
+#str(d04)
+
+# d05 <- read.dbf("Dados/NOTIPO05.DBF", as.is = T)
+# names(d05)[c(14, 15)] <- c("RACA", "SEXO")
+# write.dbf(d05, "Dados/NOTIPO05.dbf")
+#d05 <- read.dbf("Dados/NOTIPO05.dbf", as.is = T)
+#str(d05)
+
+# d06 <- read.dbf("Dados/NOTIPO06.DBF", as.is = T)
+# names(d06)[c(14, 15)] <- c("RACA", "SEXO")
+# write.dbf(d06, "Dados/NOTIPO06.dbf")
+#d06 <- read.dbf("Dados/NOTIPO06.dbf", as.is = T)
+#str(d06)
+
+# d07 <- read.dbf("Dados/NOTIPO07.DBF", as.is = T)
+# names(d07)[c(14, 15)] <- c("RACA", "SEXO")
+# write.dbf(d07, "Dados/NOTIPO07.dbf")
+#d07 <- read.dbf("Dados/NOTIPO07.dbf", as.is = T)
+#str(d07)
+
+# d08 <- read.dbf("Dados/NOTIPO08.DBF", as.is = T)
+# names(d08)[c(14, 15)] <- c("RACA", "SEXO")
+# write.dbf(d08, "Dados/NOTIPO08.dbf")
+#d08 <- read.dbf("Dados/NOTIPO08.dbf", as.is = T)
+#str(d08)
+
+# d09 <- read.dbf("Dados/NOTIPO09.DBF", as.is = T)
+# names(d09)[c(14, 15)] <- c("RACA", "SEXO")
+# write.dbf(d09, "Dados/NOTIPO09.dbf")
+#d09 <- read.dbf("Dados/NOTIPO09.dbf", as.is = T)
+#str(d09)
+
+# d10 <- read.dbf("Dados/NOTIPO10.DBF", as.is = T)
+# names(d10)[c(14, 15)] <- c("RACA", "SEXO")
+# write.dbf(d10, "Dados/NOTIPO10.dbf")
+#d10 <- read.dbf("Dados/NOTIPO10.dbf", as.is = T)
+#str(d10)
+
+# d11 <- read.dbf("Dados/NOTIPO11.DBF", as.is = T)
+# names(d11)[c(14, 15)] <- c("RACA", "SEXO")
+# write.dbf(d11, "Dados/NOTIPO11.dbf")
+#d11 <- read.dbf("Dados/NOTIPO11.dbf", as.is = T)
+#str(d11)
+
+# d12 <- read.dbf("Dados/NOTIPO12.DBF", as.is = T)
+# names(d12)[c(14, 15)] <- c("RACA", "SEXO")
+# write.dbf(d12, "Dados/NOTIPO12.dbf")
+#d12 <- read.dbf("Dados/NOTIPO12.dbf", as.is = T)
+#str(d12)
+
+# d13 <- read.dbf("Dados/NOTIPO13.DBF", as.is = T)
+# names(d13)[c(14, 15)] <- c("RACA", "SEXO")
+# write.dbf(d13, "Dados/NOTIPO13.dbf")
+#d13 <- read.dbf("Dados/NOTIPO13.dbf", as.is = T)
+#str(d13)
+
+# d14 <- read.dbf("Dados/NOTIPO14.DBF", as.is = T)
+# names(d14)[c(14, 15)] <- c("RACA", "SEXO")
+# write.dbf(d14, "Dados/NOTIPO14.dbf")
+#d14 <- read.dbf("Dados/NOTIPO14.dbf", as.is = T)
+#str(d14)
+
+# d15 <- read.dbf("Dados/NOTIPO15.DBF", as.is = T)
+# names(d15)[c(14, 15)] <- c("RACA", "SEXO")
+# write.dbf(d15, "Dados/NOTIPO15.dbf")
+#d15 <- read.dbf("Dados/NOTIPO15.dbf", as.is = T)
+#str(d15)
+
+# d16 <- read.dbf("Dados/NOTIPO16.DBF", as.is = T)
+# names(d16)[c(14, 15)] <- c("RACA", "SEXO")
+# write.dbf(d16, "Dados/NOTIPO16.dbf")
+#d16 <- read.dbf("Dados/NOTIPO16.dbf", as.is = T)
+#str(d16)
+
+# d17 <- read.dbf("Dados/NOTIPO17.DBF", as.is = T)
+# names(d17)[c(14, 15)] <- c("RACA", "SEXO")
+# write.dbf(d17, "Dados/NOTIPO17.dbf")
+#d17 <- read.dbf("Dados/NOTIPO17.dbf", as.is = T)
+#str(d17)
+
+#d18 <- read.dbf("Dados/NOTIPO18.DBF", as.is = T)
+#round(sapply(d18, function(x) sum(is.na(x))/nrow(d18)*100), 2)
+#names(d18)[c(14, 15)] <- c("RACA", "SEXO")
+#write.dbf(d18, "Dados/NOTIPO18.dbf")
+#d18 <- read.dbf("Dados/NOTIPO18.dbf", as.is = T)
+#str(d18)
+
+```
+
+
+<!-- Tabela de dados faltantes -->
+```{r setup, include=FALSE}
+#t3 <- round(sapply(d03, function(x) sum(is.na(x))/nrow(d03)*100), 2)
+#comp3 <- as.data.frame(t3)
+#t4 <- round(sapply(d04, function(x) sum(is.na(x))/nrow(d04)*100), 2)
+#comp4 <- as.data.frame(t4)
+#t5 <- round(sapply(d05, function(x) sum(is.na(x))/nrow(d05)*100), 2)
+#comp5 <- as.data.frame(t5)
+#t6 <- round(sapply(d06, function(x) sum(is.na(x))/nrow(d06)*100), 2)
+#comp6 <- as.data.frame(t6)
+#t7 <- round(sapply(d07, function(x) sum(is.na(x))/nrow(d07)*100), 2)
+#comp7 <- as.data.frame(t7)
+#t8 <- round(sapply(d08, function(x) sum(is.na(x))/nrow(d08)*100), 2)
+#comp8 <- as.data.frame(t8)
+#t9 <- round(sapply(d09, function(x) sum(is.na(x))/nrow(d09)*100), 2)
+#comp9 <- as.data.frame(t9)
+#t10 <- round(sapply(d10, function(x) sum(is.na(x))/nrow(d10)*100), 2)
+#comp10 <- as.data.frame(t10)
+#t11 <- round(sapply(d11, function(x) sum(is.na(x))/nrow(d11)*100), 2)
+#comp11 <- as.data.frame(t11)
+#t12 <- round(sapply(d12, function(x) sum(is.na(x))/nrow(d12)*100), 2)
+#comp12 <- as.data.frame(t12)
+#t13 <- round(sapply(d13, function(x) sum(is.na(x))/nrow(d13)*100), 2)
+#comp13 <- as.data.frame(t13)
+#t14 <- round(sapply(d14, function(x) sum(is.na(x))/nrow(d14)*100), 2)
+#comp14 <- as.data.frame(t14)
+#t15 <- round(sapply(d15, function(x) sum(is.na(x))/nrow(d15)*100), 2)
+#comp15 <- as.data.frame(t15)
+#t16 <- round(sapply(d16, function(x) sum(is.na(x))/nrow(d16)*100), 2)
+#comp16 <- as.data.frame(t16)
+#t17 <- round(sapply(d17, function(x) sum(is.na(x))/nrow(d17)*100), 2)
+#comp17 <- as.data.frame(t17)
+
+#junto <- cbind(comp3, comp4, comp5, comp6, comp7, comp8, comp9, comp10, comp11, comp12, comp13, comp14, comp15, comp16, comp17)
+
+#write.csv(junto, "porcentagem_faltantes.csv")
+
+```
+
+
+## Registros por data de notificação e semana epidemiológica  
+Todos os dias de todos os anos tem notificação.  
+Há inconsistências no preenchimento de algumas semanas epidemiológicas, como por exemplo, o ano não está preenchido com os 4 dígitos e em algumas tem apenas a semana. Não é um problema, pois em alguns anos usei a data de notificação para extrair a semana epidemiológica e o ano. Nos anos em que SEM_NOTI estav 100% preenchida ou tinha até 5 erros, eu inseri a mão e depois extraí a informação. O banco já foi atualizado com as duas variáveis SE e ANO. Abaixo tem o registros de todos os problemas encontrados na variável SEM_NOTI.
+```{r}
+length(unique(d03$DT_NOTIF))
+unique(d03$SEM_NOTI)
+nrow(d03[which(is.na(d03$SEM_NOTI)),]) 
+nrow(d03[which(d03$SEM_NOTI == "1"),])
+# NA: 32 
+# "1": semana 26 : 1
+# "11": semana 11 : 3 
+#Conferi alguns e não estão na semana que aparece em SEM_NOTI
+# "21/3": semana 22 : 97
+# "26/3": semana 27 : 5
+# "28/3": semana 29 : 10
+# "32/3": semana 33 : 49
+# "38/3": semana 39 : 14
+# "39/3": semana 40 : 1
+# "40/3": semana 41 : 30
+# "44/3": semana 45 : 14
+
+length(unique(d04$DT_NOTIF))# bissexto
+unique(d04$SEM_NOTI)
+nrow(d04[which(d04$SEM_NOTI == "37/4"),])
+# "03/4": 234 
+# "16/4": 35
+# "37/4": 15
+
+length(unique(d05$DT_NOTIF))
+unique(d05$SEM_NOTI)
+nrow(d05[which(d05$SEM_NOTI == "25/5"),])
+#"25/5": 12
+
+length(unique(d06$DT_NOTIF))
+unique(d06$SEM_NOTI)
+
+length(unique(d07$DT_NOTIF))
+unique(d07$SEM_NOTI)
+
+length(unique(d08$DT_NOTIF))#bissexto
+unique(d08$SEM_NOTI)
+d08[which(is.na(d08$SEM_NOTI)),]
+# NA: 1
+
+length(unique(d09$DT_NOTIF))
+unique(d09$SEM_NOTI)
+
+length(unique(d10$DT_NOTIF))
+unique(d10$SEM_NOTI)
+d10[which(is.na(d10$SEM_NOTI)),]
+# NA: 5
+
+length(unique(d11$DT_NOTIF))
+unique(d11$SEM_NOTI)
+nrow(d11[which(is.na(d11$SEM_NOTI)),])
+# NA: 29
+
+length(unique(d12$DT_NOTIF))#bissexto
+unique(d12$SEM_NOTI)
+nrow(d12[which(is.na(d12$SEM_NOTI)),])
+# NA: 35
+
+length(unique(d13$DT_NOTIF))
+unique(d13$SEM_NOTI)
+nrow(d13[which(is.na(d13$SEM_NOTI)),])
+# NA: 12
+
+length(unique(d14$DT_NOTIF))
+unique(d14$SEM_NOTI)
+nrow(d14[which(is.na(d14$SEM_NOTI)),])
+# NA: 27
+
+length(unique(d15$DT_NOTIF))
+unique(d15$SEM_NOTI)
+nrow(d15[which(is.na(d15$SEM_NOTI)),])
+# NA: 51
+
+length(unique(d16$DT_NOTIF))#bissexto
+unique(d16$SEM_NOTI)
+d16[which(is.na(d16$SEM_NOTI)),]
+# NA: 4
+
+length(unique(d17$DT_NOTIF))
+unique(d17$SEM_NOTI)
+nrow(d17[which(is.na(d17$SEM_NOTI)),])
+# NA: 36
+
+length(unique(d18$DT_NOTIF))#incompleto
+unique(d18$SEM_NOTI)
+d18[which(is.na(d18$SEM_NOTI)),]
+# NA: 5
+
+```
+<!--
+### Criando uma nova variável para semana epidemiológica, passos:  
+1- Usei a função episem() (github Cláudia). Copiei o script e salvei separado em outro arquivo R e fiz um source aqui.
+2- Apliquei ao vetor usando lapply() criando uma variável com o formato ano+semana
+3- Usei os últimos 2 dígitos dessa nova variável para gerar a semana epidemiológica, sobrescrevendo a anterior.
+4- Usei os 4 primeiros para o ano.    
+Obs.: Para outros anos eu apenas susbstitui SEM_NOTI pelo correto e extrai o ano e a semana, pois eram poucos erros. -->
+```{r setup, include=FALSE}}
+#source("episem.R")
+#class(d03$DT_NOTIF)
+#teste com subset
+#d03t <- d03[1:10,]
+#episem(d03t$DT_NOTIF, format="%Y-%m-%d", separa='', retorna='YW') # calculou certo para esses 10 primeiros, mas como é uma função para uma data por vez, usei o lapply para garantir. Dava warning sem.
+#d03t$teste <- lapply(d03t$DT_NOTIF, episem)
+#head(d03t)
+#d03t$teste <- str_sub(d03t$teste, start = 5, end = 6)
+
+#2003
+# d03$SE <- lapply(d03$DT_NOTIF, episem) #começou 14:37 - 14:56
+# tail(d03)
+# d03$ANO <- str_sub(d03$SE, start = 1, end = 4) 
+# d03$ANO <- as.numeric(d03$ANO)
+# d03$SE <- str_sub(d03$ANO.SE, start = 5, end = 6) 
+# d03$SE <- as.numeric(d03$SE)
+# #Salvando o banco
+# write.dbf(d03, "NOTIPO03.DBF")
+
+#2004
+# d04$SE <- lapply(d04$DT_NOTIF, episem) 
+# tail(d04)
+# d04$ANO <- str_sub(d04$SE, start = 1, end = 4) 
+# d04$ANO <- as.numeric(d04$ANO)
+# d04$SE <- str_sub(d04$SE, start = 5, end = 6) 
+# d04$SE <- as.numeric(d04$SE)
+# #Salvando o banco
+# write.dbf(d04, "NOTIPO04.DBF")
+
+##O restante não precisou ser resolvido assim, não eram tantos e nem todos tinham problemas em SEM_NOTI.
+#2005: só tem o ano de 2005 e SEM_NOTI pode ser usada para extrair SE, bem preenchida
+# d05$SE <- str_sub(d05$SEM_NOTI, start = 1, end = 2) 
+# d05$SE <- as.numeric(d05$SE)
+# d05$ANO <- 2005 
+# write.dbf(d05, "NOTIPO05.DBF")
+
+#2006
+# d06$SE <- str_sub(d06$SEM_NOTI, start = 1, end = 2) 
+# d06$SE <- as.numeric(d06$SE)
+# d06$ANO <-str_sub(d06$SEM_NOTI, start = 4, end = 7)  
+# d06$ANO <- as.numeric(d06$ANO)
+# write.dbf(d06, "NOTIPO06.DBF")
+
+#2007
+# d07$SE <- str_sub(d07$SEM_NOTI, start = 1, end = 2) 
+# d07$SE <- as.numeric(d07$SE)
+# d07$ANO <-str_sub(d07$SEM_NOTI, start = 4, end = 7)  
+# d07$ANO <- as.numeric(d07$ANO)
+# write.dbf(d07, "NOTIPO07.DBF")
+
+#2008
+# d08[324354, 5] <- "33/2008"
+# d08$SE <- str_sub(d08$SEM_NOTI, start = 1, end = 2) 
+# d08$SE <- as.numeric(d08$SE)
+# d08$ANO <-str_sub(d08$SEM_NOTI, start = 4, end = 7)  
+# d08$ANO <- as.numeric(d08$ANO)
+# write.dbf(d08, "NOTIPO08.DBF")
+
+#2009
+# d09$SE <- str_sub(d09$SEM_NOTI, start = 1, end = 2) 
+# d09$SE <- as.numeric(d09$SE)
+# d09$ANO <-str_sub(d09$SEM_NOTI, start = 4, end = 7)  
+# d09$ANO <- as.numeric(d09$ANO)
+# write.dbf(d09, "NOTIPO09.DBF")
+
+#2010
+# d10[which(is.na(d10$SEM_NOTI)),]
+# d10[125641, 5] <- "37/2010"
+# d10[141378, 5] <- "24/2010"
+# d10[190929, 5] <- "20/2010"
+# d10[229717, 5] <- "40/2010"
+# d10[264768, 5] <- "18/2010"
+# d10$SE <- str_sub(d10$SEM_NOTI, start = 1, end = 2) 
+# d10$SE <- as.numeric(d10$SE)
+# d10$ANO <-str_sub(d10$SEM_NOTI, start = 4, end = 7)  
+# d10$ANO <- as.numeric(d10$ANO)
+# write.dbf(d10, "NOTIPO10.DBF")
+
+#2011
+# d11[which(is.na(d11$SEM_NOTI)),]
+# d11$SE <- lapply(d11$DT_NOTIF, episem) 
+# tail(d11)
+# d11$ANO <- str_sub(d11$SE, start = 1, end = 4) 
+# d11$ANO <- as.numeric(d11$ANO)
+# d11$SE <- str_sub(d11$SE, start = 5, end = 6) 
+# d11$SE <- as.numeric(d11$SE)
+# write.dbf(d11, "NOTIPO11.DBF")
+
+#2012
+# d12[which(is.na(d12$SEM_NOTI)),]
+# d12$SE <- lapply(d12$DT_NOTIF, episem) 
+# tail(d12)
+# d12$ANO <- str_sub(d12$SE, start = 1, end = 4) 
+# d12$ANO <- as.numeric(d12$ANO)
+# d12$SE <- str_sub(d12$SE, start = 5, end = 6) 
+# d12$SE <- as.numeric(d12$SE)
+# write.dbf(d12, "NOTIPO12.DBF")
+
+#2013
+# d13[which(is.na(d13$SEM_NOTI)),]
+# d13$SE <- lapply(d13$DT_NOTIF, episem) 
+# tail(d13)
+# d13$ANO <- str_sub(d13$SE, start = 1, end = 4) 
+# d13$ANO <- as.numeric(d13$ANO)
+# d13$SE <- str_sub(d13$SE, start = 5, end = 6) 
+# d13$SE <- as.numeric(d13$SE)
+# write.dbf(d13, "NOTIPO13.DBF")
+
+#2014
+# d14[which(is.na(d14$SEM_NOTI)),]
+# d14$SE <- lapply(d14$DT_NOTIF, episem) 
+# head(d14)
+# d14$ANO <- str_sub(d14$SE, start = 1, end = 4) 
+# d14$ANO <- as.numeric(d14$ANO)
+# d14$SE <- str_sub(d14$SE, start = 5, end = 6) 
+# d14$SE <- as.numeric(d14$SE)
+# write.dbf(d14, "NOTIPO14.DBF")
+
+#2015
+# d15[which(is.na(d15$SEM_NOTI)),]
+# d15$SE <- lapply(d15$DT_NOTIF, episem) 
+# head(d15)
+# d15$ANO <- str_sub(d15$SE, start = 1, end = 4) 
+# d15$ANO <- as.numeric(d15$ANO)
+# d15$SE <- str_sub(d15$SE, start = 5, end = 6) 
+# d15$SE <- as.numeric(d15$SE)
+# write.dbf(d15, "NOTIPO15.DBF")
+
+#2016
+# d16[which(is.na(d16$SEM_NOTI)),]
+# d16[72949, 5] <- "02/2016"
+# d16[74486, 5] <- "07/2016"
+# d16[83453, 5] <- "21/2016"
+# d16[124045, 5] <- "06/2016"
+# head(d16)
+# d16$SE <- str_sub(d16$SEM_NOTI, start = 1, end = 2) 
+# d16$SE <- as.numeric(d16$SE)
+# d16$ANO <- str_sub(d16$SEM_NOTI, start = 4, end = 7) 
+# d16$ANO <- as.numeric(d16$ANO)
+# write.dbf(d16, "NOTIPO16.DBF")
+
+#2017
+# d17[which(is.na(d17$SEM_NOTI)),]
+# d17$SE <- lapply(d17$DT_NOTIF, episem) 
+# head(d17)
+# d17$ANO <- str_sub(d17$SE, start = 1, end = 4) 
+# d17$ANO <- as.numeric(d17$ANO)
+# d17$SE <- str_sub(d17$SE, start = 5, end = 6) 
+# d17$SE <- as.numeric(d17$SE)
+# write.dbf(d17, "NOTIPO17.DBF")
+
+#2018
+# d18[which(is.na(d18$SEM_NOTI)),]
+# d18$SE <- lapply(d18$DT_NOTIF, episem) 
+# head(d18)
+# d18$ANO <- str_sub(d18$SE, start = 1, end = 4) 
+# d18$ANO <- as.numeric(d18$ANO)
+# d18$SE <- str_sub(d18$SE, start = 5, end = 6) 
+# d18$SE <- as.numeric(d18$SE)
+# write.dbf(d18, "NOTIPO18.DBF")
+# #até a semana 12 apenas
+
+```
+
+
+###Vamos deixar isso em stand by por enquanto. Se necessário voltamos à essas variáveis.
+### Criando as novas variáveis: gestantes e escolaridade 
+
+Antes de decidir o que fazer com essas variáveis, queria ver a questão dos NAs entre elas e ver se dá mesmo para agregarmos, porque a primeira é melhor preenchida que a segunda nos anos iniciais e isso se inverte depois. O que podemos fazer também é deixar como está e excluir a primeira. Se voltarmos nessas variáveis, usar exemplo de códig pelo Tidyverse abaixo.
+```{r}
+table(d03$GESTANTE1)# Correspondências entre as variáveis: 1-4, 2-5, 3-6 (diferença de 1 entre essa)
+table(d03$GESTANTE_)
+table(d04$GESTANTE1)
+table(d04$GESTANTE_)
+table(d05$GESTANTE1)
+table(d05$GESTANTE_)
+table(d06$GESTANTE1)#Diferença de 1 em 3-6
+table(d06$GESTANTE_)
+table(d07$GESTANTE1)
+table(d07$GESTANTE_)
+table(d08$GESTANTE1)
+table(d08$GESTANTE_)
+table(d09$GESTANTE1)#Diferença de 3 em 3-6
+table(d09$GESTANTE_)
+table(d10$GESTANTE1)# daqui em diante começam a aparecer as diferença e GESTANTE_ começa a ser preenchida considerando a categoria "1".
+table(d10$GESTANTE_)
+table(d11$GESTANTE1)# todas as categorias começam a ser preenchidas em GESTANTE_
+table(d11$GESTANTE_)
+table(d12$GESTANTE1)
+table(d12$GESTANTE_)
+table(d13$GESTANTE1)
+table(d13$GESTANTE_)
+table(d14$GESTANTE1)
+table(d14$GESTANTE_)
+table(d15$GESTANTE1)
+table(d15$GESTANTE_)
+table(d16$GESTANTE1)
+table(d16$GESTANTE_)
+table(d17$GESTANTE1)
+table(d17$GESTANTE_)
+table(d18$GESTANTE1)
+table(d18$GESTANTE_)
+
+```
+
+
+# Continuação da exploração dos dados e adequação das variáveis quando necessário
+
+A partir daqui estou usando o arquivo **RData_full.RData** para trabalhar. Antes de usar eu fiz um backup.    
+
+- Carregando o RData com o banco completo e removendo variáveis que não vamos utilizar:
+```{r}
+library(foreign)
+library('stringr')
+library("tidyverse")
+library(lubridate)
+
+load("RData_full.RData")
+#Backup do banco
+#save(df, file = "backup22-11-18.RData")
+
+df <- df %>% select(-DT_ENVLO, -DT_DIGIT, -COD_UNIN, -COD_AGEN, -HEMOPARASI, -EXAMINADOR) %>% filter(RES_EXAM != "0")
+
+```
+
+
+# Tipo de malária
+### Variável RES_EXAM
+No caso do exame da **lâmina por microscopia**:  
+1 - Negativa  
+2 - Falciparum  
+3 - F+FG  
+4 - Vivax  
+5 - F+V  
+6 - V+FG  only v 
+7 - FG  
+8 - Malariae  
+9 - F+M  
+10 – Ovale  
+11 – Não F    
+
+Para exames feitos com **teste rápido**:  
+1- Negativo  
+2- F (P. falciparum)  
+5- F+V (P. falciparum + P. vivax)  
+11- Não F (não falciparum)  
+
+**Obs.**: Não temos notificação negativa nesse banco. O ano de 2003 tem 17 registros com código de tipo de malária igual a zero, não existe esse código no dicionário, já retirei do banco.
+
+- Tabela de contagem e frequência de ocorrência por tipo de malária por ano.
+```{r}
+freq <- df %>%
+    group_by(ANO) %>%
+    count(RES_EXAM) %>%
+    mutate(freq_mal = n / sum(n) * 100)
+
+```
+
+Talvez seja uma boa criar uma variável tipo factor para RES_EXAM, com os nomes no lugar dos códigos.  Não customizei os gráficos ainda, pois acho que seria bom escolhermos os melhores e gerar um outro código com essas análises, aqui estou usando como uma espécie de rascunho.     
+```{r}
+gf <- ggplot(aes(y = freq_mal, x = ANO, color = RES_EXAM), data = freq)
+gf <- gf + geom_bar(stat = "identity") + facet_grid(RES_EXAM ~ .)
+gf
+
+gf <- ggplot(aes(y = freq_mal, x = ANO, group = RES_EXAM, color = RES_EXAM), data = freq)
+gf <- gf + geom_bar(stat = "identity") 
+gf
+
+#Casos
+gf <- ggplot(aes(y = n, x = ANO, color = RES_EXAM), data = freq)
+gf <- gf + geom_line() + facet_grid(RES_EXAM ~ .)
+gf
+
+###Vendo só para vivax e falciparum
+freq1 <- freq %>%
+      filter(RES_EXAM == "2" | RES_EXAM == "4")
+
+gf <- ggplot(aes(y = n, x = ANO, color = RES_EXAM), data = freq1)
+gf <- gf + geom_line() + facet_grid(RES_EXAM ~ .)
+gf
+
+###Vendo para o restante
+freq2 <- freq %>%
+      filter(RES_EXAM == "3" | RES_EXAM == "5" | RES_EXAM == "6" | RES_EXAM == "7" | RES_EXAM == "8" | RES_EXAM == "9" | RES_EXAM == "10" | RES_EXAM == "11")
+
+gmal <- ggplot(aes(y = n, x = ANO, color = RES_EXAM), data = freq2)
+gmal <- gmal + geom_line() + facet_grid(RES_EXAM ~ .)
+gmal
+
+```
+
+
+### Tipo de malária, tipo de lamina, tipo de exame por ANO.
+**TIPO_LAM**: Informa o tipo de detecção.  
+1 – Detecção Passiva  
+2 – Detecção Ativa  
+3 – LVC (Código no modelo das antigas fichas de notificação) --> ver direito isso.    
+Essa variável tem 100% de preenchimento, mas não tem consistência com ID_LVC_.
+
+**ID_LVC_**: Informa quando a notificação é um caso de LVC.  ---FALTA
+1-  Notificação é um caso de LVC.
+2-  Notificação não é um caso de LVC.
+Essa variável tem 100% de preenchimento.  
+
+Verifiquei todos os anos, e a partir de 2010 começam a aparecer diferenças. Ser um caso de LVC em ID_LVC sem aparecer como LVC em TIPO_LAM, assim como não ser um caso de LVC em ID_LVC e aparecer como LVC em TIPO_LAM. Isso trás a questão: como realmente decidem se é LVC? Em qual variável acreditar? Ainda não verifiquei a evolução de busca ativa e passiva na série temporal, até mesmo porque não sei se podemos acreditar na variável...
+
+**EXAME**: Informa o tipo de exame realizado de acordo com a tabela abaixo.
+1 = Gota espessa/Esfregaço
+2 = Teste rápido
+
+
+- Tipo de lâmina e ano
+```{r}
+tl <- df %>%
+    group_by(ANO) %>%
+    count(TIPO_LAM) %>%
+    mutate(f.lam = n / sum(n) * 100)
+
+gt <- ggplot(aes(y = n, x = ANO, group = TIPO_LAM, color = TIPO_LAM), data = tl)
+gt <- gt + geom_line()
+gt # 3 é LVC, veja como diminui ao longo do tempo. Há uma diminuição de casos também, mas ainda sim é desproporcional.
+
+gt <- ggplot(aes(y = f.lam, x = ANO, color = TIPO_LAM), data = tl)
+gt <- gt + geom_bar(stat = "identity") + facet_grid(TIPO_LAM ~ .)
+gt 
+```
+
+- Tipo de malária por tipo de lamina e ano
+```{r}
+v_tl <- df %>%
+    group_by(ANO, TIPO_LAM) %>%
+    count(RES_EXAM)
+
+#Duas formas de visualizar- pode filtrar para ver só vivax e falci.
+gv <- ggplot(aes(y = n, x = ANO, group = TIPO_LAM, color = TIPO_LAM), data = v_tl)
+gv <- gv + geom_line() + facet_grid(RES_EXAM ~ .)
+gv
+
+gv <- ggplot(aes(y = n, x = ANO, group = RES_EXAM, color = RES_EXAM), data = v_tl)
+gv <- gv + geom_line() + facet_grid(TIPO_LAM ~ .)
+gv
+```
+
+- Tipo de exame, tipo de lâmina e ano
+```{r}
+exam <- df %>%
+    group_by(ANO, EXAME_) %>%
+    count(TIPO_LAM)
+
+ge <- ggplot(aes(y = n, x = ANO, color = EXAME_), data = exam)
+ge <- ge + geom_bar(stat="identity") + facet_grid(EXAME_ ~ .)
+ge #Tem muitos NAs nessa- se usar teria que ser somente a partir de 2012 eu acho.
+
+# exame e lamina
+ge <- ggplot(aes(y = n, x = TIPO_LAM, group = EXAME_, color = EXAME_), data = exam)
+ge <- ge + geom_bar(stat = "identity") + facet_grid(EXAME_ ~ .)
+ge
+
+#exame, lamina por ano
+ge <- ggplot(aes(y = n, x = ANO, color = TIPO_LAM), data = exam)
+ge <- ge + geom_bar(stat = "identity") + facet_grid(EXAME_ ~ .) 
+ge
+```
+
+- ID_LVC_ (se é ou não LVC) por ano e Tipo de lâmina   
+Para ficar correto, tem que transformar ID_LVC em factor.
+
+NÃO CONSEGUI TRANSFORMAR O EIXO Y.
+
+```{r}
+lvc <- df %>%
+    group_by(ANO, TIPO_LAM) %>%
+    count(ID_LVC_) %>%
+    mutate(ID_LVC1 = factor(ID_LVC_, c(1:2), c("LVC", "NOT.LVC")),
+           TIPO_LAM1 = factor(TIPO_LAM, c(1:3), c("PCD", "ACD", "LVC") )
+           ) 
+
+glvc <- ggplot(aes(y = n, x = ANO, color = ID_LVC1), data = lvc)
+glvc <- glvc + geom_bar(stat = "identity") + facet_grid(ID_LVC1 ~ .)
+glvc #não sei se está certo esse gráfico
+
+glvc <- ggplot(aes(y = n, x = TIPO_LAM1, group = ID_LVC1, color = ID_LVC1), data = lvc) 
+glvc <- glvc + geom_bar(stat = "identity") + facet_grid(ID_LVC1 ~ .)
+glvc # há uma grande problema na consistência dessas variáveis. Quando ID_LVC_ é "1", em TIPO_LAM ela aparece relativiamente bastante como sendo busca ativa ou passiva ao contrário de estar como 3, que seria LVC. Quando ID_LVC_ é 2, ela também aparece em TIPO_LAM como LVC.
+
+glvc <- ggplot(aes(y = n, x = ANO, group = TIPO_LAM1, color = TIPO_LAM1), data = lvc) 
+glvc <- glvc + geom_bar(stat = "identity", position = "dodge") + facet_grid(ID_LVC1~ .) + xlab("Year") + ylab("Freq.")
+glvc  # seria importante tentar descobrir como é de fato feito o preenchimento dessas variáveis. Há muita insconsistência.
+
+
+```
+
+- Parasitemia: QTD_PARA e QTD_CRUZ   
+**QTD_PARA**: Informa a quantidade de parasitos por mm3.  
+
+*Obs.*: Preencher com o número de parasitos por mm3 encontrado na lâmina. Deixar em branco se o exame foi realizado com teste rápido.  
+
+**QTD_CRUZ**: Informa a quantidade de parasitemia em cruzes, de acordo com a seguinte tabela.  
+Parasitemia em Cruzes  
+1 - "< +/2" (menor que meia cruz)  
+2 - "+/2" (meia cruz)  
+3 - "+" (uma cruz)  
+4 - "++" (duas cruzes)  
+5 - "+++" (três cruzes)  
+6 - "++++" (quatro cruzes)    
+
+*Obs.*: Deixar em branco somente se o campo anterior (parasitos por mm³) já foi preenchido ou se foi usado teste rápido.  
+
+**EXAME**: Informa o tipo de exame realizado de acordo com a tabela abaixo.
+1 = Gota espessa/Esfregaço
+2 = Teste rápido
+
+```{r}
+df %>% filter(RES_EXAM=="4") %>% mutate (parac = QTD_PARA>0) %>% add_count(parac, EXAME_ ) %>% distinct(RES_EXAM, parac, EXAME_, n)
+df %>% filter(RES_EXAM=="4") %>% mutate (parac = is.na(QTD_PARA)) %>% add_count(parac, EXAME_ ) %>% distinct(RES_EXAM, parac, EXAME_, n)
+
+
+# Quando QTD_PARA é NA e QTD_CRUZ também: 11145 registros- conferir se entendi certo
+df %>% filter(RES_EXAM=="4") %>% mutate (parac = is.na(QTD_PARA)) %>% add_count(parac, QTD_CRUZ) %>% distinct(RES_EXAM, parac, QTD_CRUZ, n)
+
+#Teste rápido e QTD_CRUZ preenchido: 4537 registros
+df %>% filter(RES_EXAM=="4") %>% mutate (parac = is.na(QTD_CRUZ)) %>% add_count(parac, EXAME_ ) %>% distinct(RES_EXAM, parac, EXAME_, n)
+
+
+#QTD_PARA por ano
+qtd <- df %>%
+    filter(RES_EXAM=="4") %>%
+    group_by(ANO, EXAME_) %>%
+    count(QTD_PARA)
+    
+gqtd <- ggplot(aes(y = n, x = ANO), data = qtd)
+gqtd <- gqtd + geom_bar(stat = "identity") + facet_grid(EXAME_ ~ .)
+gqtd
+
+
+#QTD_CRUZ por ano
+qtd <- df %>%
+    filter(RES_EXAM=="4") %>%
+    group_by(ANO, EXAME_) %>%
+    count(QTD_CRUZ)
+
+gqtd <- ggplot(aes(y = n, x = ANO, color = QTD_CRUZ), data = qtd)
+gqtd <- gqtd + geom_bar(stat = "identity", position = "dodge") + facet_grid(EXAME_ ~ .)
+gqtd
+
+
+```
+
+
+
+### Organizando a variável idade 
+Gerei duas variáveis: idade contínua em anos e idade por faixa etária no padrão do IBGE.  
+Exploração das variáveis para cada ano. Abaixo computei os problemas encontrados. Iremos retirar do banco o que está inconsistente, já que no total são poucos registros.
+```{r}
+#Aqui, para facilitar, eu só troquei o ano e rodei cada hora para um. Tem cometários abaixo.
+bd <- d17
+head(bd)
+#Teoricamente, a unidade dias deveria ser para bebês com menos de 30 dias. 
+unique(bd$ID_PACIE[bd$ID_DIMEA=="D"])
+nrow(bd[which(bd$ID_PACIE > 30 & bd$ID_DIMEA=="D"),])
+#Verificando as idades **em meses** que deveria estar como meses se < do 1 ano.
+unique(bd$ID_PACIE[bd$ID_DIMEA=="M"])
+nrow(bd[which(bd$ID_PACIE >= 12 & bd$ID_DIMEA=="M"),])
+# Verificando idade em anos
+unique(bd$ID_PACIE[bd$ID_DIMEA=="A"]) # podemos observar idades como 809, 518
+nrow(bd[which(bd$ID_PACIE > 100 & bd$ID_DIMEA=="A"),]) #Talvez o melhor seja retirar esses
+
+```
+
+**Observações sobre idade nos bancos**:  
+- 2003: em 2003 temos 30 registros com idade = D e acima de 30. Alguns tem NA em DT_NASCI, então não tem como conferir. Esses eu sugiro retirar do banco. Os outros podemos trocar para Anos caso a data de nascimento confirme isso.  
+Pode haver também notificações que tem menos de 30 em idade, apareça como D e esteja errado ainda sim. Teria que conferir isso com a DT_NASCI. O grande problema é que essa variável para 2003 tem 93892 NAs. Existem problemas no preenchimento dela também. Para exemplificar, em 2003, a idade mínima aparece 1194-01-05 e a máxima 2096-01-21. Talvez a melhor alternativa seja considerar a idade mesmo e quando possível adequar, quando não, retirar do banco, em geral são poucos os problemas se decidirmos assim, mas memso sendo poucos, trabalho para resolver, pelo menos na minha capacidade.   
+- 2004: somente 1 registro com D acima de 30, mas 97 com erros em M e 77 em A.  
+- 2005: 15 em D, 125 em M e 92 em A.  
+- 2006: 9 em D, 89 em M e 79 em A.  
+- 2007: 13 em D, 53 em M e 54 em A.  
+- 2008: 8 em D, 20 em M e 33 em A.  
+- 2009: 9 em D, 42 em M e 28 em A.  
+- 2010: 7 em D, 82 em M e 70 em A.  
+- 2011: 6 em D, 31 em M e 27 em A.  
+- 2012: 25 em D, 131 em M e 33 em A.  
+- 2013: 54 em D, 78 em M e 55 em A.  
+- 2014: 25 em D, 16 em M e 26 em A.  
+- 2015: 33 em D, 25 em M e 35 em A.  
+- 2016: 2 em D, 12 em M e 28 em A.  
+- 2017: 19 em D, 71 em M e 41 em A.
+
+
+### Avaliando para o banco completo usando Tidyverse
+- Contabilizando as inconsistências para o banco total e visualizando como aparece as idades e datas de nascimento. Avaliar se vale a pena extrair as idades pela subtração de da data de notificação pela data de nascimento.
+- Rode com e sem a linha drop_na par ater ideia da quantidade que é ou não possível extrair a idade. Para meses perdemos bastante informaçãi, pois não tem a data de nascimento.
+- Importaten observar que há alguns erros de digitação no preenchimento do ano em DT_NASCI, por isso os erros nas idades. Não sei avaliar bem o que é melhor fazer.
+- 256 D + 969 M + 759 A = 1984 registros
+- Somente para falci e vivax: 240 D + 969 M + 711 A = 1920 - as maiores perdas são para os tipos que nos interessam.
+- **Com informação de DT_NASCI: 27 D + 33 M + 117 A = 177 seriam os registros possíveis de usar caso façamos a extração pela data de nascimento. Não sei se compensa.**
+
+Vamos retirar por enquanto e não vamos recuperar o 177 registros que tem DT_NASCI.
+```{r}
+df %>% 
+  select(ID_DIMEA, ID_PACIE, DT_NASCI) %>%
+  filter(ID_PACIE > 30 & ID_DIMEA == "D") %>%
+  drop_na(DT_NASCI)
+
+df %>% 
+  select(ID_DIMEA, ID_PACIE, DT_NASCI) %>%
+  filter(ID_PACIE >= 12 & ID_DIMEA == "M") %>% 
+  drop_na(DT_NASCI)
+
+df %>% 
+  select(ID_DIMEA, ID_PACIE, DT_NASCI) %>%
+  filter(ID_PACIE > 100 & ID_DIMEA == "A") %>% 
+  drop_na(DT_NASCI)
+
+# Somente para falciparum e vivax
+#Quero contar quantos são no total aqui, mas não consegui ainda.
+df %>% 
+  select(ID_DIMEA, ID_PACIE, DT_NASCI, RES_EXAM) %>%
+  filter(ID_PACIE > 30 & ID_DIMEA == "D") %>%
+  filter(RES_EXAM == "2" | RES_EXAM == "4") %>%
+  drop_na(DT_NASCI) %>%
+  group_size()  #Tentando contar quantos ficam após os filtros e o drop_na. Uma forma seria salvar em outro objeto, mas não queria fazer isso devido à memória. Fiz isso par asaber os números, mas queria aprender do outro jeito se houver.
+
+df %>% 
+  select(ID_DIMEA, ID_PACIE, DT_NASCI, RES_EXAM) %>%
+  filter(ID_PACIE >= 12 & ID_DIMEA == "M") %>%
+  filter(RES_EXAM == "2" | RES_EXAM == "4") %>%
+  drop_na(DT_NASCI) %>%
+  group_size()
+
+df %>% 
+  select(ID_DIMEA, ID_PACIE, DT_NASCI, RES_EXAM) %>%
+  filter(ID_PACIE > 100 & ID_DIMEA == "A") %>%
+  filter(RES_EXAM == "2" | RES_EXAM == "4") %>%
+  drop_na(DT_NASCI) %>%
+  group_size()
+
+```
+
+
+- Convertendo meses e dias em anos. -não fiz mais aqui, se fizer será no próximos script, Michael prefere transformar a idade em dias.
+```{r}
+df <- df %>% 
+  filter(ID_PACIE < 30 & ID_DIMEA == "D" | ID_PACIE < 12 & ID_DIMEA == "M" | ID_PACIE <= 100 & ID_DIMEA == "A")
+
+df$ID_PACIE <- as.double(df$ID_PACIE) 
+
+df <- df %>% 
+          mutate(IDADE_cont = if_else(ID_DIMEA == "A", ID_PACIE, 0))
+
+```
+
+- Faixa etaria: categorica criada a partir de IDADE_cont. Fiz do jeito tradicional.
+```{r}
+df_age$IDADE_FE <- NA 
+
+df_age[which(df_age$IDADE_cont <= 4),]$IDADE_FE <- "0-4"
+df_age[which(df_age$IDADE_cont >= 5 & df_age$IDADE_cont <= 9),]$IDADE_FE <- "5-9"
+df_age[which(df_age$IDADE_cont >= 10 & df_age$IDADE_cont <= 14),]$IDADE_FE <- "10-14"
+df_age[which(df_age$IDADE_cont >= 15 & df_age$IDADE_cont <= 19),]$IDADE_FE <- "15-19"
+df_age[which(df_age$IDADE_cont >= 20 & df_age$IDADE_cont <= 24),]$IDADE_FE <- "20-24"
+df_age[which(df_age$IDADE_cont >= 25 & df_age$IDADE_cont <= 29),]$IDADE_FE <- "25-29"
+df_age[which(df_age$IDADE_cont >= 30 & df_age$IDADE_cont <= 34),]$IDADE_FE <- "30-34"
+df_age[which(df_age$IDADE_cont >= 35 & df_age$IDADE_cont <= 39),]$IDADE_FE <- "35-39"
+df_age[which(df_age$IDADE_cont >= 40 & df_age$IDADE_cont <= 44),]$IDADE_FE <- "40-44"
+df_age[which(df_age$IDADE_cont >= 45 & df_age$IDADE_cont <= 49),]$IDADE_FE <- "45-49"
+df_age[which(df_age$IDADE_cont >= 50 & df_age$IDADE_cont <= 54),]$IDADE_FE <- "50-54"
+df_age[which(df_age$IDADE_cont >= 55 & df_age$IDADE_cont <= 59),]$IDADE_FE <- "55-59"
+df_age[which(df_age$IDADE_cont >= 60 & df_age$IDADE_cont <= 64),]$IDADE_FE <- "60-64"
+df_age[which(df_age$IDADE_cont >= 65 & df_age$IDADE_cont <= 69),]$IDADE_FE <- "65-69"
+df_age[which(df_age$IDADE_cont >= 70 & df_age$IDADE_cont <= 74),]$IDADE_FE <- "70-74"
+df_age[which(df_age$IDADE_cont >= 75 & df_age$IDADE_cont <= 79),]$IDADE_FE <- "75-79"
+df_age[which(df_age$IDADE_cont >= 80),]$IDADE_FE <- "80+"
+
+df_age$IDADE_FE = factor(df_age$IDADE_FE, label=c("0-4","5-9","10-14","15-19","20-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64","65-69","70-74","75-79","80+"), levels= c("0-4","5-9","10-14","15-19","20-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64","65-69","70-74","75-79","80+"))
+
+levels(df_age$IDADE_FE)
+
+
+#save.image("SIVEP_vivax_falci_clean.RDATA")
+
+```
+
+A partir daqui seria melhor usar o SIVEP_vivax_falci_clean.RDATA. 
+
+- Idade
+```{r}
+age <- df_age %>%
+      filter(RES_EXAM == 4) %>%  #trocar para 2 e ver falci
+      group_by(ANO) %>%
+      count(IDADE_FE)
+
+gage <- ggplot(aes(y = n, x = IDADE_FE), data = age)
+gage <- gage + geom_bar(stat = "identity", position = "dodge") + facet_grid(ANO ~ .) + xlab("Age range") + ylab("Cases")
+gage
+
+```
+
+- Sexo e idade
+```{r}
+age_sex <- df_age %>%
+          filter(RES_EXAM == 4) %>%  #trocar para 2 e ver falci
+          mutate(SEXO = as.factor(SEXO)) %>%
+          group_by(ANO, SEXO) %>%
+          count(IDADE_FE)
+gages <- ggplot(aes(y = n, x = IDADE_FE), data = age)
+gages <- gages + geom_bar(stat = "identity", position = "dodge") + facet_grid(SEXO ~ .) + xlab("Age range") + ylab("Cases")
+gages
+
+```
+
+### Contrastando variáveis relacionadas ao tratamento
+
+Somente depois de 2010 é possível usar as duas primeiras.  
+**VIVAX**: Informa se o paciente recebeu tratamento para malária vivax nos últimos 60 dias antes da notificação.
+1- SIM  
+2- NÃO  
+
+**FALCIPARUM**: Informa se o paciente recebeu tratamento para malária falciparum nos últimos 40 dias antes da notificação.
+1- SIM  
+2- NÃO  
+
+**ESQUEMA**: esperando pelo banco adicional para terminar essa parte.  
+
+**ESQUEMA_1** (Campo com códigos no modelo da antiga ficha de notificação): Informa o esquema de tratamento utilizado.  
+1-Infecções por Pv com Cloroquina em 3 dias e Primaquina 7 dias  
+2-Infecções por Pf com Quinina em 3 dias + Doxiciclina em 5 dias + Primaquina no 6o dia  
+3-Infecções Mistas por Pv + Pf com Mefloquina em dose única e Primaquina em 7 dias  
+4-Infecções por Pm com Cloroquina em 3 dias  
+5-Infecções por Pv em crianças apresentando vômitos, com cápsulas retais de Artesunato em 4 dias e Primaquina em 7 dias  
+6-Infecções por Pf com Mefloquina em dose única e Primaquina no segundo dia  
+7-Infecções por Pf com Quinina em 7 dia  
+8-Infecções por Pf de crianças com cápsulas retais de artesunato em 4 dias e dose única de Mefloquina no 3o dia e Primaquina no 5o dia   
+9-Infecções mistas por Pv + Pf com Quinina em 3 dias, Doxiciclina em 5 dias e Primaquina em 7 dias  
+10-Prevenção de recaída da Malária por Pv com Cloroquina em dose única semanal durante 3 meses  
+11-Malária grave e complicada  
+99-Outro Esquema utilizado (por médico)  
+```{r}
+
+
+```
+
+
+### Variável ocupação
+**COD_OCUP**: Código da principal atividade exercida pelo paciente nos últimos 15 dias de acordo com a seguinte tabela:  
+1- Agricultura  
+2- Pecuária  
+3- Doméstica  
+4- Turismo  
+5- Garimpagem  
+6- Exploração Vegetal  
+7- Caça / Pesca  
+8- Consts. Estrada e Barragens  
+9- Mineração  
+10- Viajante  
+11- Outros  
+99- Ignorado   
+
+```{r}
+
+
+```
+
+
+
+
+- Antigo  
+### Filtro e agregação de casos de  vivax para confecção de mapas de IPA 
+4 - Vivax em RES_EXAM
+
+- Ano 2003
+```{r}
+class(d03$RES_EXAM)
+d03v <- subset(d03, RES_EXAM == "4")
+unique(d03v$RES_EXAM)
+d03vm <- aggregate(d03v$RES_EXAM, by = list(MUN_NOTI = d03v$MUN_NOTI, UF_NOTIF = d03v$UF_NOTIF), FUN = length)
+head(d03vm)
+tail(d03vm)
+names(d03vm)[3] <- "VIVAX"
+
+d03vm[which(d03vm$MUN_NOTI == "120033"),]#Mâncio Lima (AC)
+d03vm[which(d03vm$MUN_NOTI == "120042"),]#Rodrigues Alves (AC)
+
+```
+
+- Ano 2004
+```{r}
+class(d04$RES_EXAM)
+d04v <- subset(d04, RES_EXAM == "4")
+unique(d04v$RES_EXAM)
+d04vm <- aggregate(d04v$RES_EXAM, by = list(MUN_NOTI = d04v$MUN_NOTI, UF_NOTIF = d04v$UF_NOTIF), FUN = length)
+head(d04vm)
+tail(d04vm)
+names(d04vm)[3] <- "VIVAX"
+
+d04vm[which(d04vm$MUN_NOTI == "120033"),]#Mâncio Lima (AC)
+d04vm[which(d04vm$MUN_NOTI == "120042"),]#Rodrigues Alves (AC)
+
+```
+
+- Ano 2005
+```{r}
+class(d05$RES_EXAM)
+d05v <- subset(d05, RES_EXAM == "4")
+unique(d05v$RES_EXAM)
+d05vm <- aggregate(d05v$RES_EXAM, by = list(MUN_NOTI = d05v$MUN_NOTI, UF_NOTIF = d05v$UF_NOTIF), FUN = length)
+head(d05vm)
+tail(d05vm)
+names(d05vm)[3] <- "VIVAX"
+
+d05vm[which(d05vm$MUN_NOTI == "120033"),]#Mâncio Lima (AC)
+d05vm[which(d05vm$MUN_NOTI == "120042"),]#Rodrigues Alves (AC)
+
+```
+
+- Ano 2006
+```{r}
+class(d06$RES_EXAM)
+d06v <- subset(d06, RES_EXAM == "4")
+unique(d06v$RES_EXAM)
+d06vm <- aggregate(d06v$RES_EXAM, by = list(MUN_NOTI = d06v$MUN_NOTI, UF_NOTIF = d06v$UF_NOTIF), FUN = length)
+head(d06vm)
+tail(d06vm)
+names(d06vm)[3] <- "VIVAX"
+
+d06vm[which(d06vm$MUN_NOTI == "120033"),]#Mâncio Lima (AC)
+d06vm[which(d06vm$MUN_NOTI == "120042"),]#Rodrigues Alves (AC)
+
+```
+
+- Ano 2007
+```{r}
+class(d07$RES_EXAM)
+d07v <- subset(d07, RES_EXAM == "4")
+unique(d07v$RES_EXAM)
+d07vm <- aggregate(d07v$RES_EXAM, by = list(MUN_NOTI = d07v$MUN_NOTI, UF_NOTIF = d07v$UF_NOTIF), FUN = length)
+head(d07vm)
+tail(d07vm)
+names(d07vm)[3] <- "VIVAX"
+
+d07vm[which(d07vm$MUN_NOTI == "120033"),]#Mâncio Lima (AC)
+d07vm[which(d07vm$MUN_NOTI == "120042"),]#Rodrigues Alves (AC)
+
+```
+
+- Ano 2008
+```{r}
+class(d08$RES_EXAM)
+d08v <- subset(d08, RES_EXAM == "4")
+unique(d08v$RES_EXAM)
+d08vm <- aggregate(d08v$RES_EXAM, by = list(MUN_NOTI = d08v$MUN_NOTI, UF_NOTIF = d08v$UF_NOTIF), FUN = length)
+head(d08vm)
+tail(d08vm)
+names(d08vm)[3] <- "VIVAX"
+
+d08vm[which(d08vm$MUN_NOTI == "120033"),]#Mâncio Lima (AC)
+d08vm[which(d08vm$MUN_NOTI == "120042"),]#Rodrigues Alves (AC)
+
+```
+
+- Ano 2009
+```{r}
+class(d09$RES_EXAM)
+d09v <- subset(d09, RES_EXAM == "4")
+unique(d09v$RES_EXAM)
+d09vm <- aggregate(d09v$RES_EXAM, by = list(MUN_NOTI = d09v$MUN_NOTI, UF_NOTIF = d09v$UF_NOTIF), FUN = length)
+head(d09vm)
+tail(d09vm)
+names(d09vm)[3] <- "VIVAX"
+
+d09vm[which(d09vm$MUN_NOTI == "120033"),]#Mâncio Lima (AC)
+d09vm[which(d09vm$MUN_NOTI == "120042"),]#Rodrigues Alves (AC)
+
+```
+
+- Ano 2010
+```{r}
+class(d10$RES_EXAM)
+d10v <- subset(d10, RES_EXAM == "4")
+unique(d10v$RES_EXAM)
+d10vm <- aggregate(d10v$RES_EXAM, by = list(MUN_NOTI = d10v$MUN_NOTI, UF_NOTIF = d10v$UF_NOTIF), FUN = length)
+head(d10vm)
+tail(d10vm)
+names(d10vm)[3] <- "VIVAX"
+
+d10vm[which(d10vm$MUN_NOTI == "120033"),]#Mâncio Lima (AC)
+d10vm[which(d10vm$MUN_NOTI == "120042"),]#Rodrigues Alves (AC)
+
+```
+
+- Ano 2011
+```{r}
+class(d11$RES_EXAM)
+d11v <- subset(d11, RES_EXAM == "4")
+unique(d11v$RES_EXAM)
+d11vm <- aggregate(d11v$RES_EXAM, by = list(MUN_NOTI = d11v$MUN_NOTI, UF_NOTIF = d11v$UF_NOTIF), FUN = length)
+head(d11vm)
+tail(d11vm)
+names(d11vm)[3] <- "VIVAX"
+
+d11vm[which(d11vm$MUN_NOTI == "120033"),]#Mâncio Lima (AC)
+d11vm[which(d11vm$MUN_NOTI == "120042"),]#Rodrigues Alves (AC)
+
+```
+
+- Ano 2012
+```{r}
+class(d12$RES_EXAM)
+d12v <- subset(d12, RES_EXAM == "4")
+unique(d12v$RES_EXAM)
+d12vm <- aggregate(d12v$RES_EXAM, by = list(MUN_NOTI = d12v$MUN_NOTI, UF_NOTIF = d12v$UF_NOTIF), FUN = length)
+head(d12vm)
+tail(d12vm)
+names(d12vm)[3] <- "VIVAX"
+
+d12vm[which(d12vm$MUN_NOTI == "120033"),]#Mâncio Lima (AC)
+d12vm[which(d12vm$MUN_NOTI == "120042"),]#Rodrigues Alves (AC)
+
+```
+
+- Ano 2013
+```{r}
+class(d13$RES_EXAM)
+d13v <- subset(d13, RES_EXAM == "4")
+unique(d13v$RES_EXAM)
+d13vm <- aggregate(d13v$RES_EXAM, by = list(MUN_NOTI = d13v$MUN_NOTI, UF_NOTIF = d13v$UF_NOTIF), FUN = length)
+head(d13vm)
+tail(d13vm)
+names(d13vm)[3] <- "VIVAX"
+
+d13vm[which(d13vm$MUN_NOTI == "120033"),]#Mâncio Lima (AC)
+d13vm[which(d13vm$MUN_NOTI == "120042"),]#Rodrigues Alves (AC)
+
+```
+
+- Ano 2014
+```{r}
+class(d14$RES_EXAM)
+d14v <- subset(d14, RES_EXAM == "4")
+unique(d14v$RES_EXAM)
+d14vm <- aggregate(d14v$RES_EXAM, by = list(MUN_NOTI = d14v$MUN_NOTI, UF_NOTIF = d14v$UF_NOTIF), FUN = length)
+head(d14vm)
+tail(d14vm)
+names(d14vm)[3] <- "VIVAX"
+
+d14vm[which(d14vm$MUN_NOTI == "120033"),]#Mâncio Lima (AC)
+d14vm[which(d14vm$MUN_NOTI == "120042"),]#Rodrigues Alves (AC)
+
+```
+
+- Ano 2015
+```{r}
+class(d15$RES_EXAM)
+d15v <- subset(d15, RES_EXAM == "4")
+unique(d15v$RES_EXAM)
+d15vm <- aggregate(d15v$RES_EXAM, by = list(MUN_NOTI = d15v$MUN_NOTI, UF_NOTIF = d15v$UF_NOTIF), FUN = length)
+head(d15vm)
+tail(d15vm)
+names(d15vm)[3] <- "VIVAX"
+
+d15vm[which(d15vm$MUN_NOTI == "120033"),]#Mâncio Lima (AC)
+d15vm[which(d15vm$MUN_NOTI == "120042"),]#Rodrigues Alves (AC)
+
+```
+
+- Ano 2016
+```{r}
+class(d16$RES_EXAM)
+d16v <- subset(d16, RES_EXAM == "4")
+unique(d16v$RES_EXAM)
+d16vm <- aggregate(d16v$RES_EXAM, by = list(MUN_NOTI = d16v$MUN_NOTI, UF_NOTIF = d16v$UF_NOTIF), FUN = length)
+head(d16vm)
+tail(d16vm)
+names(d16vm)[3] <- "VIVAX"
+
+d16vm[which(d16vm$MUN_NOTI == "120033"),]#Mâncio Lima (AC)
+d16vm[which(d16vm$MUN_NOTI == "120042"),]#Rodrigues Alves (AC)
+
+```
+
+- Ano 2017
+```{r}
+class(d17$RES_EXAM)
+d17v <- subset(d17, RES_EXAM == "4")
+unique(d17v$RES_EXAM)
+d17vm <- aggregate(d17v$RES_EXAM, by = list(MUN_NOTI = d17v$MUN_NOTI, UF_NOTIF = d17v$UF_NOTIF), FUN = length)
+head(d17vm)
+tail(d17vm)
+names(d17vm)[3] <- "VIVAX"
+
+d17vm[which(d17vm$MUN_NOTI == "120033"),]#Mâncio Lima (AC)
+d17vm[which(d17vm$MUN_NOTI == "120042"),]#Rodrigues Alves (AC)
+
+```
+
+
+## Salvando as tabelas por município para confecção dos mapas
+```{r}
+#write.csv(d17vm, file = "Resultados/vivax17_muni.csv", row.names = F)
+
+
+```
+
