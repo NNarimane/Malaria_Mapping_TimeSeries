@@ -29,9 +29,6 @@ if(envNN){
 
 ```
 
-
-Precisamos ter uma tabela com:DT_NOTIF, LEVEL (só municipio agora: MU), MUN_COD, UF_COD, VIVAX_Feminino, ViVAX_Mas, FALC_F, FALC_V, VIVAX_FAIX<0...
-
 ### Creating the continuos age by year and after by categories (age range) from IBGE
 - Continuos age in year
 ```{r}
@@ -73,10 +70,43 @@ df$AGE_RANGE = factor(df$AGE_RANGE, label=c("0-4","5-9","10-14","15-19","20-24",
 ### Counting malaria cases by day, UF, municipality and malaria type.
 ```{r}
 day_malaria_type <- df %>%
-                      group_by(DT_NOTIF, UF_NOTIF, MUN_NOTI) %>%
-                      count(RES_EXAM)
+                      group_by(DT_NOTIF, MUN_NOTI) %>%
+                      count(RES_EXAM) %>%
+                      mutate(LEVEL = "MU") %>%
+                      select(DT_NOTIF, LEVEL, MUN_NOTI, RES_EXAM, n) %>%
+                      spread(RES_EXAM, n, fill = 0) %>%
+                      rename(CODE = MUN_NOTI)
+
+
+#SOmar F com F+V e V com F+V fazendo replace e remover F_V e depois fazer um gather
+
+```
+
+### Counting malaria cases by day, UF and malaria type
+```{r}
+day_malaria_type_state <- df %>%
+                      group_by(DT_NOTIF, UF_NOTIF) %>%
+                      count(RES_EXAM) %>%
+                      mutate(LEVEL = "UF") %>%
+                      select(DT_NOTIF, LEVEL, UF_NOTIF, RES_EXAM, n)
                       
-names(day_malaria_type)[2:5] <- c("UF", "MUN_COD", "MALARIA_TYPE", "CASES_N")
+names(day_malaria_type_state)[3:5] <- c("CODE", "TYPE", "CASES")
+
+```
+
+
+### Counting malaria cases by day and malaria type
+```{r}
+day_malaria_type_brazil <- df %>%
+                      group_by(DT_NOTIF) %>%
+                      count(RES_EXAM)%>%
+                      mutate(LEVEL = "BR",
+                             CODE = "0") %>%
+                      select(DT_NOTIF, LEVEL, CODE, RES_EXAM, n)
+                      
+names(day_malaria_type_brazil)[4:5] <- c("TYPE", "CASES")
   
 ```
+
+spread(dados.curto,Indicador,Valor)
 
