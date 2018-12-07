@@ -233,3 +233,39 @@ day_malaria_type_brazil_age <- df %>%
                           gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE, AGE_CAT))
 
 ```
+
+### Checking registers per notification, residence and probable infection place.
+- UF_NOTIF: 9 
+- UF_RESID: 27 + missings
+- UF_INFEC: 27 + missings
+```{r}
+length(unique(df$UF_NOTIF))
+length(unique(df$UF_RESID))
+length(unique(df$UF_INFEC))
+
+```
+
+- Diferent visualizations per state. 
+```{r}
+NOTIF_RESID <- df %>% 
+                group_by(UF_NOTIF, UF_RESID) %>%
+                count(RES_EXAM)# %>%
+#                filter(is.na(UF_RESID))
+
+
+NOTIF_INFEC<- df %>% 
+                group_by(UF_NOTIF, UF_INFEC) %>%
+                count(RES_EXAM)# %>%
+#                filter(is.na(UF_INFEC))
+
+RESID_INFEC <- df %>% 
+                group_by(UF_RESID, UF_INFEC) %>%
+                count(RES_EXAM)# %>%
+#                filter(is.na(UF_INFEC))
+  
+ALL_UF <- df %>% 
+            group_by(UF_NOTIF, UF_RESID, UF_INFEC) %>%
+            count(RES_EXAM)
+
+```
+
