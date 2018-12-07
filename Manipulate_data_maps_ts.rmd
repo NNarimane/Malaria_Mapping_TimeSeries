@@ -77,7 +77,7 @@ day_malaria_type_brazil <- df %>%
                           group_by(DT_NOTIF) %>%
                           count(RES_EXAM)%>%
                           mutate(LEVEL = "BR",
-                                 CODE = "0") %>%
+                                 CODE = "1") %>%
                           select(DT_NOTIF, LEVEL, CODE, RES_EXAM, n) %>%
                           spread(RES_EXAM, n, fill = 0) %>%
                           rename(FALCI = "F") %>%
@@ -132,7 +132,7 @@ day_malaria_type_brazil_gender <- df %>%
                           group_by(DT_NOTIF, SEXO) %>%
                           count(RES_EXAM)%>%
                           mutate(LEVEL = "BR",
-                                 CODE = "0") %>%
+                                 CODE = "1") %>%
                           select(DT_NOTIF, LEVEL, CODE, RES_EXAM, SEXO, n) %>%
                           spread(RES_EXAM, n, fill = 0) %>%
                           rename(FALCI = "F", FV = "F+V", VIVAX = "V", GENDER = SEXO) %>%
@@ -223,7 +223,7 @@ day_malaria_type_brazil_age <- df %>%
                           group_by(DT_NOTIF, AGE_RANGE) %>%
                           count(RES_EXAM)%>%
                           mutate(LEVEL = "BR",
-                                 CODE = "0") %>%
+                                 CODE = "1") %>%
                           select(DT_NOTIF, LEVEL, CODE, RES_EXAM, AGE_RANGE, n) %>%
                           spread(RES_EXAM, n, fill = 0) %>%
                           rename(FALCI = "F", FV = "F+V", VIVAX = "V", AGE_CAT = AGE_RANGE) %>%
@@ -270,6 +270,24 @@ ALL_UF <- df %>%
 ```
 
 ## Malaria per notification, residence and probable infection places
+
+### Counting malaria cases per day, notification, residence, probable infection per country and malaria type.
+```{r}
+day_malaria_type_places_country <- df %>%
+                          group_by(DT_NOTIF, PAIS_RES, PAIS_INF) %>%
+                          count(RES_EXAM) %>%
+                          mutate(LEVEL = "BR",
+                                 PAIS_NOTI = "1") %>%
+                          select(DT_NOTIF, LEVEL, PAIS_NOTI, PAIS_RES, PAIS_INF, RES_EXAM, n) %>%
+                          spread(RES_EXAM, n, fill = 0) %>%
+                          rename(CODE_NOTIF = PAIS_NOTI, CODE_RESID = PAIS_RES, CODE_INFEC = PAIS_INF, FALCI = "F", FV = "F+V", VIVAX = "V") %>%
+                          mutate(Falciparum = FALCI + FV) %>%
+                          mutate(Vivax = VIVAX + FV) %>%
+                          select(DT_NOTIF, LEVEL, CODE_NOTIF, CODE_RESID, CODE_INFEC, Falciparum, Vivax) %>%
+                          gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE_NOTIF, CODE_RESID, CODE_INFEC))
+
+```
+
 
 ### Counting malaria cases per day, notification, residence, probable infection per state and malaria type.
 ```{r}
