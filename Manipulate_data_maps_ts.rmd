@@ -245,7 +245,7 @@ length(unique(df$UF_INFEC))
 
 ```
 
-- Diferent visualizations per state. 
+- Different visualizations per state. 
 ```{r}
 NOTIF_RESID <- df %>% 
                 group_by(UF_NOTIF, UF_RESID) %>%
@@ -269,3 +269,39 @@ ALL_UF <- df %>%
 
 ```
 
+## Malaria per notification, residence and probable infection places
+
+### Counting malaria cases per day, notification, residence, probable infection per state and malaria type.
+```{r}
+day_malaria_type_places_state <- df %>%
+                          group_by(DT_NOTIF, UF_NOTIF, UF_RESID, UF_INFEC) %>%
+                          count(RES_EXAM) %>%
+                          mutate(LEVEL = "UF") %>%
+                          select(DT_NOTIF, LEVEL, UF_NOTIF, UF_RESID, UF_INFEC, RES_EXAM, n) %>%
+                          spread(RES_EXAM, n, fill = 0) %>%
+                          rename(CODE_NOTIF = UF_NOTIF, CODE_RESID = UF_RESID, CODE_INFEC = UF_INFEC, FALCI = "F", FV = "F+V", VIVAX = "V") %>%
+                          mutate(Falciparum = FALCI + FV) %>%
+                          mutate(Vivax = VIVAX + FV) %>%
+                          select(DT_NOTIF, LEVEL, CODE_NOTIF, CODE_RESID, CODE_INFEC, Falciparum, Vivax) %>%
+                          gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE_NOTIF, CODE_RESID, CODE_INFEC))
+
+
+```
+
+
+### Counting malaria cases per day, notification, residence, probable infection per municipality and malaria type.
+```{r}
+day_malaria_type_places_muni <- df %>%
+                          group_by(DT_NOTIF, MUN_NOTI, MUN_RESI, MUN_INFE) %>%
+                          count(RES_EXAM) %>%
+                          mutate(LEVEL = "MU") %>%
+                          select(DT_NOTIF, LEVEL, MUN_NOTI, MUN_RESI, MUN_INFE, RES_EXAM, n) %>%
+                          spread(RES_EXAM, n, fill = 0) %>%
+                          rename(CODE_NOTIF = MUN_NOTI, CODE_RESID = MUN_RESI, CODE_INFEC = MUN_INFE, FALCI = "F", FV = "F+V", VIVAX = "V") %>%
+                          mutate(Falciparum = FALCI + FV) %>%
+                          mutate(Vivax = VIVAX + FV) %>%
+                          select(DT_NOTIF, LEVEL, CODE_NOTIF, CODE_RESID, CODE_INFEC, Falciparum, Vivax) %>%
+                          gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE_NOTIF, CODE_RESID, CODE_INFEC))
+
+
+```
