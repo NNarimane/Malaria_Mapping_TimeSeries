@@ -68,8 +68,6 @@ df$AGE_RANGE = factor(df$AGE_RANGE, label=c("0-4","5-9","10-14","15-19","20-24",
 ```
 
 ### Counting malaria cases by day, UF, municipality and malaria type.
-
-update after
 ```{r}
 day_malaria_type <- df %>%
                       group_by(DT_NOTIF, MUN_NOTI) %>%
@@ -92,12 +90,19 @@ day_malaria_type <- df %>%
 ### Counting malaria cases by day, UF and malaria type
 ```{r}
 day_malaria_type_state <- df %>%
-                      group_by(DT_NOTIF, UF_NOTIF) %>%
-                      count(RES_EXAM) %>%
-                      mutate(LEVEL = "UF") %>%
-                      select(DT_NOTIF, LEVEL, UF_NOTIF, RES_EXAM, n)
-                      
-names(day_malaria_type_state)[3:5] <- c("CODE", "TYPE", "CASES")
+                          group_by(DT_NOTIF, UF_NOTIF) %>%
+                          count(RES_EXAM) %>%
+                          mutate(LEVEL = "UF") %>%
+                          select(DT_NOTIF, LEVEL, UF_NOTIF, RES_EXAM, n) %>%
+                          spread(RES_EXAM, n, fill = 0) %>%
+                          rename(CODE = UF_NOTIF) %>%
+                          rename(FALCI = "F") %>%
+                          rename(FV = "F+V") %>%
+                          rename(VIVAX = "V") %>%
+                          mutate(Falciparum = FALCI + FV) %>%
+                          mutate(Vivax = VIVAX + FV) %>%
+                          select(DT_NOTIF, LEVEL, CODE, Falciparum, Vivax) %>%
+                          gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE))
 
 ```
 
@@ -105,14 +110,20 @@ names(day_malaria_type_state)[3:5] <- c("CODE", "TYPE", "CASES")
 ### Counting malaria cases by day and malaria type
 ```{r}
 day_malaria_type_brazil <- df %>%
-                      group_by(DT_NOTIF) %>%
-                      count(RES_EXAM)%>%
-                      mutate(LEVEL = "BR",
-                             CODE = "0") %>%
-                      select(DT_NOTIF, LEVEL, CODE, RES_EXAM, n)
-                      
-names(day_malaria_type_brazil)[4:5] <- c("TYPE", "CASES")
-  
+                          group_by(DT_NOTIF) %>%
+                          count(RES_EXAM)%>%
+                          mutate(LEVEL = "BR",
+                                 CODE = "0") %>%
+                          select(DT_NOTIF, LEVEL, CODE, RES_EXAM, n) %>%
+                          spread(RES_EXAM, n, fill = 0) %>%
+                          rename(FALCI = "F") %>%
+                          rename(FV = "F+V") %>%
+                          rename(VIVAX = "V") %>%
+                          mutate(Falciparum = FALCI + FV) %>%
+                          mutate(Vivax = VIVAX + FV) %>%
+                          select(DT_NOTIF, LEVEL, CODE, Falciparum, Vivax) %>%
+                          gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE))
+
 ```
 
 
