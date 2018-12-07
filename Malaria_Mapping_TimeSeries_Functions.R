@@ -50,13 +50,23 @@ getDaily_SIVEP_Species=function(FilePath, StartYear, EndYear){
   # Get SIVEP raw notification data
   load(FilePath)
   
-  # Split data by species
+  # Split data by malaria type and aggregate to day
   day_malaria_type <- df %>%
-    group_by(DT_NOTIF, UF_NOTIF, MUN_NOTI) %>%
+    group_by(DT_NOTIF, MUN_NOTI) %>%
     count(RES_EXAM) %>%
-    spread(RES_EXAM, n, fill=0)
+    mutate(LEVEL = "MU") %>%
+    select(DT_NOTIF, LEVEL, MUN_NOTI, RES_EXAM, n) %>%
+    spread(RES_EXAM, n, fill = 0) %>%
+    rename(CODE = MUN_NOTI) %>%
+    rename(FALCI = "F") %>%
+    rename(FV = "F+V") %>%
+    rename(VIVAX = "V") %>%
+    mutate(F_TOTAL = FALCI + FV) %>%
+    mutate(V_TOTAL = VIVAX + FV) %>%
+    select(DT_NOTIF, LEVEL, CODE, F_TOTAL, V_TOTAL) %>%
+    gather(TYPE, F_TOTAL, V_TOTAL)
   
-  names(day_malaria_type)[2:5] <- c("UF", "MUN_COD", "MALARIA_TYPE", "CASES_N")
+  # names(day_malaria_type)[2:5] <- c("UF", "MUN_COD", "MALARIA_TYPE", "CASES_N")
 
   return(day_malaria_type)
 }
