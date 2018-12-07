@@ -54,6 +54,8 @@ library("tstools")
 library("ggfortify")
 library("RColorBrewer")
 library("colorspace")
+library("foreign")
+library("tidyverse")
 
 #################
 ## Load Functions
@@ -85,7 +87,7 @@ if(SavePlots){
 
 # Set file path
 if(envNN){
-  FilePath=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/TimeSeriesMalaria.csv")
+  FilePath=paste0(getwd(),"/SIVEP_clean.RData")
 }else{
   
 }
@@ -95,19 +97,21 @@ StartYear="2003"
 EndYear="2017"
 
 # Get time series data
-TS=getPV_Raw_Data(FilePath, StartYear, EndYear)
+TS=getDaily_SIVEP_Species(FilePath)
 
 
 ################
 ## General Plots
 ################
 
+
 # Daily number of cases, bar graph
-DailyPlot=ggplot(data = TS, aes(DT, VIVAX)) +
+DailyPlot=ggplot(data = TS, aes(DT_NOTIF, CASES_N, color = MALARIA_TYPE)) +
   stat_summary(fun.y = sum, geom = "line") +
   scale_x_date(breaks = "year", 
                date_labels = "%Y") +
   labs(title = paste0("Daily P. vivax cases in 10 BAR Municipalities ", StartYear, "-", EndYear), x = "Year", y = "Number of Cases")
+
 
 # Weekly number of cases, bar graph
 WeeklyPlot=ggplot(data = TS, aes(DT_WEEK, VIVAX)) +

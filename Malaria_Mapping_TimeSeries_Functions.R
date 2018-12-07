@@ -45,6 +45,22 @@ getPV_Raw_Data=function(FilePath, StartYear, EndYear){
   return(TS_Raw)
 }
 
+# Get SIVEP data cleaned up and by species
+getDaily_SIVEP_Species=function(FilePath, StartYear, EndYear){
+  # Get SIVEP raw notification data
+  load(FilePath)
+  
+  # Split data by species
+  day_malaria_type <- df %>%
+    group_by(DT_NOTIF, UF_NOTIF, MUN_NOTI) %>%
+    count(RES_EXAM) %>%
+    spread(RES_EXAM, n, fill=0)
+  
+  names(day_malaria_type)[2:5] <- c("UF", "MUN_COD", "MALARIA_TYPE", "CASES_N")
+
+  return(day_malaria_type)
+}
+
 
 ###################################
 ## Formatting and Stratification ##
