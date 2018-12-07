@@ -68,6 +68,8 @@ df$AGE_RANGE = factor(df$AGE_RANGE, label=c("0-4","5-9","10-14","15-19","20-24",
 ```
 
 ### Counting malaria cases by day, UF, municipality and malaria type.
+
+update after
 ```{r}
 day_malaria_type <- df %>%
                       group_by(DT_NOTIF, MUN_NOTI) %>%
@@ -75,10 +77,15 @@ day_malaria_type <- df %>%
                       mutate(LEVEL = "MU") %>%
                       select(DT_NOTIF, LEVEL, MUN_NOTI, RES_EXAM, n) %>%
                       spread(RES_EXAM, n, fill = 0) %>%
-                      rename(CODE = MUN_NOTI)
+                      rename(CODE = MUN_NOTI) %>%
+                      rename(FALCI = "F") %>%
+                      rename(FV = "F+V") %>%
+                      rename(VIVAX = "V") %>%
+                      mutate(Falciparum = FALCI + FV) %>%
+                      mutate(Vivax = VIVAX + FV) %>%
+                      select(DT_NOTIF, LEVEL, CODE, Falciparum, Vivax) %>%
+                      gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE))
 
-
-#SOmar F com F+V e V com F+V fazendo replace e remover F_V e depois fazer um gather
 
 ```
 
@@ -108,5 +115,5 @@ names(day_malaria_type_brazil)[4:5] <- c("TYPE", "CASES")
   
 ```
 
-spread(dados.curto,Indicador,Valor)
+
 
