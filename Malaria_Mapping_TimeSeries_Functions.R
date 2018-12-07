@@ -46,29 +46,240 @@ getPV_Raw_Data=function(FilePath, StartYear, EndYear){
 }
 
 # Get SIVEP data cleaned up and by species
-getDaily_SIVEP_Species=function(FilePath, StartYear, EndYear){
+getDAILY_SIVEP_MALARIA_TYPE=function(FilePath, StartYear, EndYear, Melted){
+  
   # Get SIVEP raw notification data
   load(FilePath)
   
-  # Split data by malaria type and aggregate to day
-  day_malaria_type <- df %>%
-    group_by(DT_NOTIF, MUN_NOTI) %>%
+  # Choose time period
+  df=df[which(df[,"DT_NOTIF"] >= paste0(StartYear,"-01-01") & df[,"DT_NOTIF"] <= paste0(EndYear, "-12-31")),]
+  
+  # Split data by malaria type and aggregate to day (MU - level)
+  # day_malaria_type <- df %>%
+  #   group_by(DT_NOTIF, MUN_NOTI) %>%
+  #   count(RES_EXAM) %>%
+  #   mutate(LEVEL = "MU") %>%
+  #   select(DT_NOTIF, LEVEL, MUN_NOTI, RES_EXAM, n) %>%
+  #   spread(RES_EXAM, n, fill = 0) %>%
+  #   rename(CODE = MUN_NOTI) %>%
+  #   rename(FALCI = "F") %>%
+  #   rename(FV = "F+V") %>%
+  #   rename(VIVAX = "V") %>%
+  #   mutate(Falciparum = FALCI + FV) %>%
+  #   mutate(Vivax = VIVAX + FV) %>%
+  #   select(DT_NOTIF, LEVEL, CODE, Falciparum, Vivax) %>%
+  #   gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE))
+  
+  day_malaria_type_places_muni <- df %>%
+    group_by(DT_NOTIF, MUN_NOTI, MUN_RESI, MUN_INFE) %>%
     count(RES_EXAM) %>%
     mutate(LEVEL = "MU") %>%
-    select(DT_NOTIF, LEVEL, MUN_NOTI, RES_EXAM, n) %>%
+    select(DT_NOTIF, LEVEL, MUN_NOTI, MUN_RESI, MUN_INFE, RES_EXAM, n) %>%
     spread(RES_EXAM, n, fill = 0) %>%
-    rename(CODE = MUN_NOTI) %>%
+    rename(CODE_NOTIF = MUN_NOTI, CODE_RESID = MUN_RESI, CODE_INFEC = MUN_INFE, FALCI = "F", FV = "F+V", VIVAX = "V") %>%
+    mutate(Falciparum = FALCI + FV) %>%
+    mutate(Vivax = VIVAX + FV) %>%
+    select(DT_NOTIF, LEVEL, CODE_NOTIF, CODE_RESID, CODE_INFEC, Falciparum, Vivax) %>%
+    gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE_NOTIF, CODE_RESID, CODE_INFEC))
+  
+  # UT - level
+  # day_malaria_type_state <- df %>%
+  #   group_by(DT_NOTIF, UF_NOTIF) %>%
+  #   count(RES_EXAM) %>%
+  #   mutate(LEVEL = "UF") %>%
+  #   select(DT_NOTIF, LEVEL, UF_NOTIF, RES_EXAM, n) %>%
+  #   spread(RES_EXAM, n, fill = 0) %>%
+  #   rename(CODE = UF_NOTIF) %>%
+  #   rename(FALCI = "F") %>%
+  #   rename(FV = "F+V") %>%
+  #   rename(VIVAX = "V") %>%
+  #   mutate(Falciparum = FALCI + FV) %>%
+  #   mutate(Vivax = VIVAX + FV) %>%
+  #   select(DT_NOTIF, LEVEL, CODE, Falciparum, Vivax) %>%
+  #   gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE))
+  
+  day_malaria_type_places_state <- df %>%
+    group_by(DT_NOTIF, UF_NOTIF, UF_RESID, UF_INFEC) %>%
+    count(RES_EXAM) %>%
+    mutate(LEVEL = "UF") %>%
+    select(DT_NOTIF, LEVEL, UF_NOTIF, UF_RESID, UF_INFEC, RES_EXAM, n) %>%
+    spread(RES_EXAM, n, fill = 0) %>%
+    rename(CODE_NOTIF = UF_NOTIF, CODE_RESID = UF_RESID, CODE_INFEC = UF_INFEC, FALCI = "F", FV = "F+V", VIVAX = "V") %>%
+    mutate(Falciparum = FALCI + FV) %>%
+    mutate(Vivax = VIVAX + FV) %>%
+    select(DT_NOTIF, LEVEL, CODE_NOTIF, CODE_RESID, CODE_INFEC, Falciparum, Vivax) %>%
+    gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE_NOTIF, CODE_RESID, CODE_INFEC))
+  
+  # BR - level
+  # day_malaria_type_brazil <- df %>%
+  #   group_by(DT_NOTIF) %>%
+  #   count(RES_EXAM)%>%
+  #   mutate(LEVEL = "BR",
+  #          CODE = "0") %>%
+  #   select(DT_NOTIF, LEVEL, CODE, RES_EXAM, n) %>%
+  #   spread(RES_EXAM, n, fill = 0) %>%
+  #   rename(FALCI = "F") %>%
+  #   rename(FV = "F+V") %>%
+  #   rename(VIVAX = "V") %>%
+  #   mutate(Falciparum = FALCI + FV) %>%
+  #   mutate(Vivax = VIVAX + FV) %>%
+  #   select(DT_NOTIF, LEVEL, CODE, Falciparum, Vivax) %>%
+  #   gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE))
+  
+  day_malaria_type_brazil <- df %>%
+    group_by(DT_NOTIF) %>%
+    count(RES_EXAM)%>%
+    mutate(LEVEL = "BR",
+           CODE = "1") %>%
+    select(DT_NOTIF, LEVEL, CODE, RES_EXAM, n) %>%
+    spread(RES_EXAM, n, fill = 0) %>%
     rename(FALCI = "F") %>%
     rename(FV = "F+V") %>%
     rename(VIVAX = "V") %>%
-    mutate(F_TOTAL = FALCI + FV) %>%
-    mutate(V_TOTAL = VIVAX + FV) %>%
-    select(DT_NOTIF, LEVEL, CODE, F_TOTAL, V_TOTAL) %>%
-    gather(TYPE, F_TOTAL, V_TOTAL)
+    mutate(Falciparum = FALCI + FV) %>%
+    mutate(Vivax = VIVAX + FV) %>%
+    select(DT_NOTIF, LEVEL, CODE, Falciparum, Vivax) %>%
+    gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE))
   
-  # names(day_malaria_type)[2:5] <- c("UF", "MUN_COD", "MALARIA_TYPE", "CASES_N")
+  # Merge together
+  # SIVEP_MALARIA_TYPE=rbind(day_malaria_type_brazil, day_malaria_type_state, day_malaria_type)
+  SIVEP_MALARIA_TYPE=rbind(day_malaria_type_brazil, day_malaria_type_places_state, day_malaria_type_places_muni)
+  
+  # Select administrative level via code
+  if(byNotification){
+    SIVEP_MALARIA_TYPE = subset(SIVEP_MALARIA_TYPE, select=-c(CODE_RESID, CODE_INFEC))
+    names(SIVEP_MALARIA_TYPE)[names(SIVEP_MALARIA_TYPE) == 'CODE_NOTIF'] <- 'CODE'
+  }
+  if(byResidence){
+    SIVEP_MALARIA_TYPE = subset(SIVEP_MALARIA_TYPE, select=-c(CODE_NOTIF, CODE_INFEC))
+    names(SIVEP_MALARIA_TYPE)[names(SIVEP_MALARIA_TYPE) == 'CODE_RESID'] <- 'CODE'
+  }
+  if(byInfection){
+    SIVEP_MALARIA_TYPE = subset(SIVEP_MALARIA_TYPE, select=-c(CODE_NOTIF, CODE_RESID))
+    names(SIVEP_MALARIA_TYPE)[names(SIVEP_MALARIA_TYPE) == 'CODE_INFEC'] <- 'CODE'
+  }
+  
+  # Get week, month, and year
+  SIVEP_MALARIA_TYPE=data.frame(cbind(SIVEP_MALARIA_TYPE,
+                          DT_YEAR=floor_date(SIVEP_MALARIA_TYPE$DT_NOTIF, unit = "year"),
+                          DT_MONTH=floor_date(SIVEP_MALARIA_TYPE$DT_NOTIF, unit = "month"),
+                          DT_WEEK=floor_date(SIVEP_MALARIA_TYPE$DT_NOTIF, unit = "week")))
+  
+  if(Melted){
+    #########################
+    ## General Plots (Melted)
+    #########################
+    
+    # Melt by date
+    mSIVEP_MALARIA_TYPE=melt(setDT(SIVEP_MALARIA_TYPE),
+                   measure.vars = list(c("DT_NOTIF",
+                                         "DT_YEAR",
+                                         "DT_MONTH",
+                                         "DT_WEEK")),
+                   variable.name = "DATE_TYPE", 
+                   value.name = "DATE",
+                   id.vars = c("LEVEL","CODE","TYPE","CASES"))
+    
+    # Reorder and relabel date type
+    levels(mSIVEP_MALARIA_TYPE$DATE_TYPE) = c("Daily","Yearly","Monthly","Weekly")
+    mSIVEP_MALARIA_TYPE$DATE_TYPE = factor(mSIVEP_MALARIA_TYPE$DATE_TYPE,
+                                 levels = c("Daily","Weekly","Monthly","Yearly"))
+    
+    return(mSIVEP_MALARIA_TYPE)
+    
+  }else{
+    
+    return(SIVEP_MALARIA_TYPE)
+  }
+}
 
-  return(day_malaria_type)
+# Get SIVEP data cleaned up and by species
+getDAILY_SIVEP_MALARIA_GENDER=function(FilePath, StartYear, EndYear, Melted){
+  
+  # Get SIVEP raw notification data
+  load(FilePath)
+  
+  # Choose time period
+  df=df[which(df[,"DT_NOTIF"] >= paste0(StartYear,"-01-01") & df[,"DT_NOTIF"] <= paste0(EndYear, "-12-31")),]
+  
+  # Split data by malaria type and aggregate to day (MU - level)
+  day_malaria_type_gender <- df %>%
+    group_by(DT_NOTIF, MUN_NOTI, SEXO) %>%
+    count(RES_EXAM) %>%
+    mutate(LEVEL = "MU") %>%
+    select(DT_NOTIF, LEVEL, MUN_NOTI, RES_EXAM, SEXO, n) %>%
+    spread(RES_EXAM, n, fill = 0) %>%
+    rename(CODE = MUN_NOTI, FALCI = "F", FV = "F+V", VIVAX = "V", GENDER = SEXO) %>%
+    mutate(Falciparum = FALCI + FV) %>%
+    mutate(Vivax = VIVAX + FV) %>%
+    select(DT_NOTIF, LEVEL, CODE, GENDER, Falciparum, Vivax) %>%
+    gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE, GENDER))
+  
+  # UT - level
+  day_malaria_type_state_gender <- df %>%
+    group_by(DT_NOTIF, UF_NOTIF, SEXO) %>%
+    count(RES_EXAM) %>%
+    mutate(LEVEL = "UF") %>%
+    select(DT_NOTIF, LEVEL, UF_NOTIF, RES_EXAM, SEXO, n) %>%
+    spread(RES_EXAM, n, fill = 0) %>%
+    rename(CODE = UF_NOTIF, FALCI = "F", FV = "F+V", VIVAX = "V", GENDER = SEXO) %>%
+    mutate(Falciparum = FALCI + FV) %>%
+    mutate(Vivax = VIVAX + FV) %>%
+    select(DT_NOTIF, LEVEL, CODE, GENDER, Falciparum, Vivax) %>%
+    gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE, GENDER))
+  
+  # BR - level
+  day_malaria_type_brazil_gender <- df %>%
+    group_by(DT_NOTIF, SEXO) %>%
+    count(RES_EXAM)%>%
+    mutate(LEVEL = "BR",
+           CODE = "0") %>%
+    select(DT_NOTIF, LEVEL, CODE, RES_EXAM, SEXO, n) %>%
+    spread(RES_EXAM, n, fill = 0) %>%
+    rename(FALCI = "F", FV = "F+V", VIVAX = "V", GENDER = SEXO) %>%
+    mutate(Falciparum = FALCI + FV) %>%
+    mutate(Vivax = VIVAX + FV) %>%
+    select(DT_NOTIF, LEVEL, CODE, GENDER, Falciparum, Vivax) %>%
+    gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE, GENDER))
+  
+  # Merge together
+  SIVEP_MALARIA_GENDER=rbind(day_malaria_type_brazil_gender, day_malaria_type_state_gender, day_malaria_type_gender)
+  
+  # Remove unknown gender
+  levels(SIVEP_MALARIA_GENDER$GENDER)[levels(SIVEP_MALARIA_GENDER$GENDER)=="I"] = NA
+  
+  # Get week, month, and year
+  SIVEP_MALARIA_GENDER=data.frame(cbind(SIVEP_MALARIA_GENDER,
+                                      DT_YEAR=floor_date(SIVEP_MALARIA_GENDER$DT_NOTIF, unit = "year"),
+                                      DT_MONTH=floor_date(SIVEP_MALARIA_GENDER$DT_NOTIF, unit = "month"),
+                                      DT_WEEK=floor_date(SIVEP_MALARIA_GENDER$DT_NOTIF, unit = "week")))
+  
+  if(Melted){
+    #########################
+    ## General Plots (Melted)
+    #########################
+    
+    # Melt by date
+    mSIVEP_GENDER=melt(setDT(SIVEP_MALARIA_GENDER),
+                             measure.vars = list(c("DT_NOTIF",
+                                                   "DT_YEAR",
+                                                   "DT_MONTH",
+                                                   "DT_WEEK")),
+                             variable.name = "DATE_TYPE", 
+                             value.name = "DATE",
+                             id.vars = c("LEVEL","CODE","TYPE","GENDER","CASES"))
+    
+    # Reorder and relabel date type
+    levels(mSIVEP_GENDER$DATE_TYPE) = c("Daily","Yearly","Monthly","Weekly")
+    mSIVEP_GENDER$DATE_TYPE = factor(mSIVEP_GENDER$DATE_TYPE,
+                                           levels = c("Daily","Weekly","Monthly","Yearly"))
+    
+    return(mSIVEP_GENDER)
+    
+  }else{
+    
+    return(SIVEP_MALARIA_GENDER)
+  }
 }
 
 
