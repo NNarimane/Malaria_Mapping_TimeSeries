@@ -58,40 +58,56 @@ d17 <- read.csv("Dados/CasosMunicip/vivax17_muni.csv")
 
 ## Importanto os bancos de população
 ```{r setup, include=FALSE}
-p03 <- fread("Dados/PopEstimada/pop2003.csv", encoding = 'Latin-1')
+p03 <- fread("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/pop2/pop2003.csv", encoding = 'Latin-1')
 #head(p03)
+p03$YEAR <- 2003
 
-p04 <- fread("Dados/PopEstimada/pop2004.csv", encoding = 'Latin-1')
+p04 <- fread("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/pop2/pop2004.csv", encoding = 'Latin-1')
+p04$YEAR <- 2004
 
-p05 <- fread("Dados/PopEstimada/pop2005.csv", encoding = 'Latin-1')
+p05 <- fread("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/pop2/pop2005.csv", encoding = 'Latin-1')
+p05$YEAR <- 2005
 
-p06 <- fread("Dados/PopEstimada/pop2006.csv", encoding = 'Latin-1')
+p06 <- fread("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/pop2/pop2006.csv", encoding = 'Latin-1')
+p06$YEAR <- 2006
 
-p07 <- fread("Dados/PopEstimada/pop2007.csv", encoding = 'Latin-1')
+p07 <- fread("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/pop2/pop2007.csv", encoding = 'Latin-1')
+p07$YEAR <- 2007
 
-p08 <- fread("Dados/PopEstimada/pop2008.csv", encoding = 'Latin-1')
+p08 <- fread("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/pop2/pop2008.csv", encoding = 'Latin-1')
+p08$YEAR <- 2008
 
-p09 <- fread("Dados/PopEstimada/pop2009.csv", encoding = 'Latin-1')
+p09 <- fread("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/pop2/pop2009.csv", encoding = 'Latin-1')
+p09$YEAR <- 2009
 
-p10 <- fread("Dados/PopEstimada/pop2010.csv", encoding = 'UTF-8') #Feito no Linux
+p10 <- fread("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/pop2/pop2010.csv", encoding = 'UTF-8') #Feito no Linux
+p10$YEAR <- 2010
 
-p11<- fread("Dados/PopEstimada/pop2011.csv", encoding = 'Latin-1')
+p11<- fread("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/pop2/pop2011.csv", encoding = 'Latin-1')
+p11$YEAR <- 2011
 
-p12 <- fread("Dados/PopEstimada/pop2012.csv", encoding = 'Latin-1')
+p12 <- fread("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/pop2/pop2012.csv", encoding = 'Latin-1')
+p12$YEAR <- 2012
 
-p13 <- fread("Dados/PopEstimada/pop2013.csv", encoding = 'Latin-1')
+p13 <- fread("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/pop2/pop2013.csv", encoding = 'Latin-1')
+p13$YEAR <- 2013
 
-p14 <- fread("Dados/PopEstimada/pop2014.csv", encoding = 'Latin-1')
+p14 <- fread("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/pop2/pop2014.csv", encoding = 'Latin-1')
+p14$YEAR <- 2014
 
-p15 <- fread("Dados/PopEstimada/pop2015.csv", encoding = 'Latin-1')
+p15 <- fread("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/pop2/pop2015.csv", encoding = 'Latin-1')
+p15$YEAR <- 2015
 
-p16 <- fread("Dados/PopEstimada/pop2016.csv", encoding = 'Latin-1')
+p16 <- fread("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/pop2/pop2016.csv", encoding = 'Latin-1')
+p16$YEAR <- 2016
 
-p17 <- fread("Dados/PopEstimada/pop2017.csv", encoding = 'Latin-1')
+p17 <- fread("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/pop2/pop2017.csv", encoding = 'Latin-1')
+p17$YEAR <- 2017
 
-dim(p03)
-#5560 municípios em 2003
-#5570 municípios em 2017
+
+pop_estimated <- rbind(p03, p04, p05, p06, p07, p08, p09, p10, p11, p12, p13, p14, p15, p16, p17)
+
+write.csv(pop_estimated, file = "pop_estimated.csv", row.names = F)
 
 ```
 

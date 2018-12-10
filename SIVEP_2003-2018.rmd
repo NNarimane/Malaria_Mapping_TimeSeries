@@ -249,9 +249,67 @@ gqtd
 ### Contrasting treatment-related variables
 
 **ESQUEMA**  
+1- Infections by *P. vivax* or *P.ovale* with Chloroquine in 3 days and Primaquine in 7 days (short scheme)  
+2- Infections by *P. vivax* or *P.ovale* with Chloroquine in 3 days and Primaquine in 14 days (long scheme)  
+3- Infections for *P. malariae* for all ages and for *P. vivax* or *P. ovale* in pregnant women and children under 6 months, with Chloroquine in 3 days  
+4- Prevention of frequent relapses by *P. vivax* or *P. ovale* with weekly chloroquine at 12 weeks  
+5- *P. falciparum* infections with fixed combination of Artemeter + Lumefantrine in 3 days  
+6- *P. falciparum* infections with fixed combination of Artesunate + Mefloquine in 3 days  
+7- *P. falciparum* infections with Quinine at 3 days, Doxycycline at 5 days and Primaquine at 6 days  
+8- Mixed infections by *P. falciparum* and *P. vivax* or *P.ovale* with Artemeter + Lumefantrine or Artesunate + Mefloquine in 3 days and Primaquina in 7 days  
+9- Uncomplicated infections by *P. falciparum* in the first trimester of gestation and children under 6 months, with quinine in 3 days and Clindamycin in 5 days  
+10- Severe and complicated malaria by *P. falciparum* in all age groups  
+11- *P. falciparum* infections with fixed combination of Artemeter + Lumefantrine in 3 days and primaquine in a single dose  
+12- *P. falciparum* infections with fixed combination of Artemeter + Mefloquine in 3 days and primaquine in a single dose  
+99- Another scheme used (by doctor)  
 
 
-**ESQUEMA_1** (Campo com códigos no modelo da antiga ficha de notificação): Informa o esquema de tratamento utilizado.  
+**ESQUEMA_1** (Field with codes in the template of the old notification sheet)
+1- Pv with Chloroquine Infections in 3 days and Primaquine 7 days  
+2- Pf infections with Quinine in 3 days + Doxycycline in 5 days + Primaquine in the 6th day  
+3- Mixed Pv + Pf Infections with Mefloquine in a single dose and Primaquina in 7 days  
+4- Pm Chloroquine Infections in 3 Days  
+5- Pv infections in children with vomiting, with artesunate rectal capsules in 4 days and Primaquina in 7 days  
+6- Infections by Pf with Mefloquina in single dose and Primaquina in the second day  
+7- Pf Infections with Quinine at 7 Day  
+8- Pf Infections of children with rectal artesunate capsules in 4 days and single dose of Mefloquine on day 3 and Primaquine on day 5  
+9- Mixed infections by Pv + Pf with Quinine in 3 days, Doxycycline in 5 days and Primaquina in 7 days  
+10- Prevention of Malaria Relapse by Pv with Chloroquine in a single weekly dose for 3 months  
+11- Severe and complicated malaria  
+99- Other Scheme used (per physician)  
+```{r}
+unique(df$ESQUEMA)
+unique(df$ESQUEMA_1)
+esquema <- df %>%
+            group_by(ANO) %>%
+            count(ESQUEMA) %>%
+          
+esquema %>% filter(ESQUEMA == "85" | ESQUEMA == "86" | ESQUEMA == "87" | ESQUEMA == "88" | ESQUEMA == "89" | ESQUEMA == "123")
+
+esquema1 <- df %>%
+            group_by(ANO, ESQUEMA) %>%
+            count(ESQUEMA_1)
+
+esquema_type <- df %>%
+                group_by(ANO, RES_EXAM) %>%
+                count(ESQUEMA)
+
+esquema_type %>% filter(ESQUEMA == "85" | ESQUEMA == "86" | ESQUEMA == "87" | ESQUEMA == "88" | ESQUEMA == "89" | ESQUEMA == "123") %>% filter(RES_EXAM == "4")
+
+esquema_type1 <- esquema_type %>%
+                  filter(RES_EXAM == "4" | RES_EXAM == "5")
+
+esq <- ggplot(aes(y = n, x = ANO, color = ESQUEMA_1), data = esquema1)
+esq <- esq + geom_bar(stat = "identity", position = "dodge") + facet_grid(ESQUEMA ~ .)
+esq
+
+
+```
+
+What is 85, 86, 87, 88, 89, 123 codes??? Some of them are not filling wrong because they are many in the count.
+
+
+**ESQUEMA_1** in **Portuguese**: (Campo com códigos no modelo da antiga ficha de notificação): Informa o esquema de tratamento utilizado.  
 1-Infecções por Pv com Cloroquina em 3 dias e Primaquina 7 dias  
 2-Infecções por Pf com Quinina em 3 dias + Doxiciclina em 5 dias + Primaquina no 6o dia  
 3-Infecções Mistas por Pv + Pf com Mefloquina em dose única e Primaquina em 7 dias  
@@ -264,9 +322,20 @@ gqtd
 10-Prevenção de recaída da Malária por Pv com Cloroquina em dose única semanal durante 3 meses  
 11-Malária grave e complicada  
 99-Outro Esquema utilizado (por médico)  
-```{r}
 
 
-```
-
+**ESQUEMA** in **Portuguese**:    
+1- Infecções pelo P. vivax ou P.ovale com cloroquina em 3 dias  e primaquina  em 7 dias (esquema curto)      
+2- Infecções pelo P. vivax ou P.ovale com cloroquina em 3 dias  e primaquina  em 14 dias (esquema longo)      
+3- Infecções para o P. malariae para todas as idades e por P. vivax ou P. ovale em gestantes e crianças com menos de 6 meses , com cloroquina em 3 dias  
+4- Prevenção das recaídas frequentes por P. vivax ou P. ovale com cloroquina semanal em 12 semanas    
+5- Infecções por P. falciparum com combinação fixa de artemeter+lumefantrina em 3 dias    
+6- Infecções por P. falciparum com combinação fixa de artesunato+mefloquina em 3 dias    
+7- Infecções por P. falciparum com quinina em 3 dias, doxiciclina em 5 dias e primaquina no 6º dia  
+8- Infecções mistas por P. falciparum e P. vivax ou P.ovale com Artemeter+Lumefantrina ou Artesunato+Mefloquina em 3 dias e Primaquina em 7 dias    
+9- Infecções não complicadasv por P. falciparum no 1º trimestre da gestação e crianças  com menos de 6 meses, com quinina em 3 dias  e clindamicina em 5 dias    
+10- Malária grave e complicada pelo P. falciparum em todas as faixas etárias    
+11- Infecções por P. falciparum com combinação fixa de artemeter+lumefantrina em 3 dias  e primaquina em dose única    
+12- Infecções por P. falciparum com combinação fixa de artemeter+mefloquina em 3 dias  e primaquina em dose única    
+99- Outro esquema utilizado (por médico)  
 
