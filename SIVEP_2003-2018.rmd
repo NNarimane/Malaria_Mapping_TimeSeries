@@ -307,6 +307,11 @@ esq
 ```
 
 What is 85, 86, 87, 88, 89, 123 codes??? Some of them are not filling wrong because they are many in the count.
+- Read DBF of ESQUEMA
+```{r}
+
+```
+
 
 
 **ESQUEMA_1** in **Portuguese**: (Campo com códigos no modelo da antiga ficha de notificação): Informa o esquema de tratamento utilizado.  
