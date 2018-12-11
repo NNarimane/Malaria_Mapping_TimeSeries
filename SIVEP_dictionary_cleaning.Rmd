@@ -78,6 +78,40 @@ SIVEP provides the **treatment schema for reported cases**. Completeness is > 85
 - **FALCIPARUM**: informs if the patient received treatment for falciparum malaria in the last 40 days prior to notification.
 
 
+#### Details about treatment schema --- to COMPLETE with new database
+These variables are not explored here. Go to *Manipulate_data_maps_ts.rmd*.  
+**ESQUEMA**  
+1- Infections by *P. vivax* or *P.ovale* with Chloroquine in 3 days and Primaquine in 7 days (short scheme)  
+2- Infections by *P. vivax* or *P.ovale* with Chloroquine in 3 days and Primaquine in 14 days (long scheme)  
+3- Infections for *P. malariae* for all ages and for *P. vivax* or *P. ovale* in pregnant women and children under 6 months, with Chloroquine in 3 days  
+4- Prevention of frequent relapses by *P. vivax* or *P. ovale* with weekly chloroquine at 12 weeks  
+5- *P. falciparum* infections with fixed combination of Artemeter + Lumefantrine in 3 days  
+6- *P. falciparum* infections with fixed combination of Artesunate + Mefloquine in 3 days  
+7- *P. falciparum* infections with Quinine at 3 days, Doxycycline at 5 days and Primaquine at 6 days  
+8- Mixed infections by *P. falciparum* and *P. vivax* or *P.ovale* with Artemeter + Lumefantrine or Artesunate + Mefloquine in 3 days and Primaquina in 7 days  
+9- Uncomplicated infections by *P. falciparum* in the first trimester of gestation and children under 6 months, with quinine in 3 days and Clindamycin in 5 days  
+10- Severe and complicated malaria by *P. falciparum* in all age groups  
+11- *P. falciparum* infections with fixed combination of Artemeter + Lumefantrine in 3 days and primaquine in a single dose  
+12- *P. falciparum* infections with fixed combination of Artemeter + Mefloquine in 3 days and primaquine in a single dose  
+99- Another scheme used (by doctor)  
+
+
+**ESQUEMA_1** (Field with codes in the template of the old notification sheet)
+1- Pv with Chloroquine Infections in 3 days and Primaquine 7 days  
+2- Pf infections with Quinine in 3 days + Doxycycline in 5 days + Primaquine in the 6th day  
+3- Mixed Pv + Pf Infections with Mefloquine in a single dose and Primaquina in 7 days  
+4- Pm Chloroquine Infections in 3 Days  
+5- Pv infections in children with vomiting, with artesunate rectal capsules in 4 days and Primaquina in 7 days  
+6- Infections by Pf with Mefloquina in single dose and Primaquina in the second day  
+7- Pf Infections with Quinine at 7 Day  
+8- Pf Infections of children with rectal artesunate capsules in 4 days and single dose of Mefloquine on day 3 and Primaquine on day 5  
+9- Mixed infections by Pv + Pf with Quinine in 3 days, Doxycycline in 5 days and Primaquina in 7 days  
+10- Prevention of Malaria Relapse by Pv with Chloroquine in a single weekly dose for 3 months  
+11- Severe and complicated malaria  
+99- Other Scheme used (per physician)  
+
+
+
 - Loading RData file 
 ```{r}
 library(foreign)
