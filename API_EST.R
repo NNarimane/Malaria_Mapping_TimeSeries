@@ -108,19 +108,23 @@ EndYear="2017"
 Melted=TRUE
 
 # Get time series data by administrative level and by variable of interest
-if(byNotification){
-  if(byType){TS=getDAILY_SIVEP_MALARIA_TYPE(FilePath, StartYear, EndYear, Melted)}
-  # if(byGender){TS=getDAILY_SIVEP_MALARIA_GENDER(FilePath, StartYear, EndYear, Melted)}
-}
-
-if(byResidence){
-  if(byType){TS=getDAILY_SIVEP_MALARIA_TYPE(FilePath, StartYear, EndYear, Melted)}
-  # if(byGender){TS=getDAILY_SIVEP_MALARIA_GENDER(FilePath, StartYear, EndYear, Melted)}
-}
-
-if(byInfection){
-  if(byType){TS=getDAILY_SIVEP_MALARIA_TYPE(FilePath, StartYear, EndYear, Melted)}
-  # if(byGender){TS=getDAILY_SIVEP_MALARIA_GENDER(FilePath, StartYear, EndYear, Melted)}
+loadCleanData=TRUE
+if(loadCleanData){
+  if(byNotification){
+    if(byType){load(file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/TS_byType_byNotification.RData"))}
+    if(byGender){load()}
+  }
+  
+  if(byResidence){
+    if(byType){load()}
+    if(byGender){load()}
+  }
+  
+  if(byInfection){
+    if(byType){load()}
+    if(byGender){load()}
+  }
+  
 }
 
 
@@ -130,7 +134,7 @@ if(byInfection){
 
 # Get annual aggregate of cases
 TS=TS[which(TS$DATE_TYPE == "Yearly"),]
-TS$DATE=year(TS$DATE)
+TS$YEAR=year(TS$DATE)
 TS=subset(TS, select = -c(DATE_TYPE))
 
 # Get function that calculates API by year
@@ -144,12 +148,18 @@ getAPI=function(TS, LEVEL){
   
   # Get population of each level by year
   TS_API$POP=foreach(i=1:nrow(TS_API), .combine = "rbind") %do% {
-    POP=POP_EST_LEVEL[which(TS_API[i,"CODE"] == POP_EST_LEVEL[,"CODE"]),as.character(TS_API[i,"DATE"])]
+    POP=POP_EST_LEVEL[which(TS_API[i,"CODE"] == POP_EST_LEVEL[,"CODE"]),as.character(TS_API[i,"YEAR"])]
   }
   
   # Get API
-  TS_API$API_F=ifelse(TS_API$TYPE == "Falciparum",(TS_API$CASES/TS_API$POP)*1000,NA)
-  TS_API$API_V=ifelse(TS_API$TYPE == "Vivax",(TS_API$CASES/TS_API$POP)*1000,NA)
+  # TS_API$API_F=ifelse(TS_API$TYPE == "Falciparum",(TS_API$CASES/TS_API$POP)*1000,NA)
+  # TS_API$API_V=ifelse(TS_API$TYPE == "Vivax",(TS_API$CASES/TS_API$POP)*1000,NA)
+  TS_API$API=(TS_API$CASES/TS_API$POP)*1000
+  
+  # Assign names
+  TS_API$STATE = ADMIN_NAMES[match(TS_API$CODE, ADMIN_NAMES$Code),"UF"] 
+  TS_API$NAME = ADMIN_NAMES[match(TS_API$CODE, ADMIN_NAMES$Code),"Name"] 
+  
   
   return(TS_API)
 }

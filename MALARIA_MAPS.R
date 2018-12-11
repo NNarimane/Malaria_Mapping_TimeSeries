@@ -46,13 +46,10 @@ library("RColorBrewer")
 library("colorspace")
 library("foreign")
 library("tidyverse")
-
-
 library("sqldf")
 library("taRifx")
 library("reshape2")
 library("malariaAtlas")
-library("data.table")
 
 #################
 ## Load Functions
@@ -78,45 +75,34 @@ byAge=FALSE
 byImportation=FALSE
 bySetting=FALSE
 
-
-##############
-## Data Upload
-##############
-
-# Set file path
-if(envNN){
-  FilePath=paste0(getwd(),"/SIVEP_clean.RData")
-}else{
-  
-}
-
-# Load state abbreviations
-ADMIN_NAMES=read.csv(file = paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/BRA_ADMIN_NAMES.csv"), sep = "")
-ADMIN_NAMES$Code=as.character(ADMIN_NAMES$Code)
-
 # Choose time period
 StartYear="2003"
 EndYear="2017"
 
-# Melted data
-Melted=TRUE
 
-# Get time series data by administrative level and by variable of interest
+#################
+## Load Data
+#################
+
 if(byNotification){
-  if(byType){TS=getDAILY_SIVEP_MALARIA_TYPE(FilePath, StartYear, EndYear, Melted)}
-  if(byGender){TS=getDAILY_SIVEP_MALARIA_GENDER(FilePath, StartYear, EndYear, Melted)}
+  TS_MU_API=read.csv(file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_API_MU_byNotification.csv"), stringsAsFactors = F, row.names = NULL, check.names = F)
+  TS_UF_API=read.csv(file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_API_UF_byNotification.csv"), stringsAsFactors = F, row.names = NULL, check.names = F)
+  TS=rbind(TS_UF_API, TS_MU_API)
+  TS$DATE=as.Date(TS$DATE)
+  rm(TS_MU_API,TS_UF_API)
 }
 
 if(byResidence){
-  if(byType){TS=getDAILY_SIVEP_MALARIA_TYPE(FilePath, StartYear, EndYear, Melted)}
-  if(byGender){TS=getDAILY_SIVEP_MALARIA_GENDER(FilePath, StartYear, EndYear, Melted)}
+  TS_MU_API=read.csv(file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_API_MU_byResidence.csv"), stringsAsFactors = F, row.names = NULL, check.names = F)
+  TS_UF_API=read.csv(file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_API_UF_byNotification.csv"), stringsAsFactors = F, row.names = NULL, check.names = F)
+  TS=rbind(TS_UF_API, TS_MU_API)
 }
 
-if(byInfection){
-  if(byType){TS=getDAILY_SIVEP_MALARIA_TYPE(FilePath, StartYear, EndYear, Melted)}
-  if(byGender){TS=getDAILY_SIVEP_MALARIA_GENDER(FilePath, StartYear, EndYear, Melted)}
+if(byResidence){
+  TS_MU_API=read.csv(file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_API_MU_byResidence.csv"), stringsAsFactors = F, row.names = NULL, check.names = F)
+  TS_UF_API=read.csv(file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_API_UF_byNotification.csv"), stringsAsFactors = F, row.names = NULL, check.names = F)
+  TS=rbind(TS_UF_API, TS_MU_API)
 }
-
 
 #############
 ## Save Plots
@@ -124,25 +110,132 @@ if(byInfection){
 
 # Save plots
 SavePlots=TRUE
+options(scipen=999)
 
 # Set folder for saving plots
+API=F
 if(SavePlots){
   if(envNN){
     if(byNotification){
-      if(byType){Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byNotification/byType/")}
-      if(byGender){Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byNotification/byGender/")}
+      if(byType){
+        if(!API){
+          Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byCases/byNotification/byType/")
+        }else{
+          Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byAPI/byNotification/byType/")
+        }
+        if(byGender){
+          if(!API){
+            Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byCases/byNotification/byGender/")
+          }else{
+            Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byAPI/byNotification/byGender/")
+          }
+        }
+      }
     }
-    
     if(byResidence){
-      if(byType){Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byResidence/byType/")}
-      if(byGender){Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byResidence/byGender/")}
+      if(byType){
+        if(!API){
+          Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byCases/byResidence/byType/")
+        }else{
+          Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byAPI/byResidence/byType/")
+        }
+        if(byGender){
+          if(!API){
+            Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byCases/byResidence/byGender/")
+          }else{
+            Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byAPI/byResidence/byGender/")
+          }
+        }
+      }
     }
     
     if(byInfection){
-      if(byType){Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byInfection/byType/")}
-      if(byGender){Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byInfection/byGender/")}
+      if(byType){
+        if(!API){
+          Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byCases/byInfection/byType/")
+        }else{
+          Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byAPI/byInfection/byType/")
+        }
+        if(byGender){
+          if(!API){
+            Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byCases/byInfection/byGender/")
+          }else{
+            Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byAPI/byInfection/byGender/")
+          }
+        }
+      }
     }
-  }else{
-    Plot_Folder="~/"
   }
+}else{}
+
+###################
+### Map Shape Files
+###################
+
+#################
+## State-Level ##
+
+# State-level shape files
+BRA_SHP_UF=getShp(country = "Brazil", admin_level = "admin1", format = "df")
+
+# Plot
+autoplot(BRA_SHP_UF)
+
+# Get function
+getSTATE_MAPS=function(Level, Type, Measure){
+  # Select data to plot
+  TS_UF=TS[which(TS$LEVEL == Level & TS$TYPE == Type),]
+  TS_UF=subset(TS_UF, select = -c(API,POP,DATE))
+  
+  # Make TS data wide by year and by type
+  wTS_UF=reshape(TS_UF, idvar = c("LEVEL","CODE","TYPE","STATE","NAME"), 
+                 timevar = "YEAR", direction = "wide")
+  
+  # Step 1: make names into character temporarily
+  BRA_SHP_UF$name_1=as.character(BRA_SHP_UF$name_1)
+  
+  # Step 2: merge (left_join will help keep in order)
+  BRA_SHP_UF_SIVEP=left_join(BRA_SHP_UF, wTS_UF, by = c("name_1" = "NAME"))
+  
+  # Step 3: reorder and change back to factors
+  BRA_SHP_UF_SIVEP$name_1=factor(BRA_SHP_UF_SIVEP$name_1)
+  
+  # Melt data
+  setDT(BRA_SHP_UF_SIVEP)
+  mBRA_SHP_UF_SIVEP=melt(BRA_SHP_UF_SIVEP,
+                         measure.vars = list(paste0("CASES.",seq(2003,2017,1))),
+                         variable.name = "YEAR", 
+                         value.name = "CASES",
+                         id.vars = 1:23)
+  
+  # Create population categorical variable
+  mBRA_SHP_UF_SIVEP$CASES_CAT <- cut(as.numeric(mBRA_SHP_UF_SIVEP$CASES), 
+                                     breaks = breaks, labels = labels)
+  
+  # Fix Year labels
+  levels(mBRA_SHP_UF_SIVEP$YEAR)=as.character(seq(2003,2017,1))
+  
+  # Plot
+  PLOT=ggplot(mBRA_SHP_UF_SIVEP) +
+    aes(long, lat, group=group, fill = CASES_CAT) +
+    scale_fill_brewer(palette="Blues", na.value = "white") +
+    coord_equal() +
+    geom_polygon(colour = "black", size = 0.5) +
+    facet_wrap(facets= YEAR ~.) 
+  
+  return(PLOT)
 }
+
+# Set break points
+breaks=c(1000, seq(25000,225000,25000))
+labels=paste("<", breaks[2:length(breaks)])
+
+# Plot
+Plot=getSTATE_MAPS("UF", "Vivax", "CASES")
+Plot + labs(title = "Plasmodium vivax cases, Brazil 2003-2017")
+
+# Save
+dev.copy(png, paste0(Plot_Folder,"Map of Plasmodium vivax cases, Brazil ", StartYear, "-", EndYear, ".png"),
+         width = 1000, height = 1000, units = "px", pointsize = 12,
+         res = 100)
+dev.off()
