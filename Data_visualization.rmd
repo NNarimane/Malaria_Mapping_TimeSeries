@@ -78,54 +78,139 @@ summary(df)
 ```
 
 
-- TIPO_LAM per year.
+- Malaria type and TIPO_LAM per year.
 ```{r}
 LAM_M_type <- df %>%
+              mutate(RES_EXAM = factor(RES_EXAM, c("V", "F", "F+V"), c("Vivax", "Falciparum", "V+F")),
+                     TIPO_LAM = factor(TIPO_LAM, c("PCD", "ACD", "CV"), c("PCD", "ACD", "CV"))) %>%
               group_by(ANO, TIPO_LAM) %>%
-              count(RES_EXAM) 
-
+              count(RES_EXAM)  
+              
 options(scipen = 10000)
 
-TL <- ggplot(aes(y = n, x = ANO, fill = TIPO_LAM), data = LAM_M_type) +
-            geom_bar(stat = "identity", position='dodge') +
+TL <- ggplot(aes(y = n, x = ANO, color = TIPO_LAM), data = LAM_M_type) +
+            geom_line(stat = "identity") +
+            facet_grid(RES_EXAM ~ .) +
             scale_x_continuous(labels = seq(2003,2018,1), breaks = seq(2003,2018,1)) +
             labs(x = "Year", y = "Malaria cases") +
             guides(fill = guide_legend(title="Detection type"))
 
 ```
 
-- TIPO_LAM per Malaria type and year
-```{r}
-TLM <- ggplot(aes(y = n, x = ANO, fill = RES_EXAM), data = LAM_M_type) +
-            geom_bar(stat = "identity", position='dodge') +
-            facet_grid(TIPO_LAM ~ .) +
-            scale_x_continuous(labels = seq(2003,2018,1), breaks = seq(2003,2018,1)) +
-            labs(x = "Year", y = "Malaria cases") +
-            guides(fill = guide_legend(title="Malaria type"))
-
-```
 
 - ID_LVC_ and TIPO_LAM
+From paper **WIEFELS et al. 2016**. Accuracy of the malaria epidemiological surveillance system data in the state of Amazonas. Acta Amazonica:
+"The follow-up consultation was related to the active/ passive notification. The patient’s follow-up consultation occurs weeks after the confirmation of the malaria infection (World Health Organization 2012). It is a second consultation to certify the healing and is registered as a new notification, which is why it is essential to distinguish it from the first consultation to avoid duplicates. Two variables - the detection type, called TIPO_LAM (1-Passive, 2-Active and 3- Follow-up consultation) and the follow-up consultation, called ID_LVC (1-Yes, 2-No) certify the follow-up consultation. There were 201 inconsistent notifications checked as a follow- up consultation notification (TIPO_LAM=3) but also as its opposite (ID_LVC=2)."
 ```{r}
-LAM_M_type <- df %>%
+LAM_ID_type <- df %>%
+              mutate(TIPO_LAM = factor(TIPO_LAM, c("PCD", "ACD", "CV"), c("PCD", "ACD", "CV"))) %>%
               group_by(ANO, TIPO_LAM) %>%
-              count(RES_EXAM) 
+              count(ID_LVC_)  
+              
 
 options(scipen = 10000)
 
-TL <- ggplot(aes(y = n, x = ANO, fill = TIPO_LAM), data = LAM_M_type) +
-            geom_bar(stat = "identity", position='dodge') +
+TLI <- ggplot(aes(y = n, x = ANO, color = TIPO_LAM), data = LAM_ID_type) +
+            geom_line(stat = "identity") +
+            facet_grid(ID_LVC_ ~ .) +
             scale_x_continuous(labels = seq(2003,2018,1), breaks = seq(2003,2018,1)) +
             labs(x = "Year", y = "Malaria cases") +
             guides(fill = guide_legend(title="Detection type"))
 
 ```
 
+- Malaria type and age
+```{r}
+M_age_gender <- df %>%
+                  mutate(TIPO_LAM = factor(TIPO_LAM, c("PCD", "ACD", "CV"), c("PCD", "ACD", "CV")),
+                         RES_EXAM = factor(RES_EXAM, c("V", "F", "F+V"), c("Vivax", "Falciparum", "V+F"))) %>%
+                  group_by(ANO, RES_EXAM) %>%
+                  count(AGE_RANGE, SEXO)  %>%
+                  filter(SEXO == "M" | filter == "F")
 
-- AGE
+options(scipen = 10000)
+
+MA <- ggplot(aes(y = n, x = AGE_RANGE, fill = RES_EXAM), data = M_age_gender) +
+            geom_bar(stat = "identity", position = "dodge") +
+            facet_wrap(~ANO) +
+            labs(x = "Age Categories", y = "Malaria cases") +
+            theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+            guides(fill = guide_legend(title="Malaria type")) 
+
+```
 
 - GENDER
+```{r}
+MG <- ggplot(aes(y = n, x = SEXO, fill = RES_EXAM), data = M_age_gender[which(M_age_gender$SEXO == "F" | M_age_gender$SEXO == "M"),]) +
+            geom_bar(stat = "identity", position = "dodge") +
+            facet_wrap(~ANO) +
+            labs(x = "Gender", y = "Malaria cases") +
+            scale_x_discrete(breaks = c("F", "M"), labels = c("Female", "Male")) +
+            guides(fill = guide_legend(title ="Malaria type")) 
+
+```
 
 - AGE and GENDER
+```{r}
+AG <- ggplot(aes(y = n, x = AGE_RANGE, fill = SEXO), data = M_age_gender[which(M_age_gender$SEXO == "F" | M_age_gender$SEXO == "M"),]) +
+            geom_bar(stat = "identity", position = "dodge") +
+            facet_wrap(~ANO) +
+            labs(x = "Age categories", y = "Malaria cases") +
+            theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+            guides(fill = guide_legend(title ="Gender")) 
+
+```
 
 
+- SINTOMAS- ver com LVC e com TIPO_LAM
+```{r}
+Sint <- df %>%
+          mutate(TIPO_LAM = factor(TIPO_LAM, c("PCD", "ACD", "CV"), c("PCD", "ACD", "CV")),
+                 SINTOMAS = factor(SINTOMAS, c("YES", "NO"), c("YES", "NO")),
+                 ID_LVC_ = factor(ID_LVC_, c("YES", "NO"), c("YES", "NO"))) %>%
+          group_by(ANO, SINTOMAS) %>%
+          count(TIPO_LAM, ID_LVC_)
+  
+SCD <- ggplot(aes(y = n, x = SINTOMAS, fill = ID_LVC_), data = Sint) +
+            geom_bar(stat = "identity", position = "dodge") +
+            facet_wrap(~ANO) +
+            labs(x = "Symptons", y = "Malaria cases") +
+            theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+            guides(fill = guide_legend(title ="Cure Verification")) 
+
+SCD <- ggplot(aes(y = n, x = SINTOMAS, fill = TIPO_LAM), data = Sint) +
+            geom_bar(stat = "identity", position = "dodge") +
+            facet_wrap(~ANO) +
+            labs(x = "Symptons", y = "Malaria cases") +
+            theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+            guides(fill = guide_legend(title ="Detection type")) 
+
+SCD <- ggplot(aes(y = n, x = TIPO_LAM, fill = SINTOMAS), data = Sint) +
+            geom_bar(stat = "identity", position = "dodge") +
+            facet_wrap(~ID_LVC_) +
+            labs(x = "Detection type", y = "Malaria cases", title = "Cure verification") +
+            theme(axis.text.x = element_text(angle = 90, hjust = 1), plot.title = element_text(hjust = 0.5, size = 3)) +
+            guides(fill = guide_legend(title ="Symptons"))
+            
+
+
+```
+
+- Sintomas e Tipo de malária- ver qual produz mais sintomas?
+
+
+Case per age and gender population size
+```{r}
+if(envNN){
+  pop_strat <- read.csv("/BRA_AGE_SEX_MUNICIP_2010.csv")
+}else{pop_strat <- read.csv("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/BRA_AGE_SEX_MUNICIP_2010.csv", stringsAsFactors = F)
+}
+
+head(pop_strat)
+
+#Filtrar o group 0 ano, mudar as categorias da variável group para deixar igual do SIVEP, mudar o nome da variaǘel tb. Cortar BR, UF e deixar só município. E ver se o código de município bate com do SIVEP.
+
+```
+
+
+- abrir o shape de assentamentos e ver se tem de grandes empreendimentos e suas infos.
