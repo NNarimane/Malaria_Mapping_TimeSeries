@@ -14,6 +14,7 @@ editor_options:
 library(foreign)
 library('stringr')
 library(tidyverse)
+library(data.table)
 
 ```
 
@@ -321,5 +322,26 @@ day_malaria_type_places_muni <- df %>%
                           select(DT_NOTIF, LEVEL, CODE_NOTIF, CODE_RESID, CODE_INFEC, Falciparum, Vivax) %>%
                           gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE_NOTIF, CODE_RESID, CODE_INFEC))
 
+
+```
+
+
+- Reading the schema treatment database
+```{r}
+envNN = F
+
+if(envNN){
+  treat <- read.dbf("/Malaria_Mapping_TimeSeries_Data/ESQUEMA_.DBF", as.is = F)
+}else{treat <- read.dbf("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/ESQUEMA_.DBF", as.is = F)
+}
+
+```
+
+- Categories
+```{r}
+unique(treat$CD_ESQUEMA)
+unique(treat$ESQUEMA)
+unique(treat$STATUS)
+treat %>% filter(CD_ESQUEMA == 83)
 
 ```

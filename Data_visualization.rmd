@@ -15,7 +15,7 @@ library(foreign)
 library('stringr')
 library(tidyverse)
 library(ggplot2)
-library("scales")
+library("scales")#para usar nas escalas gráficas- ver depois.
 
 ```
 
@@ -106,6 +106,20 @@ TLM <- ggplot(aes(y = n, x = ANO, fill = RES_EXAM), data = LAM_M_type) +
 ```
 
 - ID_LVC_ and TIPO_LAM
+```{r}
+LAM_M_type <- df %>%
+              group_by(ANO, TIPO_LAM) %>%
+              count(RES_EXAM) 
+
+options(scipen = 10000)
+
+TL <- ggplot(aes(y = n, x = ANO, fill = TIPO_LAM), data = LAM_M_type) +
+            geom_bar(stat = "identity", position='dodge') +
+            scale_x_continuous(labels = seq(2003,2018,1), breaks = seq(2003,2018,1)) +
+            labs(x = "Year", y = "Malaria cases") +
+            guides(fill = guide_legend(title="Detection type"))
+
+```
 
 
 - AGE
