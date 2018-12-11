@@ -54,22 +54,12 @@ getDAILY_SIVEP_MALARIA_TYPE=function(FilePath, StartYear, EndYear, Melted){
   # Choose time period
   df=df[which(df[,"DT_NOTIF"] >= paste0(StartYear,"-01-01") & df[,"DT_NOTIF"] <= paste0(EndYear, "-12-31")),]
   
-  # Split data by malaria type and aggregate to day (MU - level)
-  # day_malaria_type <- df %>%
-  #   group_by(DT_NOTIF, MUN_NOTI) %>%
-  #   count(RES_EXAM) %>%
-  #   mutate(LEVEL = "MU") %>%
-  #   select(DT_NOTIF, LEVEL, MUN_NOTI, RES_EXAM, n) %>%
-  #   spread(RES_EXAM, n, fill = 0) %>%
-  #   rename(CODE = MUN_NOTI) %>%
-  #   rename(FALCI = "F") %>%
-  #   rename(FV = "F+V") %>%
-  #   rename(VIVAX = "V") %>%
-  #   mutate(Falciparum = FALCI + FV) %>%
-  #   mutate(Vivax = VIVAX + FV) %>%
-  #   select(DT_NOTIF, LEVEL, CODE, Falciparum, Vivax) %>%
-  #   gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE))
+  # Replace missing state code with municipality state code
+  df$UF_NOTIF=substr(df$MUN_NOTI, 1, 2) 
+  df$UF_RESID=substr(df$MUN_RESI, 1, 2)
+  df$UF_INFEC=substr(df$MUN_INFE, 1, 2)
   
+  # Split data by malaria type and aggregate to day (MU - level)
   day_malaria_type_places_muni <- df %>%
     group_by(DT_NOTIF, MUN_NOTI, MUN_RESI, MUN_INFE) %>%
     count(RES_EXAM) %>%
@@ -83,21 +73,6 @@ getDAILY_SIVEP_MALARIA_TYPE=function(FilePath, StartYear, EndYear, Melted){
     gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE_NOTIF, CODE_RESID, CODE_INFEC))
   
   # UT - level
-  # day_malaria_type_state <- df %>%
-  #   group_by(DT_NOTIF, UF_NOTIF) %>%
-  #   count(RES_EXAM) %>%
-  #   mutate(LEVEL = "UF") %>%
-  #   select(DT_NOTIF, LEVEL, UF_NOTIF, RES_EXAM, n) %>%
-  #   spread(RES_EXAM, n, fill = 0) %>%
-  #   rename(CODE = UF_NOTIF) %>%
-  #   rename(FALCI = "F") %>%
-  #   rename(FV = "F+V") %>%
-  #   rename(VIVAX = "V") %>%
-  #   mutate(Falciparum = FALCI + FV) %>%
-  #   mutate(Vivax = VIVAX + FV) %>%
-  #   select(DT_NOTIF, LEVEL, CODE, Falciparum, Vivax) %>%
-  #   gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE))
-  
   day_malaria_type_places_state <- df %>%
     group_by(DT_NOTIF, UF_NOTIF, UF_RESID, UF_INFEC) %>%
     count(RES_EXAM) %>%
@@ -111,21 +86,6 @@ getDAILY_SIVEP_MALARIA_TYPE=function(FilePath, StartYear, EndYear, Melted){
     gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE_NOTIF, CODE_RESID, CODE_INFEC))
   
   # BR - level
-  # day_malaria_type_brazil <- df %>%
-  #   group_by(DT_NOTIF) %>%
-  #   count(RES_EXAM)%>%
-  #   mutate(LEVEL = "BR",
-  #          CODE = "0") %>%
-  #   select(DT_NOTIF, LEVEL, CODE, RES_EXAM, n) %>%
-  #   spread(RES_EXAM, n, fill = 0) %>%
-  #   rename(FALCI = "F") %>%
-  #   rename(FV = "F+V") %>%
-  #   rename(VIVAX = "V") %>%
-  #   mutate(Falciparum = FALCI + FV) %>%
-  #   mutate(Vivax = VIVAX + FV) %>%
-  #   select(DT_NOTIF, LEVEL, CODE, Falciparum, Vivax) %>%
-  #   gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE))
-  
   day_malaria_type_brazil <- df %>%
     group_by(DT_NOTIF) %>%
     count(RES_EXAM)%>%
@@ -142,20 +102,19 @@ getDAILY_SIVEP_MALARIA_TYPE=function(FilePath, StartYear, EndYear, Melted){
     gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE))
   
   # Merge together
-  # SIVEP_MALARIA_TYPE=rbind(day_malaria_type_brazil, day_malaria_type_state, day_malaria_type)
   SIVEP_MALARIA_TYPE=rbind(day_malaria_type_brazil, day_malaria_type_places_state, day_malaria_type_places_muni)
   
   # Select administrative level via code
   if(byNotification){
-    SIVEP_MALARIA_TYPE = subset(SIVEP_MALARIA_TYPE, select=-c(CODE_RESID, CODE_INFEC))
+    SIVEP_MALARIA_TYPE = subset(SIVEP_MALARIA_TYPE, select=-c(CODE, CODE_RESID, CODE_INFEC))
     names(SIVEP_MALARIA_TYPE)[names(SIVEP_MALARIA_TYPE) == 'CODE_NOTIF'] <- 'CODE'
   }
   if(byResidence){
-    SIVEP_MALARIA_TYPE = subset(SIVEP_MALARIA_TYPE, select=-c(CODE_NOTIF, CODE_INFEC))
+    SIVEP_MALARIA_TYPE = subset(SIVEP_MALARIA_TYPE, select=-c(CODE, CODE_NOTIF, CODE_INFEC))
     names(SIVEP_MALARIA_TYPE)[names(SIVEP_MALARIA_TYPE) == 'CODE_RESID'] <- 'CODE'
   }
   if(byInfection){
-    SIVEP_MALARIA_TYPE = subset(SIVEP_MALARIA_TYPE, select=-c(CODE_NOTIF, CODE_RESID))
+    SIVEP_MALARIA_TYPE = subset(SIVEP_MALARIA_TYPE, select=-c(CODE, CODE_NOTIF, CODE_RESID))
     names(SIVEP_MALARIA_TYPE)[names(SIVEP_MALARIA_TYPE) == 'CODE_INFEC'] <- 'CODE'
   }
   
