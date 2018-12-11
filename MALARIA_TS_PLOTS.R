@@ -82,43 +82,77 @@ byImportation=FALSE
 bySetting=FALSE
 
 
-##############
-## Data Upload
-##############
+##################
+## BY CASES OR API
+##################
 
-# Set file path
-if(envNN){
-  FilePath=paste0(getwd(),"/SIVEP_clean.RData")
+API=TRUE
+
+if(!API){
+  
+  ##############
+  ## Data Upload
+  ##############
+  
+  # Set file path
+  if(envNN){
+    FilePath=paste0(getwd(),"/SIVEP_clean.RData")
+  }else{
+    
+  }
+  
+  # Load state abbreviations
+  ADMIN_NAMES=read.csv(file = paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/BRA_ADMIN_NAMES.csv"), sep = "")
+  ADMIN_NAMES$Code=as.character(ADMIN_NAMES$Code)
+  
+  # Choose time period
+  StartYear="2003"
+  EndYear="2017"
+  
+  # Melted data
+  Melted=TRUE
+  
+  # Get time series data by administrative level and by variable of interest
+  if(byNotification){
+    if(byType){TS=getDAILY_SIVEP_MALARIA_TYPE(FilePath, StartYear, EndYear, Melted)}
+    if(byGender){TS=getDAILY_SIVEP_MALARIA_GENDER(FilePath, StartYear, EndYear, Melted)}
+  }
+  
+  if(byResidence){
+    if(byType){TS=getDAILY_SIVEP_MALARIA_TYPE(FilePath, StartYear, EndYear, Melted)}
+    if(byGender){TS=getDAILY_SIVEP_MALARIA_GENDER(FilePath, StartYear, EndYear, Melted)}
+  }
+  
+  if(byInfection){
+    if(byType){TS=getDAILY_SIVEP_MALARIA_TYPE(FilePath, StartYear, EndYear, Melted)}
+    if(byGender){TS=getDAILY_SIVEP_MALARIA_GENDER(FilePath, StartYear, EndYear, Melted)}
+  }
 }else{
   
+  ##############
+  ## Data Upload
+  ##############
+  
+  if(byNotification){
+    TS_MU_API=read.csv(file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_API_MU_byNotification.csv"), stringsAsFactors = F, row.names = NULL, check.names = F)
+    TS_UF_API=read.csv(file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_API_UF_byNotification.csv"), stringsAsFactors = F, row.names = NULL, check.names = F)
+    
+  }
+  
+  if(byResidence){
+    TS_MU_API=read.csv(file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_API_MU_byResidence.csv"), stringsAsFactors = F, row.names = NULL, check.names = F)
+    TS_UF_API=read.csv(file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_API_UF_byNotification.csv"), stringsAsFactors = F, row.names = NULL, check.names = F)
+    
+  }
+  
+  if(byResidence){
+    TS_MU_API=read.csv(file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_API_MU_byResidence.csv"), stringsAsFactors = F, row.names = NULL, check.names = F)
+    TS_UF_API=read.csv(file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_API_UF_byNotification.csv"), stringsAsFactors = F, row.names = NULL, check.names = F)
+    
+  }
 }
 
-# Load state abbreviations
-ADMIN_NAMES=read.csv(file = paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/BRA_ADMIN_NAMES.csv"), sep = "")
-ADMIN_NAMES$Code=as.character(ADMIN_NAMES$Code)
 
-# Choose time period
-StartYear="2003"
-EndYear="2017"
-
-# Melted data
-Melted=TRUE
-
-# Get time series data by administrative level and by variable of interest
-if(byNotification){
-  if(byType){TS=getDAILY_SIVEP_MALARIA_TYPE(FilePath, StartYear, EndYear, Melted)}
-  if(byGender){TS=getDAILY_SIVEP_MALARIA_GENDER(FilePath, StartYear, EndYear, Melted)}
-}
-
-if(byResidence){
-  if(byType){TS=getDAILY_SIVEP_MALARIA_TYPE(FilePath, StartYear, EndYear, Melted)}
-  if(byGender){TS=getDAILY_SIVEP_MALARIA_GENDER(FilePath, StartYear, EndYear, Melted)}
-}
-
-if(byInfection){
-  if(byType){TS=getDAILY_SIVEP_MALARIA_TYPE(FilePath, StartYear, EndYear, Melted)}
-  if(byGender){TS=getDAILY_SIVEP_MALARIA_GENDER(FilePath, StartYear, EndYear, Melted)}
-}
 
 
 #############
