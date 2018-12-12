@@ -16,6 +16,7 @@ library('stringr')
 library(tidyverse)
 library(ggplot2)
 library("scales")#para usar nas escalas gráficas- ver depois.
+library("data.table")
 
 ```
 
@@ -88,12 +89,16 @@ LAM_M_type <- df %>%
               
 options(scipen = 10000)
 
+
+dev.copy(png, "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Plots_results/MalariaType_DetectionType", width = 800, height = 900, units = "px", pointsize = 12, res = 100)
+    
 TL <- ggplot(aes(y = n, x = ANO, color = TIPO_LAM), data = LAM_M_type) +
             geom_line(stat = "identity") +
             facet_grid(RES_EXAM ~ .) +
-            scale_x_continuous(labels = seq(2003,2018,1), breaks = seq(2003,2018,1)) +
-            labs(x = "Year", y = "Malaria cases") +
-            guides(fill = guide_legend(title="Detection type"))
+            scale_x_continuous(labels = seq(2003, 2018, 1), breaks = seq(2003, 2018, 1)) +
+            labs(x = "Year", y = "Malaria cases", color = "Detection type") 
+
+dev.off()
 
 ```
 
@@ -110,12 +115,15 @@ LAM_ID_type <- df %>%
 
 options(scipen = 10000)
 
+dev.copy(png, "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Plots_results/DetectionType_LVC", width = 800, height = 900, units = "px", pointsize = 12, res = 100)
+
 TLI <- ggplot(aes(y = n, x = ANO, color = TIPO_LAM), data = LAM_ID_type) +
             geom_line(stat = "identity") +
             facet_grid(ID_LVC_ ~ .) +
             scale_x_continuous(labels = seq(2003,2018,1), breaks = seq(2003,2018,1)) +
-            labs(x = "Year", y = "Malaria cases") +
-            guides(fill = guide_legend(title="Detection type"))
+            labs(x = "Year", y = "Malaria cases stratified by cure verification", color = "Detection type")
+        
+dev.off()
 
 ```
 
@@ -125,92 +133,176 @@ M_age_gender <- df %>%
                   mutate(TIPO_LAM = factor(TIPO_LAM, c("PCD", "ACD", "CV"), c("PCD", "ACD", "CV")),
                          RES_EXAM = factor(RES_EXAM, c("V", "F", "F+V"), c("Vivax", "Falciparum", "V+F"))) %>%
                   group_by(ANO, RES_EXAM) %>%
-                  count(AGE_RANGE, SEXO)  %>%
-                  filter(SEXO == "M" | filter == "F")
+                  count(AGE_RANGE, SEXO)
 
 options(scipen = 10000)
 
-MA <- ggplot(aes(y = n, x = AGE_RANGE, fill = RES_EXAM), data = M_age_gender) +
+dev.copy(png, "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Plots_results/AgeCategories_MalariaType", width = 1100, height = 1000, units = "px", pointsize = 12, res = 100)
+
+MA <- ggplot(aes(y = n, x = AGE_RANGE, fill = RES_EXAM), data = M_age_gender[which(M_age_gender$SEXO == "F" | M_age_gender$SEXO == "M"),]) +
             geom_bar(stat = "identity", position = "dodge") +
             facet_wrap(~ANO) +
             labs(x = "Age Categories", y = "Malaria cases") +
             theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-            guides(fill = guide_legend(title="Malaria type")) 
+            guides(fill = guide_legend(title= "Malaria type")) 
+
+dev.off()
 
 ```
 
 - GENDER
 ```{r}
+dev.copy(png, "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Plots_results/Gender_MalariaType", width = 1100, height = 1000, units = "px", pointsize = 12, res = 100)
+
 MG <- ggplot(aes(y = n, x = SEXO, fill = RES_EXAM), data = M_age_gender[which(M_age_gender$SEXO == "F" | M_age_gender$SEXO == "M"),]) +
             geom_bar(stat = "identity", position = "dodge") +
             facet_wrap(~ANO) +
             labs(x = "Gender", y = "Malaria cases") +
             scale_x_discrete(breaks = c("F", "M"), labels = c("Female", "Male")) +
-            guides(fill = guide_legend(title ="Malaria type")) 
+            guides(fill = guide_legend(title = "Malaria type")) 
+
+dev.off()
 
 ```
 
-- AGE and GENDER
+- To do age and gender stratified by type. Here I summed V+F with F and V. 
 ```{r}
-AG <- ggplot(aes(y = n, x = AGE_RANGE, fill = SEXO), data = M_age_gender[which(M_age_gender$SEXO == "F" | M_age_gender$SEXO == "M"),]) +
+df1 <- df %>%
+        select(RES_EXAM, TIPO_LAM, SEXO, SINTOMAS, ID_LVC_, ANO, AGE_RANGE) %>%
+        group_by(ANO, TIPO_LAM, SEXO, SINTOMAS, ID_LVC_, AGE_RANGE) %>%
+        count(RES_EXAM) %>%
+        spread(RES_EXAM, n, fill = 0) %>%
+        rename(FALCI = "F") %>%
+        rename(FV = "F+V") %>%
+        rename(VIVAX = "V") %>%
+        mutate(Falciparum = FALCI + FV) %>%
+        mutate(Vivax = VIVAX + FV) %>%
+        select(ANO, TIPO_LAM, SEXO, SINTOMAS, ID_LVC_, AGE_RANGE, Falciparum, Vivax) %>%
+        gather(key = 'MALARIA_TYPE', value = 'CASES', -c(ANO, TIPO_LAM, SEXO, SINTOMAS, ID_LVC_, AGE_RANGE))
+
+```
+
+
+- AGE and GENDER stratified by malaria type
+```{r}
+#Change the title when change the type
+dev.copy(png, "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Plots_results/AgeCategory_Gender_Falciparum", width = 1100, height = 1000, units = "px", pointsize = 12, res = 100)
+
+#Change the type
+#df2 <- df1 %>% filter(MALARIA_TYPE == "Falciparum")
+
+AG <- ggplot(aes(y = CASES, x = AGE_RANGE, fill = SEXO), data = df2[which(df2$SEXO == "F" | df2$SEXO == "M"),]) +
             geom_bar(stat = "identity", position = "dodge") +
             facet_wrap(~ANO) +
-            labs(x = "Age categories", y = "Malaria cases") +
+            labs(x = "Age categories", y = "Malaria falciparum cases") + #Change to vivax
             theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-            guides(fill = guide_legend(title ="Gender")) 
+            guides(fill = guide_legend(title = "Gender")) 
+
+dev.off()
 
 ```
 
 
 - SINTOMAS- ver com LVC e com TIPO_LAM
 ```{r}
-Sint <- df %>%
-          mutate(TIPO_LAM = factor(TIPO_LAM, c("PCD", "ACD", "CV"), c("PCD", "ACD", "CV")),
-                 SINTOMAS = factor(SINTOMAS, c("YES", "NO"), c("YES", "NO")),
-                 ID_LVC_ = factor(ID_LVC_, c("YES", "NO"), c("YES", "NO"))) %>%
-          group_by(ANO, SINTOMAS) %>%
-          count(TIPO_LAM, ID_LVC_)
-  
-SCD <- ggplot(aes(y = n, x = SINTOMAS, fill = ID_LVC_), data = Sint) +
+Sint <- df1 %>%
+          mutate(TIPO_LAM1 = factor(TIPO_LAM, c("PCD", "ACD", "CV"), c("PCD", "ACD", "CV")),
+                 SINTOMAS1 = factor(SINTOMAS, c("YES", "NO"), c("YES", "NO")),
+                 ID_LVC_1 = factor(ID_LVC_, c("YES", "NO"), c("YES", "NO")))
+
+#Change the title when change the type
+dev.copy(png, "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Plots_results/Symptoms_DetectionType_Vivax", width = 1100, height = 1000, units = "px", pointsize = 12, res = 100)
+
+# SCD <- ggplot(aes(y = CASES, x = SINTOMAS1, fill = ID_LVC_1), data = Sint[Sint$MALARIA_TYPE == "Vivax",]) +
+#             geom_bar(stat = "identity", position = "dodge") +
+#             facet_wrap(~ANO) +
+#             labs(x = "Symptoms", y = "Malaria vivax cases") +
+#             theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+#             guides(fill = guide_legend(title ="Cure Verification"))
+# dev.off()
+
+SCD2 <- ggplot(aes(y = CASES, x = SINTOMAS1, fill = TIPO_LAM1), data = Sint[Sint$MALARIA_TYPE == "Vivax",]) +
             geom_bar(stat = "identity", position = "dodge") +
             facet_wrap(~ANO) +
-            labs(x = "Symptons", y = "Malaria cases") +
+            labs(x = "Symptoms", y = "Malaria vivax cases") +
             theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-            guides(fill = guide_legend(title ="Cure Verification")) 
+            guides(fill = guide_legend(title ="Detection type"))
+dev.off()
 
-SCD <- ggplot(aes(y = n, x = SINTOMAS, fill = TIPO_LAM), data = Sint) +
-            geom_bar(stat = "identity", position = "dodge") +
-            facet_wrap(~ANO) +
-            labs(x = "Symptons", y = "Malaria cases") +
-            theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-            guides(fill = guide_legend(title ="Detection type")) 
-
-SCD <- ggplot(aes(y = n, x = TIPO_LAM, fill = SINTOMAS), data = Sint) +
-            geom_bar(stat = "identity", position = "dodge") +
-            facet_wrap(~ID_LVC_) +
-            labs(x = "Detection type", y = "Malaria cases", title = "Cure verification") +
-            theme(axis.text.x = element_text(angle = 90, hjust = 1), plot.title = element_text(hjust = 0.5, size = 3)) +
-            guides(fill = guide_legend(title ="Symptons"))
+# SCD3 <- ggplot(aes(y = CASES, x = TIPO_LAM1, fill = SINTOMAS1), data = Sint[Sint$MALARIA_TYPE == "Falciparum",]) +
+#             geom_bar(stat = "identity", position = "dodge") +
+#             facet_wrap(~ID_LVC_1) +
+#             labs(x = "Detection type stratified by Cure verification", y = "Malaria falciparum cases") +
+#             guides(fill = guide_legend(title ="Symptoms"))
+# 
+# dev.off()
             
-
-
 ```
 
-- Sintomas e Tipo de malária- ver qual produz mais sintomas?
+Pregnant 
+```{r}
+unique(df$GESTANTE_1)
+preg <- df %>%
+          group_by(ANO, RES_EXAM, SEXO) %>%
+          count(GESTANTE_)
+
+pms <- ggplot(aes(y = n, x = GESTANTE_), data = preg) +
+            geom_bar(stat = "identity", position = "dodge") +
+            facet_wrap(~ANO) 
+         
+  
+```
 
 
-Case per age and gender population size
+
+
+- Case per age and gender population size
+- fazer essa tabela ficar no ponto para o merge com a tabela de casos por faixa etaria e sexo do sivep que eu fiz no scrpit Manipulate_data_maps_ts. Antes do merge, fazer um rbind dessa tabela do SIVEP considerando. BR, UF e MU também. Fazer o mesmo para essa.
 ```{r}
 if(envNN){
   pop_strat <- read.csv("/BRA_AGE_SEX_MUNICIP_2010.csv")
-}else{pop_strat <- read.csv("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/BRA_AGE_SEX_MUNICIP_2010.csv", stringsAsFactors = F)
+}else{pop_strat <- fread("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/BRA_AGE_SEX_MUNICIP_2010.csv", stringsAsFactors = F, encoding = 'Latin-1')
 }
 
 head(pop_strat)
 
 #Filtrar o group 0 ano, mudar as categorias da variável group para deixar igual do SIVEP, mudar o nome da variaǘel tb. Cortar BR, UF e deixar só município. E ver se o código de município bate com do SIVEP.
 
+pop_strat1 <- pop_strat %>%
+                  filter(Group != "0 ano") %>%
+                  filter(Level == "MU") %>%
+                  mutate(Group = factor(Group, label=c("0-4","5-9","10-14","15-19","20-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64","65-69","70-74","75-79","80+"), levels= c("0-4","5-9","10-14","15-19","20-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64","65-69","70-74","75-79","80+")))
+
+
+teste <- pop_strat %>%
+              filter(Level == "BR" & Group == "5 anos" | Group == "6 anos" | Group == "7 anos" | Group == "8 anos" | Group == "9 anos" | Group == "5 a 9 anos")
+     
+
+# BR
+# 2933764 + 2891614 + 2958801 + 2985271 + 3198318 = 14967768
+# BR total
+# 14967767
+# 
+# testesub <- pop_strat %>% filter(pop_strat$Code == "2304202") %>% filter(Group == "5 anos" | Group == "6 anos" | Group == "7 anos" | Group == "8 anos" | Group == "9 anos")
+# 139444
+# 
+# pop_strat %>% filter(pop_strat$Code == "2304202") %>% filter(Group == "5 a 9 anos") #139443
+# 
+# testesub <- pop_strat %>% filter(pop_strat$Code == "12") %>% filter(Group == "5 anos" | Group == "6 anos" | Group == "7 anos" | Group == "8 anos" | Group == "9 anos")
+# 82159
+# 
+# pop_strat %>% filter(pop_strat$Code == "12") %>% filter(Group == "5 a 9 anos") #82158
+# 
+# 
+# 2304202
+
 ```
+
+
+```{r}
+
+```
+
 
 
 - abrir o shape de assentamentos e ver se tem de grandes empreendimentos e suas infos.
