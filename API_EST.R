@@ -69,13 +69,13 @@ source(paste0(getwd(),"/Malaria_Mapping_TimeSeries/Malaria_Mapping_TimeSeries_Fu
 #################
 
 # Which administrative level ?
-byNotification=TRUE
-byResidence=FALSE
+byNotification=FALSE
+byResidence=TRUE
 byInfection=FALSE
 
 # Which variable(s) ?
 byType=TRUE
-# byGender=FALSE
+byGender=FALSE
 # byAge=FALSE
 # byImportation=FALSE
 # bySetting=FALSE
@@ -116,12 +116,12 @@ if(loadCleanData){
   }
   
   if(byResidence){
-    if(byType){load()}
+    if(byType){load(file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/TS_byType_byResidence.RData"))}
     if(byGender){load()}
   }
   
   if(byInfection){
-    if(byType){load()}
+    if(byType){load(file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/TS_byType_byInfection.RData"))}
     if(byGender){load()}
   }
   
@@ -148,7 +148,7 @@ getAPI=function(TS, LEVEL){
   
   # Get population of each level by year
   TS_API$POP=foreach(i=1:nrow(TS_API), .combine = "rbind") %do% {
-    POP=POP_EST_LEVEL[which(TS_API[i,"CODE"] == POP_EST_LEVEL[,"CODE"]),as.character(TS_API[i,"YEAR"])]
+    POP=ifelse(is.null(POP_EST_LEVEL[which(TS_API[i,"CODE"] == POP_EST_LEVEL[,"CODE"]),as.character(TS_API[i,"YEAR"])]),NA, POP_EST_LEVEL[which(TS_API[i,"CODE"] == POP_EST_LEVEL[,"CODE"]),as.character(TS_API[i,"YEAR"])])
   }
   
   # Get API
@@ -184,13 +184,13 @@ if(byNotification){
 
 if(byResidence){
   write.csv(TS_MU_API, file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_API_MU_byResidence.csv"), row.names = F)
-  write.csv(TS_UF_API, file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_API_UF_byNotification.csv"), row.names = F)
+  write.csv(TS_UF_API, file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_API_UF_byResidence.csv"), row.names = F)
   
 }
 
-if(byResidence){
-  write.csv(TS_MU_API, file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_API_MU_byResidence.csv"), row.names = F)
-  write.csv(TS_UF_API, file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_API_UF_byNotification.csv"), row.names = F)
+if(byInfection){
+  write.csv(TS_MU_API, file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_API_MU_byInfection.csv"), row.names = F)
+  write.csv(TS_UF_API, file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_API_UF_byInfection.csv"), row.names = F)
   
 }
 
