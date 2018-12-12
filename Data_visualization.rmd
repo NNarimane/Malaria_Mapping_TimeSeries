@@ -241,8 +241,18 @@ dev.off()
 
 Pregnant 
 ```{r}
+unique(df$GESTANTE_1)
+preg <- df %>%
+          group_by(ANO, RES_EXAM, SEXO) %>%
+          count(GESTANTE_)
 
+pms <- ggplot(aes(y = n, x = GESTANTE_), data = preg) +
+            geom_bar(stat = "identity", position = "dodge") +
+            facet_wrap(~ANO) 
+         
+  
 ```
+
 
 
 
