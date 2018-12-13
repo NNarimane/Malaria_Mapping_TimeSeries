@@ -152,7 +152,7 @@ getDAILY_SIVEP_MALARIA_TYPE=function(FilePath, StartYear, EndYear, Melted){
   }
 }
 
-# Get SIVEP data cleaned up and by species
+# Get SIVEP data cleaned up and by gender
 getDAILY_SIVEP_MALARIA_GENDER=function(FilePath, StartYear, EndYear, Melted){
   
   # Get SIVEP raw notification data
@@ -241,39 +241,163 @@ getDAILY_SIVEP_MALARIA_GENDER=function(FilePath, StartYear, EndYear, Melted){
   }
 }
 
+# Get SIVEP data cleaned up and by age
+getDAILY_SIVEP_MALARIA_AGE=function(FilePath, StartYear, EndYear, Melted){
+  
+  # Get SIVEP raw notification data
+  load(FilePath)
+  
+  # Choose time period
+  df=df[which(df[,"DT_NOTIF"] >= paste0(StartYear,"-01-01") & df[,"DT_NOTIF"] <= paste0(EndYear, "-12-31")),]
+  
+  ### Creating the continuos age by year and after by categories (age range) from IBGE
+  df <- df %>% 
+    filter(ID_PACIE < 30 & ID_DIMEA == "D" | ID_PACIE < 12 & ID_DIMEA == "M" | ID_PACIE <= 100 & ID_DIMEA == "A")
+  
+  df$ID_PACIE <- as.double(df$ID_PACIE) 
+  
+  df <- df %>% 
+    mutate(AGE_CONT = if_else(ID_DIMEA == "A", ID_PACIE, 0))
+
+  df$AGE_RANGE <- NA 
+  df[which(df$AGE_CONT <= 4),]$AGE_RANGE <- "0-4"
+  df[which(df$AGE_CONT >= 5 & df$AGE_CONT <= 9),]$AGE_RANGE <- "5-9"
+  df[which(df$AGE_CONT >= 10 & df$AGE_CONT <= 14),]$AGE_RANGE <- "10-14"
+  df[which(df$AGE_CONT >= 15 & df$AGE_CONT <= 19),]$AGE_RANGE <- "15-19"
+  df[which(df$AGE_CONT >= 20 & df$AGE_CONT <= 24),]$AGE_RANGE <- "20-24"
+  df[which(df$AGE_CONT >= 25 & df$AGE_CONT <= 29),]$AGE_RANGE <- "25-29"
+  df[which(df$AGE_CONT >= 30 & df$AGE_CONT <= 34),]$AGE_RANGE <- "30-34"
+  df[which(df$AGE_CONT >= 35 & df$AGE_CONT <= 39),]$AGE_RANGE <- "35-39"
+  df[which(df$AGE_CONT >= 40 & df$AGE_CONT <= 44),]$AGE_RANGE <- "40-44"
+  df[which(df$AGE_CONT >= 45 & df$AGE_CONT <= 49),]$AGE_RANGE <- "45-49"
+  df[which(df$AGE_CONT >= 50 & df$AGE_CONT <= 54),]$AGE_RANGE <- "50-54"
+  df[which(df$AGE_CONT >= 55 & df$AGE_CONT <= 59),]$AGE_RANGE <- "55-59"
+  df[which(df$AGE_CONT >= 60 & df$AGE_CONT <= 64),]$AGE_RANGE <- "60-64"
+  df[which(df$AGE_CONT >= 65 & df$AGE_CONT <= 69),]$AGE_RANGE <- "65-69"
+  df[which(df$AGE_CONT >= 70 & df$AGE_CONT <= 74),]$AGE_RANGE <- "70-74"
+  df[which(df$AGE_CONT >= 75 & df$AGE_CONT <= 79),]$AGE_RANGE <- "75-79"
+  df[which(df$AGE_CONT >= 80),]$AGE_RANGE <- "80+"
+  
+  df$AGE_RANGE = factor(df$AGE_RANGE, label=c("0-4","5-9","10-14","15-19","20-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64","65-69","70-74","75-79","80+"), levels= c("0-4","5-9","10-14","15-19","20-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64","65-69","70-74","75-79","80+"))
+  
+  ### Counting malaria cases by day, UF, municipality, AGE RANGE, malaria type.
+  day_malaria_type_age <- df %>%
+    group_by(DT_NOTIF, MUN_NOTI, AGE_RANGE) %>%
+    count(RES_EXAM) %>%
+    mutate(LEVEL = "MU") %>%
+    select(DT_NOTIF, LEVEL, MUN_NOTI, RES_EXAM, AGE_RANGE, n) %>%
+    spread(RES_EXAM, n, fill = 0) %>%
+    rename(CODE = MUN_NOTI, FALCI = "F", FV = "F+V", VIVAX = "V", AGE_CAT = AGE_RANGE) %>%
+    mutate(Falciparum = FALCI + FV) %>%
+    mutate(Vivax = VIVAX + FV) %>%
+    select(DT_NOTIF, LEVEL, CODE, AGE_CAT, Falciparum, Vivax) %>%
+    gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE, AGE_CAT))
+  
+  ### Counting malaria cases by day, UF, AGE RANGE and malaria type
+  day_malaria_type_state_age <- df %>%
+    group_by(DT_NOTIF, UF_NOTIF, AGE_RANGE) %>%
+    count(RES_EXAM) %>%
+    mutate(LEVEL = "UF") %>%
+    select(DT_NOTIF, LEVEL, UF_NOTIF, RES_EXAM, AGE_RANGE, n) %>%
+    spread(RES_EXAM, n, fill = 0) %>%
+    rename(CODE = UF_NOTIF, FALCI = "F", FV = "F+V", VIVAX = "V", AGE_CAT = AGE_RANGE) %>%
+    mutate(Falciparum = FALCI + FV) %>%
+    mutate(Vivax = VIVAX + FV) %>%
+    select(DT_NOTIF, LEVEL, CODE, AGE_CAT, Falciparum, Vivax) %>%
+    gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE, AGE_CAT))
+  
+  ### Counting malaria cases by day, AGE RANGE and malaria type
+  day_malaria_type_brazil_age <- df %>%
+    group_by(DT_NOTIF, AGE_RANGE) %>%
+    count(RES_EXAM)%>%
+    mutate(LEVEL = "BR",
+           CODE = "1") %>%
+    select(DT_NOTIF, LEVEL, CODE, RES_EXAM, AGE_RANGE, n) %>%
+    spread(RES_EXAM, n, fill = 0) %>%
+    rename(FALCI = "F", FV = "F+V", VIVAX = "V", AGE_CAT = AGE_RANGE) %>%
+    mutate(Falciparum = FALCI + FV) %>%
+    mutate(Vivax = VIVAX + FV) %>%
+    select(DT_NOTIF, LEVEL, CODE, AGE_CAT, Falciparum, Vivax) %>%
+    gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE, AGE_CAT))
+  
+  # Merge together
+  SIVEP_MALARIA_AGE=rbind(day_malaria_type_brazil_age, day_malaria_type_state_age, day_malaria_type_age)
+  
+  # Get week, month, and year
+  SIVEP_MALARIA_AGE=data.frame(cbind(SIVEP_MALARIA_AGE,
+                                        DT_YEAR=floor_date(SIVEP_MALARIA_AGE$DT_NOTIF, unit = "year"),
+                                        DT_MONTH=floor_date(SIVEP_MALARIA_AGE$DT_NOTIF, unit = "month"),
+                                        DT_WEEK=floor_date(SIVEP_MALARIA_AGE$DT_NOTIF, unit = "week")))
+  
+  if(Melted){
+    #########################
+    ## General Plots (Melted)
+    #########################
+    
+    # Melt by date
+    mSIVEP_AGE=melt(setDT(SIVEP_MALARIA_AGE),
+                       measure.vars = list(c("DT_NOTIF",
+                                             "DT_YEAR",
+                                             "DT_MONTH",
+                                             "DT_WEEK")),
+                       variable.name = "DATE_TYPE", 
+                       value.name = "DATE",
+                       id.vars = c("LEVEL","CODE","TYPE","AGE_CAT","CASES"))
+    
+    # Reorder and relabel date type
+    levels(mSIVEP_AGE$DATE_TYPE) = c("Daily","Yearly","Monthly","Weekly")
+    mSIVEP_AGE$DATE_TYPE = factor(mSIVEP_AGE$DATE_TYPE,
+                                     levels = c("Daily","Weekly","Monthly","Yearly"))
+    
+    return(mSIVEP_AGE)
+    
+  }else{
+    
+    return(SIVEP_MALARIA_AGE)
+  }
+}
+
 
 ###################################
 ## Formatting and Stratification ##
 ###################################
 
 # Get P. vivax time series in TS format
-getPV_TS_Format=function(TS_Raw, StartYear, EndYear, Period, Frequency){
-  
-  # Weekly data
-  TS = aggregate(TS_Raw[,"VIVAX"], by = list(TS_Raw[,Period]), sum)
-  colnames(TS) = c(as.character(Period), "VIVAX")
-  
-  # Get TS format
-  TS_Formatted = ts(na.omit(TS$VIVAX), start = c(as.integer(StartYear),1), frequency=Frequency)
-  
-  return(TS_Formatted)
-}
+# getPV_TS_Format=function(TS, Type, StartYear, EndYear, Period, Frequency){
+#   
+#   # Get type
+#   TS = TS[which(TS$TYPE == Type),]
+#   
+#   # Get by Period
+#   TS = TS[which(TS$DATE_TYPE == Period),]
+#   
+#   # Weekly data
+#   TS_Sum = aggregate(TS[,"CASES"], by = list(TS[,"DATE"]), sum)
+#   # colnames(TS_Sum) = c(as.character(Period), "VIVAX")
+#   
+#   # Get TS format
+#   TS_Formatted = ts(na.omit(TS_Sum$VIVAX), start = c(as.integer(StartYear),1), frequency=Frequency)
+#   
+#   return(TS_Formatted)
+# }
 
 # Get P. vivax time series in TS format and stratified by State
-getPV_TS_Format_Stratified=function(TS_Raw, StartYear, EndYear, Stratification, Period, Frequency){
+getPV_TS_Format_Stratified=function(TS, Type, StartYear, EndYear, Stratification, Period, Frequency){
+  # Get type
+  TS = TS[which(TS$TYPE == Type),]
+  
+  # Get by Period
+  TS = TS[which(TS$DATE_TYPE == Period),]
+  
+  # By level
+  TS = TS[which(TS$LEVEL == Stratification),]
+  
   # Get state by state time series
-  TS = aggregate(TS_Raw$VIVAX ~ TS_Raw[,Stratification]+TS_Raw[,Period], TS_Raw, sum)
+  TS_Sum = aggregate(CASES ~ CODE+DATE, TS, sum)
+  
+  # Format
+  TS_Formatted=by(TS, TS$CODE, FUN=function(TS) ts(TS$CASES, start = as.integer(StartYear), end = as.integer(EndYear), frequency=Frequency))  
 
-  # Get TS format
-  if(Stratification == "STATE"){
-    colnames(TS) = c("STATE", as.character(Period), "VIVAX")
-    TS_Formatted=by(TS, TS$STATE, FUN=function(TS) ts(TS[,3], start = c(as.integer(StartYear),1), frequency=Frequency))  
-  }
-  if(Stratification == "MU_NAME"){
-    colnames(TS) = c("MU_NAME", as.character(Period), "VIVAX")
-    TS_Formatted=by(TS, TS$MU_NAME, FUN=function(TS) ts(TS[,3], start = c(as.integer(StartYear),1), frequency=Frequency))  
-    
-  }
   return(TS_Formatted)
 }
 
