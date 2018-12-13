@@ -11,40 +11,6 @@
 ## Load and Clean P. vivax Time Series Data ##
 ##############################################
 
-# Get P. vivax raw time series data function
-getPV_Raw_Data=function(FilePath, StartYear, EndYear){
-  # Upload time series raw data
-  TS_Raw = fread(file = FilePath, encoding = "UTF-8")
-  
-  # Fix all municipality names of time series data (remove accents)
-  # TS_Raw$MUN_NAME=gsub("Ã", "a", TS_Raw$MUN_NAME)
-  # TS_Raw$MUN_NAME=gsub("¡", "", TS_Raw$MUN_NAME)
-  # TS_Raw$MUN_NAME=iconv(TS_Raw$MUN_NAME, from = "ISO-8859-1", to = "ASCII//TRANSLIT")
-  # # TS_Raw$MUN_NAME=str_replace_all(TS_Raw$MUN_NAME, "[[:punct:]]", "")
-  
-  # Date formatting
-  TS_Raw$DT_NOTIF=as.Date(TS_Raw$DT_NOTIF)
-  TS_Raw=data.frame(cbind(TS_Raw,
-                          year=floor_date(TS_Raw$DT_NOTIF, unit = "year"),
-                          month=floor_date(TS_Raw$DT_NOTIF, unit = "month"),
-                          week=floor_date(TS_Raw$DT_NOTIF, unit = "week"),
-                          year_num=year(ymd(TS_Raw$DT_NOTIF)),
-                          month_num=month(ymd(TS_Raw$DT_NOTIF)),
-                          week_num=epiweek(ymd(TS_Raw$DT_NOTIF))))
-  
-  # Column names
-  colnames(TS_Raw) = c("MU_CODE","MU_NAME","STATE","DT","VIVAX","DT_YEAR", "DT_MONTH", "DT_WEEK",
-                       "YEAR", "MONTH", "WEEK")
-  
-  # Choose time period
-  TS_Raw=TS_Raw[which(TS_Raw[,"YEAR"] >= StartYear & TS_Raw[,"YEAR"] <= EndYear),]
-  
-  # Order
-  TS_Raw=TS_Raw[order(TS_Raw[,"YEAR"]),]
-  
-  return(TS_Raw)
-}
-
 # Get SIVEP data cleaned up and by species
 getDAILY_SIVEP_MALARIA_TYPE=function(FilePath, StartYear, EndYear, Melted){
   
@@ -219,7 +185,7 @@ getDAILY_SIVEP_MALARIA_GENDER=function(FilePath, StartYear, EndYear, Melted){
     #########################
     
     # Melt by date
-    mSIVEP_GENDER=melt(setDT(SIVEP_MALARIA_GENDER),
+    mSIVEP_MALARIA_GENDER=melt(setDT(SIVEP_MALARIA_GENDER),
                              measure.vars = list(c("DT_NOTIF",
                                                    "DT_YEAR",
                                                    "DT_MONTH",
@@ -229,11 +195,11 @@ getDAILY_SIVEP_MALARIA_GENDER=function(FilePath, StartYear, EndYear, Melted){
                              id.vars = c("LEVEL","CODE","TYPE","GENDER","CASES"))
     
     # Reorder and relabel date type
-    levels(mSIVEP_GENDER$DATE_TYPE) = c("Daily","Yearly","Monthly","Weekly")
-    mSIVEP_GENDER$DATE_TYPE = factor(mSIVEP_GENDER$DATE_TYPE,
+    levels(mSIVEP_MALARIA_GENDER$DATE_TYPE) = c("Daily","Yearly","Monthly","Weekly")
+    mSIVEP_MALARIA_GENDER$DATE_TYPE = factor(mSIVEP_MALARIA_GENDER$DATE_TYPE,
                                            levels = c("Daily","Weekly","Monthly","Yearly"))
     
-    return(mSIVEP_GENDER)
+    return(mSIVEP_MALARIA_GENDER)
     
   }else{
     
@@ -335,7 +301,7 @@ getDAILY_SIVEP_MALARIA_AGE=function(FilePath, StartYear, EndYear, Melted){
     #########################
     
     # Melt by date
-    mSIVEP_AGE=melt(setDT(SIVEP_MALARIA_AGE),
+    mSIVEP_MALARIA_AGE=melt(setDT(SIVEP_MALARIA_AGE),
                        measure.vars = list(c("DT_NOTIF",
                                              "DT_YEAR",
                                              "DT_MONTH",
@@ -345,11 +311,11 @@ getDAILY_SIVEP_MALARIA_AGE=function(FilePath, StartYear, EndYear, Melted){
                        id.vars = c("LEVEL","CODE","TYPE","AGE_CAT","CASES"))
     
     # Reorder and relabel date type
-    levels(mSIVEP_AGE$DATE_TYPE) = c("Daily","Yearly","Monthly","Weekly")
-    mSIVEP_AGE$DATE_TYPE = factor(mSIVEP_AGE$DATE_TYPE,
+    levels(mSIVEP_MALARIA_AGE$DATE_TYPE) = c("Daily","Yearly","Monthly","Weekly")
+    mSIVEP_MALARIA_AGE$DATE_TYPE = factor(mSIVEP_MALARIA_AGE$DATE_TYPE,
                                      levels = c("Daily","Weekly","Monthly","Yearly"))
     
-    return(mSIVEP_AGE)
+    return(mSIVEP_MALARIA_AGE)
     
   }else{
     

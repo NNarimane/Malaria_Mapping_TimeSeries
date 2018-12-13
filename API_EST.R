@@ -25,16 +25,6 @@ if(envNN){
 ## Install and read packages
 ############################
 
-# Install once
-# install.packages("ggplot2")
-# install.packages("forecast")
-# install.packages("tseries")
-# install.packages("stringr")
-# install.packages("gridExtra")
-# install.packages("data.table")
-# install.packages("fUnitRoots")
-# install.packages("FitAR")
-
 # Load packages
 library("ggplot2")
 library("forecast")
