@@ -75,9 +75,9 @@ byResidence=FALSE
 byInfection=FALSE
 
 # Which variable(s) ?
-byType=FALSE
+byType=TRUE
 byGender=FALSE
-byAge=TRUE
+byAge=FALSE
 byImportation=FALSE
 bySetting=FALSE
 
@@ -97,8 +97,8 @@ Melted=TRUE
 ## BY CASES OR API
 ##################
 
-API=F
-loadCleanData=F
+API=T
+loadCleanData=T
 
 if(!API){
   
@@ -190,8 +190,6 @@ if(!API){
     TS=rbind(TS_UF_API, TS_MU_API)
   }
 }
-
-
 
 
 #############

@@ -69,8 +69,8 @@ source(paste0(getwd(),"/Malaria_Mapping_TimeSeries/Malaria_Mapping_TimeSeries_Fu
 #################
 
 # Which administrative level ?
-byNotification=FALSE
-byResidence=TRUE
+byNotification=TRUE
+byResidence=FALSE
 byInfection=FALSE
 
 # Which variable(s) ?
@@ -132,13 +132,22 @@ if(loadCleanData){
 ## Calculate API
 ################
 
-# Get annual aggregate of cases
-TS=TS[which(TS$DATE_TYPE == "Yearly"),]
+# Give BR code "0"
+TS[which(TS$LEVEL == "BR"),"CODE"] = "0"
+
+# Add year
 TS$YEAR=year(TS$DATE)
-TS=subset(TS, select = -c(DATE_TYPE))
 
 # Get function that calculates API by year
-getAPI=function(TS, LEVEL){
+getAPI=function(TS, LEVEL, DATE_TYPE){
+  
+  # Get annual aggregate of cases
+  TS=TS[which(TS$DATE_TYPE == DATE_TYPE),]
+  TS$YEAR=year(TS$DATE)
+  TS=subset(TS, select = -c(DATE_TYPE))
+  
+  # Level of time series
+  TS=TS[which(TS$LEVEL == LEVEL),]
   
   # Get population estimates by level (state or municipality)
   POP_EST_LEVEL=POP_EST[which(POP_EST$LEVEL == LEVEL),]
@@ -152,8 +161,6 @@ getAPI=function(TS, LEVEL){
   }
   
   # Get API
-  # TS_API$API_F=ifelse(TS_API$TYPE == "Falciparum",(TS_API$CASES/TS_API$POP)*1000,NA)
-  # TS_API$API_V=ifelse(TS_API$TYPE == "Vivax",(TS_API$CASES/TS_API$POP)*1000,NA)
   TS_API$API=(TS_API$CASES/TS_API$POP)*1000
   
   # Assign names
@@ -164,33 +171,55 @@ getAPI=function(TS, LEVEL){
   return(TS_API)
 }
 
-# By MU
-TS_MU=TS[which(TS$LEVEL == "MU"),]
-TS_MU_API=getAPI(TS_MU, "MU")
+# # Daily
+# DATE_TYPE="Daily"
+# # By MU
+# TS_MU_API=getAPI(TS, "MU", DATE_TYPE)
+# # By UF
+# TS_UF_API=getAPI(TS, "UF", DATE_TYPE)
 
+# Weekly
+DATE_TYPE="Weekly"
+# By MU
+TS_MU_API=getAPI(TS, "MU", DATE_TYPE)
 # By UF
-TS_UF=TS[which(TS$LEVEL == "UF"),]
-TS_UF_API=getAPI(TS_UF, "UF")
+TS_UF_API=getAPI(TS, "UF", DATE_TYPE)
+
+# Monthly
+DATE_TYPE="Monthly"
+# By MU
+TS_MU_API=getAPI(TS, "MU", DATE_TYPE)
+# By UF
+TS_UF_API=getAPI(TS, "UF", DATE_TYPE)
+
+# Yearly
+DATE_TYPE="Yearly"
+# By MU
+TS_MU_API=getAPI(TS, "MU", DATE_TYPE)
+# By UF
+TS_UF_API=getAPI(TS, "UF", DATE_TYPE)
+
+
 
 ############
 ## Save Data
 ############
 
 if(byNotification){
-  write.csv(TS_MU_API, file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_API_MU_byNotification.csv"), row.names = F)
-  write.csv(TS_UF_API, file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_API_UF_byNotification.csv"), row.names = F)
+  write.csv(TS_MU_API, file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_", DATE_TYPE, "_API_MU_byNotification.csv"), row.names = F)
+  write.csv(TS_UF_API, file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_", DATE_TYPE, "_API_UF_byNotification.csv"), row.names = F)
   
 }
 
 if(byResidence){
-  write.csv(TS_MU_API, file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_API_MU_byResidence.csv"), row.names = F)
-  write.csv(TS_UF_API, file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_API_UF_byResidence.csv"), row.names = F)
+  write.csv(TS_MU_API, file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_", DATE_TYPE, "_API_MU_byResidence.csv"), row.names = F)
+  write.csv(TS_UF_API, file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_", DATE_TYPE, "_API_UF_byResidence.csv"), row.names = F)
   
 }
 
 if(byInfection){
-  write.csv(TS_MU_API, file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_API_MU_byInfection.csv"), row.names = F)
-  write.csv(TS_UF_API, file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_API_UF_byInfection.csv"), row.names = F)
+  write.csv(TS_MU_API, file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_", DATE_TYPE, "_API_MU_byInfection.csv"), row.names = F)
+  write.csv(TS_UF_API, file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_", DATE_TYPE, "_API_UF_byInfection.csv"), row.names = F)
   
 }
 

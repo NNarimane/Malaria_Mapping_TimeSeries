@@ -363,33 +363,41 @@ getDAILY_SIVEP_MALARIA_AGE=function(FilePath, StartYear, EndYear, Melted){
 ###################################
 
 # Get P. vivax time series in TS format
-getPV_TS_Format=function(TS_Raw, StartYear, EndYear, Period, Frequency){
-  
-  # Weekly data
-  TS = aggregate(TS_Raw[,"VIVAX"], by = list(TS_Raw[,Period]), sum)
-  colnames(TS) = c(as.character(Period), "VIVAX")
-  
-  # Get TS format
-  TS_Formatted = ts(na.omit(TS$VIVAX), start = c(as.integer(StartYear),1), frequency=Frequency)
-  
-  return(TS_Formatted)
-}
+# getPV_TS_Format=function(TS, Type, StartYear, EndYear, Period, Frequency){
+#   
+#   # Get type
+#   TS = TS[which(TS$TYPE == Type),]
+#   
+#   # Get by Period
+#   TS = TS[which(TS$DATE_TYPE == Period),]
+#   
+#   # Weekly data
+#   TS_Sum = aggregate(TS[,"CASES"], by = list(TS[,"DATE"]), sum)
+#   # colnames(TS_Sum) = c(as.character(Period), "VIVAX")
+#   
+#   # Get TS format
+#   TS_Formatted = ts(na.omit(TS_Sum$VIVAX), start = c(as.integer(StartYear),1), frequency=Frequency)
+#   
+#   return(TS_Formatted)
+# }
 
 # Get P. vivax time series in TS format and stratified by State
-getPV_TS_Format_Stratified=function(TS_Raw, StartYear, EndYear, Stratification, Period, Frequency){
+getPV_TS_Format_Stratified=function(TS, Type, StartYear, EndYear, Stratification, Period, Frequency){
+  # Get type
+  TS = TS[which(TS$TYPE == Type),]
+  
+  # Get by Period
+  TS = TS[which(TS$DATE_TYPE == Period),]
+  
+  # By level
+  TS = TS[which(TS$LEVEL == Stratification),]
+  
   # Get state by state time series
-  TS = aggregate(TS_Raw$VIVAX ~ TS_Raw[,Stratification]+TS_Raw[,Period], TS_Raw, sum)
+  TS_Sum = aggregate(CASES ~ CODE+DATE, TS, sum)
+  
+  # Format
+  TS_Formatted=by(TS, TS$CODE, FUN=function(TS) ts(TS$CASES, start = as.integer(StartYear), end = as.integer(EndYear), frequency=Frequency))  
 
-  # Get TS format
-  if(Stratification == "STATE"){
-    colnames(TS) = c("STATE", as.character(Period), "VIVAX")
-    TS_Formatted=by(TS, TS$STATE, FUN=function(TS) ts(TS[,3], start = c(as.integer(StartYear),1), frequency=Frequency))  
-  }
-  if(Stratification == "MU_NAME"){
-    colnames(TS) = c("MU_NAME", as.character(Period), "VIVAX")
-    TS_Formatted=by(TS, TS$MU_NAME, FUN=function(TS) ts(TS[,3], start = c(as.integer(StartYear),1), frequency=Frequency))  
-    
-  }
   return(TS_Formatted)
 }
 
