@@ -326,9 +326,27 @@ getDAILY_SIVEP_MALARIA_AGE=function(FilePath, StartYear, EndYear, Melted){
 }
 
 
-##############################
-## API CALCULATION FUNCTION ##
-##############################
+########################################
+## API AND RATIO CALCULATION FUNCTION ##
+########################################
+
+# Get PvPf ration function
+getRATIO=function(TS){
+  
+  # UF-level
+  sTS=subset(TS, select = c("CODE","DATE","TYPE","CASES"))
+  sTS_Wide=reshape(sTS, idvar = c("CODE","DATE"), timevar = c("TYPE"), direction = "wide", v.names = "CASES")
+  sTS_Wide$RATIO = sTS_Wide$CASES.Vivax / sTS_Wide$CASES.Falciparum
+  
+  # Remerge
+  sTS_Long=reshape(sTS_Wide, idvar = c("CODE","DATE","RATIO"), v.names = "CASES",
+                          timevar = c("TYPE"), direction = "long")
+  
+  mTS=merge(TS, sTS_Long, by = c("CODE","DATE","TYPE","CASES"), all.x = TRUE)
+  
+  return(mTS)
+  
+}
 
 # Get function that calculates API by year
 getAPI=function(TS, Level, Date_Type, Denominator){
@@ -363,12 +381,15 @@ getAPI=function(TS, Level, Date_Type, Denominator){
   # Get API
   TS_API$API=(TS_API$CASES/TS_API$POP)*Denominator
   
+  # Get Ration
+  TS_API_RATIO=getRATIO(TS_API)
+  
   # Assign names
-  TS_API$STATE = ADMIN_NAMES[match(TS_API$CODE, ADMIN_NAMES$Code),"UF"] 
-  TS_API$NAME = ADMIN_NAMES[match(TS_API$CODE, ADMIN_NAMES$Code),"Name"] 
+  TS_API_RATIO$STATE = ADMIN_NAMES[match(TS_API_RATIO$CODE, ADMIN_NAMES$Code),"UF"] 
+  TS_API_RATIO$NAME = ADMIN_NAMES[match(TS_API_RATIO$CODE, ADMIN_NAMES$Code),"Name"] 
   
   
-  return(TS_API)
+  return(TS_API_RATIO)
 }
 
 

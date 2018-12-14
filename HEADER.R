@@ -48,7 +48,7 @@ source(paste0(getwd(),"/Malaria_Mapping_TimeSeries/Malaria_Mapping_TimeSeries_Fu
 #################################################################
 
 # Load data or run code?
-loadCleanData = FALSE
+loadCleanData = TRUE
 
 # Melted data
 Melted=TRUE
@@ -80,13 +80,7 @@ if(!byAll_Detection){
 ##################
 
 # If API = TRUE, data will also include case numbers
-API = TRUE
-
-# Choose denominator
-Denominator = 1000
-
-# By date type
-Date_Type="Weekly"
+API = FALSE
 
 # Merge UF and MU
 Merged = FALSE

@@ -38,15 +38,15 @@ POP_EST=read.csv("Malaria_Mapping_TimeSeries_Data/BRA_POP_EST.csv", stringsAsFac
 POP_EST$CODE=as.character(POP_EST$CODE)
 
 
-###################
-## Calculate API ##
-###################
+#############################
+## Calculate API and RATIO ##
+#############################
 
 # Choose denominator
 Denominator = 1000
 
 # By date type
-Date_Type="Daily"
+Date_Type="Monthly"
 
 # By MU
 Level="MU"
