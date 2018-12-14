@@ -1,15 +1,17 @@
-######################################
-######################################
-###                                ###
-###  Brazilian P.vivax Time Series ###
-###           Functions            ###
-###                                ###
-######################################
-######################################
+#############################################################
+#############################################################
+##########                                         ##########
+##########                                         ##########
+##########      *** SIVEP DATA ANALYSIS ***        ##########
+##########            *** FUNCTIONS ***            ##########
+##########                                         ##########
+##########                                         ##########
+#############################################################
+#############################################################
 
-##############################################
-## Load and Clean P. vivax Time Series Data ##
-##############################################
+#############################################
+## LOAD AND AGGREGATE SIVEP DATA FUNCTIONS ##
+#############################################
 
 # Get SIVEP data cleaned up and by species
 getDAILY_SIVEP_MALARIA_TYPE=function(FilePath, StartYear, EndYear, Melted){
@@ -321,6 +323,52 @@ getDAILY_SIVEP_MALARIA_AGE=function(FilePath, StartYear, EndYear, Melted){
     
     return(SIVEP_MALARIA_AGE)
   }
+}
+
+
+##############################
+## API CALCULATION FUNCTION ##
+##############################
+
+# Get function that calculates API by year
+getAPI=function(TS, Level, Date_Type, Denominator){
+  
+  # Get population estimates by level (state or municipality)
+  POP_EST_LEVEL=POP_EST[which(POP_EST$LEVEL == Level),]
+  
+  # Give BR code "0"
+  TS[which(TS$LEVEL == "BR"),"CODE"] = "0"
+  
+  # Level of time series
+  TS=TS[which(TS$LEVEL == Level),]
+  
+  # Select by date type
+  TS=subset(TS, TS$DATE_TYPE == Date_Type)
+  
+  # Get year (by epi-week)
+  TS$YEAR = NA
+  TS$YEAR = ifelse((TS$DATE < as.Date("2003-01-01") & TS$DATE - as.Date("2003-01-01") >= -6), 2003, year(TS$DATE)) 
+  
+  # Keep variables and remove variables before aggregation
+  TS=subset(TS, select = -c(DATE_TYPE))
+  
+  # Aggregate 
+  TS_API=aggregate(CASES~., data = TS, FUN = sum, na.action = na.omit)
+  
+  # Get population of each level by year
+  TS_API$POP=foreach(i=1:nrow(TS_API), .combine = "rbind") %do% {
+    POP=ifelse(is.null(POP_EST_LEVEL[which(TS_API[i,"CODE"] == POP_EST_LEVEL[,"CODE"]),as.character(TS_API[i,"YEAR"])]),NA, POP_EST_LEVEL[which(TS_API[i,"CODE"] == POP_EST_LEVEL[,"CODE"]),as.character(TS_API[i,"YEAR"])])
+  }
+  
+  # Get API
+  TS_API$API=(TS_API$CASES/TS_API$POP)*Denominator
+  
+  # Assign names
+  TS_API$STATE = ADMIN_NAMES[match(TS_API$CODE, ADMIN_NAMES$Code),"UF"] 
+  TS_API$NAME = ADMIN_NAMES[match(TS_API$CODE, ADMIN_NAMES$Code),"Name"] 
+  
+  
+  return(TS_API)
 }
 
 
