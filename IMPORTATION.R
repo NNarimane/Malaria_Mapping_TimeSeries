@@ -1163,3 +1163,100 @@ for(i in 1:length(Years)){
   dev.off()
 }
 
+#################################################################
+
+
+# Where are venezuelans going?
+
+
+############################
+## Run data upload script ##
+############################
+
+cat("Run data upload script\n")
+
+# Set file path
+if(envNN){
+  FilePath=paste0(getwd(),"/SIVEP_clean.RData")
+}else{
+  
+}
+
+# Get SIVEP raw notification data
+load(FilePath)
+
+# Read country codes files
+PAIS_CODE=read.csv(file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/COUNTRY_CODES.csv"), header = TRUE, stringsAsFactors = FALSE)
+PAIS_CODE$PAIS_CODE=as.character(PAIS_CODE$PAIS_CODE)
+
+
+###############
+## INFECTION ##
+
+###########
+## VIVAX ##
+
+#UF
+SIVEP_VENEZ_UF_INF_VIVAX = df %>%
+  select(DT_NOTIF, PAIS_INF, UF_NOTIF, RES_EXAM) %>% 
+  filter(PAIS_INF == "216") %>%
+  mutate(YEAR = year(DT_NOTIF)) %>% 
+  select(-DT_NOTIF, -PAIS_INF) %>%
+  group_by(YEAR, UF_NOTIF) %>%
+  count(RES_EXAM) %>%
+  spread(RES_EXAM, n, fill = 0) %>%
+  rename(FALCI = "F") %>%
+  rename(FV = "F+V") %>%
+  rename(VIVAX = "V") %>%
+  mutate(Falciparum = FALCI + FV) %>%
+  mutate(Vivax = VIVAX + FV) %>%
+  select(YEAR, UF_NOTIF, Vivax) %>%
+  spread(key = YEAR, value = Vivax)
+#MU
+SIVEP_VENEZ_MU_INF_VIVAX = df %>%
+  select(DT_NOTIF, PAIS_INF, MUN_NOTI, RES_EXAM) %>% 
+  filter(PAIS_INF == "216") %>%
+  mutate(YEAR = year(DT_NOTIF)) %>% 
+  select(-DT_NOTIF, -PAIS_INF) %>%
+  group_by(YEAR, MUN_NOTI) %>%
+  count(RES_EXAM) %>%
+  spread(RES_EXAM, n, fill = 0) %>%
+  rename(FALCI = "F") %>%
+  rename(FV = "F+V") %>%
+  rename(VIVAX = "V") %>%
+  mutate(Falciparum = FALCI + FV) %>%
+  mutate(Vivax = VIVAX + FV) %>%
+  select(YEAR, MUN_NOTI, Vivax) %>%
+  spread(key = YEAR, value = Vivax)
+
+# Assign names
+SIVEP_VENEZ_UF_INF_VIVAX$UF_NOTIF = as.character(ADMIN_NAMES[match(SIVEP_VENEZ_UF_INF_VIVAX$UF_NOTIF, ADMIN_NAMES$Code),"UF"])
+SIVEP_VENEZ_UF_INF_VIVAX$UF_NOTIF=as.factor(SIVEP_VENEZ_UF_INF_VIVAX$UF_NOTIF)
+SIVEP_VENEZ_MU_INF_VIVAX$MUN_NOTI = as.character(ADMIN_NAMES[match(SIVEP_VENEZ_MU_INF_VIVAX$MUN_NOTI, ADMIN_NAMES$Code),"Name"])
+SIVEP_VENEZ_MU_INF_VIVAX$MUN_NOTI=as.factor(SIVEP_VENEZ_MU_INF_VIVAX$MUN_NOTI)
+SIVEP_VENEZ_UF_INF_VIVAX[is.na(SIVEP_VENEZ_UF_INF_VIVAX)] = 0
+SIVEP_VENEZ_MU_INF_VIVAX[is.na(SIVEP_VENEZ_MU_INF_VIVAX)] = 0
+
+# UF: melt the data frame for plotting
+mVENEZ_VIVAX_UF <- melt(SIVEP_VENEZ_UF_INF_VIVAX, id.vars='UF_NOTIF')
+levels(mVENEZ_VIVAX_UF$UF_NOTIF) = levels(SIVEP_VENEZ_UF_INF_VIVAX$UF_NOTIF) 
+
+# Colors
+getColors=colorRampPalette(brewer.pal(10,"Spectral"))
+Colors=rev(getColors(length(levels(mVENEZ_VIVAX_UF$UF_NOTIF))))
+names(Colors)=levels(mVENEZ_VIVAX_UF$UF_NOTIF)
+
+# Stacked
+mVENEZ_VIVAX_UF_Plot=ggplot(mVENEZ_VIVAX_UF, aes(y=value, x=variable, fill = UF_NOTIF)) +   
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values=Colors,
+                    labels=names(Colors)) +
+  theme_minimal() +
+  labs(title="Proportion of imported P. vivax cases by case residence country", y="Proportion (%)", x="") +
+  theme(axis.text.x = element_text(size = 12, angle = 90, hjust = 1),
+        axis.title.y=element_text(size=12),
+        legend.position="right",
+        legend.title=element_text(size=12, face = "bold"))  +
+  guides(fill=guide_legend(title="Country of residence"))
+
+mVENEZ_VIVAX_UF_Plot
