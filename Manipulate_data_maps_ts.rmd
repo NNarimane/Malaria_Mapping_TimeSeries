@@ -41,11 +41,11 @@ day_malaria_type <- df %>%
                       select(DT_NOTIF, LEVEL, MUN_NOTI, RES_EXAM, n) %>%
                       spread(RES_EXAM, n, fill = 0) %>%
                       rename(CODE = MUN_NOTI) %>%
-                      rename(FALCI = "F") %>%
-                      rename(FV = "F+V") %>%
-                      rename(VIVAX = "V") %>%
-                      mutate(Falciparum = FALCI + FV) %>%
-                      mutate(Vivax = VIVAX + FV) %>%
+                      rename(FALCI = "Falciparum") %>%
+                      rename(VF = "V+F") %>%
+                      rename(VIVAX = "Vivax") %>%
+                      mutate(Falciparum = FALCI + VF) %>%
+                      mutate(Vivax = VIVAX + VF) %>%
                       select(DT_NOTIF, LEVEL, CODE, Falciparum, Vivax) %>%
                       gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE))
 
@@ -61,11 +61,11 @@ day_malaria_type_state <- df %>%
                           select(DT_NOTIF, LEVEL, UF_NOTIF, RES_EXAM, n) %>%
                           spread(RES_EXAM, n, fill = 0) %>%
                           rename(CODE = UF_NOTIF) %>%
-                          rename(FALCI = "F") %>%
-                          rename(FV = "F+V") %>%
-                          rename(VIVAX = "V") %>%
-                          mutate(Falciparum = FALCI + FV) %>%
-                          mutate(Vivax = VIVAX + FV) %>%
+                          rename(FALCI = "Falciparum") %>%
+                          rename(VF = "V+F") %>%
+                          rename(VIVAX = "Vivax") %>%
+                          mutate(Falciparum = FALCI + VF) %>%
+                          mutate(Vivax = VIVAX + VF) %>%
                           select(DT_NOTIF, LEVEL, CODE, Falciparum, Vivax) %>%
                           gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE))
 
@@ -81,11 +81,11 @@ day_malaria_type_brazil <- df %>%
                                  CODE = "1") %>%
                           select(DT_NOTIF, LEVEL, CODE, RES_EXAM, n) %>%
                           spread(RES_EXAM, n, fill = 0) %>%
-                          rename(FALCI = "F") %>%
-                          rename(FV = "F+V") %>%
-                          rename(VIVAX = "V") %>%
-                          mutate(Falciparum = FALCI + FV) %>%
-                          mutate(Vivax = VIVAX + FV) %>%
+                          rename(FALCI = "Falciparum") %>%
+                          rename(VF = "V+F") %>%
+                          rename(VIVAX = "Vivax") %>%
+                          mutate(Falciparum = FALCI + VF) %>%
+                          mutate(Vivax = VIVAX + VF) %>%
                           select(DT_NOTIF, LEVEL, CODE, Falciparum, Vivax) %>%
                           gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE))
 
@@ -101,9 +101,9 @@ day_malaria_type_gender <- df %>%
                             mutate(LEVEL = "MU") %>%
                             select(DT_NOTIF, LEVEL, MUN_NOTI, RES_EXAM, SEXO, n) %>%
                             spread(RES_EXAM, n, fill = 0) %>%
-                            rename(CODE = MUN_NOTI, FALCI = "F", FV = "F+V", VIVAX = "V", GENDER = SEXO) %>%
-                            mutate(Falciparum = FALCI + FV) %>%
-                            mutate(Vivax = VIVAX + FV) %>%
+                            rename(CODE = MUN_NOTI, FALCI = "Falciparum", VF = "V+F", VIVAX = "Vivax", GENDER = SEXO) %>%
+                            mutate(Falciparum = FALCI + VF) %>%
+                            mutate(Vivax = VIVAX + VF) %>%
                             select(DT_NOTIF, LEVEL, CODE, GENDER, Falciparum, Vivax) %>%
                             gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE, GENDER))
 
@@ -118,9 +118,9 @@ day_malaria_type_state_gender <- df %>%
                           mutate(LEVEL = "UF") %>%
                           select(DT_NOTIF, LEVEL, UF_NOTIF, RES_EXAM, SEXO, n) %>%
                           spread(RES_EXAM, n, fill = 0) %>%
-                          rename(CODE = UF_NOTIF, FALCI = "F", FV = "F+V", VIVAX = "V", GENDER = SEXO) %>%
-                          mutate(Falciparum = FALCI + FV) %>%
-                          mutate(Vivax = VIVAX + FV) %>%
+                          rename(CODE = UF_NOTIF, FALCI = "Falciparum", VF = "V+F", VIVAX = "Vivax", GENDER = SEXO) %>%
+                          mutate(Falciparum = FALCI + VF) %>%
+                          mutate(Vivax = VIVAX + VF) %>%
                           select(DT_NOTIF, LEVEL, CODE, GENDER, Falciparum, Vivax) %>%
                           gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE, GENDER))
 
@@ -136,65 +136,26 @@ day_malaria_type_brazil_gender <- df %>%
                                  CODE = "1") %>%
                           select(DT_NOTIF, LEVEL, CODE, RES_EXAM, SEXO, n) %>%
                           spread(RES_EXAM, n, fill = 0) %>%
-                          rename(FALCI = "F", FV = "F+V", VIVAX = "V", GENDER = SEXO) %>%
-                          mutate(Falciparum = FALCI + FV) %>%
-                          mutate(Vivax = VIVAX + FV) %>%
+                          rename(FALCI = "Falciparum", VF = "V+F", VIVAX = "Vivax", GENDER = SEXO) %>%
+                          mutate(Falciparum = FALCI + VF) %>%
+                          mutate(Vivax = VIVAX + VF) %>%
                           select(DT_NOTIF, LEVEL, CODE, GENDER, Falciparum, Vivax) %>%
                           gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE, GENDER))
 
 ```
 
 
-## Adding AGE RANGE
-
-### Creating the continuos age by year and after by categories (age range) from IBGE
-- Continuos age in year: here I dropped registries with inconsistency.
-```{r}
-df <- df %>% 
-  filter(ID_PACIE < 30 & ID_DIMEA == "D" | ID_PACIE < 12 & ID_DIMEA == "M" | ID_PACIE <= 100 & ID_DIMEA == "A")
-
-df$ID_PACIE <- as.double(df$ID_PACIE) 
-
-df <- df %>% 
-          mutate(AGE_CONT = if_else(ID_DIMEA == "A", ID_PACIE, 0))
-```
-
-- Age range
-```{r}
-df$AGE_RANGE <- NA 
-df[which(df$AGE_CONT <= 4),]$AGE_RANGE <- "0-4"
-df[which(df$AGE_CONT >= 5 & df$AGE_CONT <= 9),]$AGE_RANGE <- "5-9"
-df[which(df$AGE_CONT >= 10 & df$AGE_CONT <= 14),]$AGE_RANGE <- "10-14"
-df[which(df$AGE_CONT >= 15 & df$AGE_CONT <= 19),]$AGE_RANGE <- "15-19"
-df[which(df$AGE_CONT >= 20 & df$AGE_CONT <= 24),]$AGE_RANGE <- "20-24"
-df[which(df$AGE_CONT >= 25 & df$AGE_CONT <= 29),]$AGE_RANGE <- "25-29"
-df[which(df$AGE_CONT >= 30 & df$AGE_CONT <= 34),]$AGE_RANGE <- "30-34"
-df[which(df$AGE_CONT >= 35 & df$AGE_CONT <= 39),]$AGE_RANGE <- "35-39"
-df[which(df$AGE_CONT >= 40 & df$AGE_CONT <= 44),]$AGE_RANGE <- "40-44"
-df[which(df$AGE_CONT >= 45 & df$AGE_CONT <= 49),]$AGE_RANGE <- "45-49"
-df[which(df$AGE_CONT >= 50 & df$AGE_CONT <= 54),]$AGE_RANGE <- "50-54"
-df[which(df$AGE_CONT >= 55 & df$AGE_CONT <= 59),]$AGE_RANGE <- "55-59"
-df[which(df$AGE_CONT >= 60 & df$AGE_CONT <= 64),]$AGE_RANGE <- "60-64"
-df[which(df$AGE_CONT >= 65 & df$AGE_CONT <= 69),]$AGE_RANGE <- "65-69"
-df[which(df$AGE_CONT >= 70 & df$AGE_CONT <= 74),]$AGE_RANGE <- "70-74"
-df[which(df$AGE_CONT >= 75 & df$AGE_CONT <= 79),]$AGE_RANGE <- "75-79"
-df[which(df$AGE_CONT >= 80),]$AGE_RANGE <- "80+"
-
-df$AGE_RANGE = factor(df$AGE_RANGE, label=c("0-4","5-9","10-14","15-19","20-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64","65-69","70-74","75-79","80+"), levels= c("0-4","5-9","10-14","15-19","20-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64","65-69","70-74","75-79","80+"))
-
-```
-
-### Counting malaria cases by day, UF, municipality, AGE RANGE, malaria type.
+### Counting malaria cases by day, UF, municipality, AGE Categories, malaria type.
 ```{r}
 day_malaria_type_age <- df %>%
-                            group_by(DT_NOTIF, MUN_NOTI, AGE_RANGE) %>%
+                            group_by(DT_NOTIF, MUN_NOTI, AGE_CAT) %>%
                             count(RES_EXAM) %>%
                             mutate(LEVEL = "MU") %>%
-                            select(DT_NOTIF, LEVEL, MUN_NOTI, RES_EXAM, AGE_RANGE, n) %>%
+                            select(DT_NOTIF, LEVEL, MUN_NOTI, RES_EXAM, AGE_CAT, n) %>%
                             spread(RES_EXAM, n, fill = 0) %>%
-                            rename(CODE = MUN_NOTI, FALCI = "F", FV = "F+V", VIVAX = "V", AGE_CAT = AGE_RANGE) %>%
-                            mutate(Falciparum = FALCI + FV) %>%
-                            mutate(Vivax = VIVAX + FV) %>%
+                            rename(CODE = MUN_NOTI, FALCI = "Falciparum", VF = "V+F", VIVAX = "Vivax") %>%
+                            mutate(Falciparum = FALCI + VF) %>%
+                            mutate(Vivax = VIVAX + VF) %>%
                             select(DT_NOTIF, LEVEL, CODE, AGE_CAT, Falciparum, Vivax) %>%
                             gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE, AGE_CAT))
 
@@ -204,32 +165,32 @@ day_malaria_type_age <- df %>%
 ### Counting malaria cases by day, UF, AGE RANGE and malaria type
 ```{r}
 day_malaria_type_state_age <- df %>%
-                          group_by(DT_NOTIF, UF_NOTIF, AGE_RANGE) %>%
+                          group_by(DT_NOTIF, UF_NOTIF, AGE_CAT) %>%
                           count(RES_EXAM) %>%
                           mutate(LEVEL = "UF") %>%
-                          select(DT_NOTIF, LEVEL, UF_NOTIF, RES_EXAM, AGE_RANGE, n) %>%
+                          select(DT_NOTIF, LEVEL, UF_NOTIF, RES_EXAM, AGE_CAT, n) %>%
                           spread(RES_EXAM, n, fill = 0) %>%
-                          rename(CODE = UF_NOTIF, FALCI = "F", FV = "F+V", VIVAX = "V", AGE_CAT = AGE_RANGE) %>%
-                          mutate(Falciparum = FALCI + FV) %>%
-                          mutate(Vivax = VIVAX + FV) %>%
+                          rename(CODE = UF_NOTIF, FALCI = "Falciparum", VF = "V+F", VIVAX = "Vivax") %>%
+                          mutate(Falciparum = FALCI + VF) %>%
+                          mutate(Vivax = VIVAX + VF) %>%
                           select(DT_NOTIF, LEVEL, CODE, AGE_CAT, Falciparum, Vivax) %>%
                           gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE, AGE_CAT))
 
 ```
 
 
-### Counting malaria cases by day, AGE RANGE and malaria type
+### Counting malaria cases by day, AGE categories and malaria type
 ```{r}
 day_malaria_type_brazil_age <- df %>%
-                          group_by(DT_NOTIF, AGE_RANGE) %>%
+                          group_by(DT_NOTIF, AGE_CAT) %>%
                           count(RES_EXAM)%>%
                           mutate(LEVEL = "BR",
                                  CODE = "1") %>%
-                          select(DT_NOTIF, LEVEL, CODE, RES_EXAM, AGE_RANGE, n) %>%
+                          select(DT_NOTIF, LEVEL, CODE, RES_EXAM, AGE_CAT, n) %>%
                           spread(RES_EXAM, n, fill = 0) %>%
-                          rename(FALCI = "F", FV = "F+V", VIVAX = "V", AGE_CAT = AGE_RANGE) %>%
-                          mutate(Falciparum = FALCI + FV) %>%
-                          mutate(Vivax = VIVAX + FV) %>%
+                          rename(FALCI = "Falciparum", VF = "V+F", VIVAX = "Vivax") %>%
+                          mutate(Falciparum = FALCI + VF) %>%
+                          mutate(Vivax = VIVAX + VF) %>%
                           select(DT_NOTIF, LEVEL, CODE, AGE_CAT, Falciparum, Vivax) %>%
                           gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE, AGE_CAT))
 
@@ -281,9 +242,9 @@ day_malaria_type_places_country <- df %>%
                                  PAIS_NOTI = "1") %>%
                           select(DT_NOTIF, LEVEL, PAIS_NOTI, PAIS_RES, PAIS_INF, RES_EXAM, n) %>%
                           spread(RES_EXAM, n, fill = 0) %>%
-                          rename(CODE_NOTIF = PAIS_NOTI, CODE_RESID = PAIS_RES, CODE_INFEC = PAIS_INF, FALCI = "F", FV = "F+V", VIVAX = "V") %>%
-                          mutate(Falciparum = FALCI + FV) %>%
-                          mutate(Vivax = VIVAX + FV) %>%
+                          rename(CODE_NOTIF = PAIS_NOTI, CODE_RESID = PAIS_RES, CODE_INFEC = PAIS_INF, FALCI = "Falciparum", VF = "V+F", VIVAX = "Vivax") %>%
+                          mutate(Falciparum = FALCI + VF) %>%
+                          mutate(Vivax = VIVAX + VF) %>%
                           select(DT_NOTIF, LEVEL, CODE_NOTIF, CODE_RESID, CODE_INFEC, Falciparum, Vivax) %>%
                           gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE_NOTIF, CODE_RESID, CODE_INFEC))
 
@@ -298,9 +259,9 @@ day_malaria_type_places_state <- df %>%
                           mutate(LEVEL = "UF") %>%
                           select(DT_NOTIF, LEVEL, UF_NOTIF, UF_RESID, UF_INFEC, RES_EXAM, n) %>%
                           spread(RES_EXAM, n, fill = 0) %>%
-                          rename(CODE_NOTIF = UF_NOTIF, CODE_RESID = UF_RESID, CODE_INFEC = UF_INFEC, FALCI = "F", FV = "F+V", VIVAX = "V") %>%
-                          mutate(Falciparum = FALCI + FV) %>%
-                          mutate(Vivax = VIVAX + FV) %>%
+                          rename(CODE_NOTIF = UF_NOTIF, CODE_RESID = UF_RESID, CODE_INFEC = UF_INFEC, FALCI = "Falciparum", VF = "V+F", VIVAX = "Vivax") %>%
+                          mutate(Falciparum = FALCI + VF) %>%
+                          mutate(Vivax = VIVAX + VF) %>%
                           select(DT_NOTIF, LEVEL, CODE_NOTIF, CODE_RESID, CODE_INFEC, Falciparum, Vivax) %>%
                           gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE_NOTIF, CODE_RESID, CODE_INFEC))
 
@@ -316,9 +277,9 @@ day_malaria_type_places_muni <- df %>%
                           mutate(LEVEL = "MU") %>%
                           select(DT_NOTIF, LEVEL, MUN_NOTI, MUN_RESI, MUN_INFE, RES_EXAM, n) %>%
                           spread(RES_EXAM, n, fill = 0) %>%
-                          rename(CODE_NOTIF = MUN_NOTI, CODE_RESID = MUN_RESI, CODE_INFEC = MUN_INFE, FALCI = "F", FV = "F+V", VIVAX = "V") %>%
-                          mutate(Falciparum = FALCI + FV) %>%
-                          mutate(Vivax = VIVAX + FV) %>%
+                          rename(CODE_NOTIF = MUN_NOTI, CODE_RESID = MUN_RESI, CODE_INFEC = MUN_INFE, FALCI = "Falciparum", VF = "V+F", VIVAX = "Vivax") %>%
+                          mutate(Falciparum = FALCI + VF) %>%
+                          mutate(Vivax = VIVAX + VF) %>%
                           select(DT_NOTIF, LEVEL, CODE_NOTIF, CODE_RESID, CODE_INFEC, Falciparum, Vivax) %>%
                           gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE_NOTIF, CODE_RESID, CODE_INFEC))
 
