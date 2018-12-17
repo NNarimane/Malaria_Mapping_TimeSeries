@@ -325,6 +325,353 @@ getDAILY_SIVEP_MALARIA_AGE=function(FilePath, StartYear, EndYear, Melted){
   }
 }
 
+# Get importation tables at country level
+getSIVEP_MALARIA_TYPE_COUNTRY=function(RES_OR_INF, TYPE){
+  
+  cat("Aggregate by type and country\n")
+  SIVEP_PAIS = df %>%
+    select_("DT_NOTIF", RES_OR_INF, "RES_EXAM") %>% 
+    mutate(YEAR = year(DT_NOTIF)) %>% 
+    select(-DT_NOTIF) %>%
+    group_by_("YEAR", RES_OR_INF) %>%
+    count(RES_EXAM) %>%
+    spread(RES_EXAM, n, fill = 0) %>%
+    rename(FALCI = "F") %>%
+    rename(FV = "F+V") %>%
+    rename(VIVAX = "V") %>%
+    mutate(Falciparum = FALCI + FV) %>%
+    mutate(Vivax = VIVAX + FV) %>%
+    select_("YEAR", RES_OR_INF, TYPE) %>%
+    spread_(key = "YEAR", value = TYPE)
+  
+  if(RES_OR_INF == "PAIS_RES"){
+    
+    cat("By resident country\n")
+    
+    if(byTOP_COUNTRIES){
+      
+      cat("By top countries\n")
+      
+      # Get names
+      SIVEP_PAIS[is.na(SIVEP_PAIS)] = 0
+      SIVEP_PAIS$PAIS_RES = PAIS_CODE[match(SIVEP_PAIS$PAIS_RES, PAIS_CODE$PAIS_CODE),"PAIS"]
+      SIVEP_PAIS=SIVEP_PAIS[complete.cases(SIVEP_PAIS$PAIS_RES),]
+      
+      # Combine France and French Guyana
+      SIVEP_PAIS[which(SIVEP_PAIS$PAIS_RES == "GUIANA FRANCESA"),]=c("GUIANA FRANCESA",(SIVEP_PAIS[which(SIVEP_PAIS$PAIS_RES == "FRANCA"),2:ncol(SIVEP_PAIS)] +
+                                                                                          SIVEP_PAIS[which(SIVEP_PAIS$PAIS_RES == "GUIANA FRANCESA"),2:ncol(SIVEP_PAIS)]))
+      SIVEP_PAIS=SIVEP_PAIS[-which(SIVEP_PAIS$PAIS_RES == "FRANCA"),]
+      
+      # Get other category
+      OTHER=t(as.data.frame(c(OTHER="OTHER", colSums(SIVEP_PAIS[!(SIVEP_PAIS$PAIS_RES %in% Top_Countries_BR),2:ncol(SIVEP_PAIS)]))))
+      OTHER=data.frame(OTHER, check.names = F, stringsAsFactors = F)
+      colnames(OTHER)=colnames(SIVEP_PAIS)
+      rownames(OTHER)=1
+      OTHER[,2:ncol(OTHER)]=as.numeric(OTHER[,2:ncol(OTHER)])
+      
+      # Get prop table with Brazil
+      SIVEP_PAIS=bind_rows(SIVEP_PAIS[which(SIVEP_PAIS$PAIS_RES %in% Top_Countries_BR),],OTHER)
+      pSIVEP_PAIS=as.data.frame(prop.table(as.matrix(SIVEP_PAIS[,-1]), 2))
+      pSIVEP_PAIS=cbind(PAIS_RES = SIVEP_PAIS$PAIS_RES,pSIVEP_PAIS)
+      
+      # Get prop table without Brazil
+      sSIVEP_PAIS=bind_rows(SIVEP_PAIS[which(SIVEP_PAIS$PAIS_RES %in% Top_Countries),],OTHER)
+      pwbSIVEP_PAIS=as.data.frame(prop.table(as.matrix(sSIVEP_PAIS[,-1]), 2))
+      pwbSIVEP_PAIS=cbind(PAIS_RES = sSIVEP_PAIS$PAIS_RES,pwbSIVEP_PAIS)
+      
+    }else{
+      
+      cat("By all countries\n")
+      
+      # Get names
+      SIVEP_PAIS[is.na(SIVEP_PAIS)] = 0
+      SIVEP_PAIS$PAIS_RES = PAIS_CODE[match(SIVEP_PAIS$PAIS_RES, PAIS_CODE$PAIS_CODE),"PAIS"]
+      SIVEP_PAIS=SIVEP_PAIS[complete.cases(SIVEP_PAIS$PAIS_RES),]
+      
+      # Combine France and French Guyana
+      SIVEP_PAIS[which(SIVEP_PAIS$PAIS_RES == "GUIANA FRANCESA"),]=c("GUIANA FRANCESA",(SIVEP_PAIS[which(SIVEP_PAIS$PAIS_RES == "FRANCA"),2:ncol(SIVEP_PAIS)] +
+                                                                                          SIVEP_PAIS[which(SIVEP_PAIS$PAIS_RES == "GUIANA FRANCESA"),2:ncol(SIVEP_PAIS)]))
+      SIVEP_PAIS=SIVEP_PAIS[-which(SIVEP_PAIS$PAIS_RES == "FRANCA"),]
+      
+      # Get prop table with Brazil
+      pSIVEP_PAIS=as.data.frame(prop.table(as.matrix(SIVEP_PAIS[,-1]), 2))
+      pSIVEP_PAIS=cbind(PAIS_RES = SIVEP_PAIS$PAIS_RES,pSIVEP_PAIS)
+      
+      # Get prop table without Brazil
+      pwbSIVEP_PAIS=as.data.frame(prop.table(as.matrix(SIVEP_PAIS[-1,-1]), 2))
+      pwbSIVEP_PAIS=cbind(PAIS_RES = SIVEP_PAIS$PAIS_RES[-1],pwbSIVEP_PAIS)
+    }
+   
+  }else{
+    
+    cat("By infection country\n")
+    
+    if(byTOP_COUNTRIES){
+      
+      cat("By top countries\n")
+      
+      # Get names
+      SIVEP_PAIS[is.na(SIVEP_PAIS)] = 0
+      SIVEP_PAIS$PAIS_INF = PAIS_CODE[match(SIVEP_PAIS$PAIS_INF, PAIS_CODE$PAIS_CODE),"PAIS"]
+      SIVEP_PAIS=SIVEP_PAIS[complete.cases(SIVEP_PAIS$PAIS_INF),]
+      
+      # Combine France and French Guyana
+      SIVEP_PAIS[which(SIVEP_PAIS$PAIS_INF == "GUIANA FRANCESA"),]=c("GUIANA FRANCESA",(SIVEP_PAIS[which(SIVEP_PAIS$PAIS_INF == "FRANCA"),2:ncol(SIVEP_PAIS)] +
+                                                                       SIVEP_PAIS[which(SIVEP_PAIS$PAIS_INF == "GUIANA FRANCESA"),2:ncol(SIVEP_PAIS)]))
+      SIVEP_PAIS=SIVEP_PAIS[-which(SIVEP_PAIS$PAIS_INF == "FRANCA"),]
+      
+      # Get other category
+      OTHER=t(as.data.frame(c(OTHER="OTHER", colSums(SIVEP_PAIS[!(SIVEP_PAIS$PAIS_INF %in% Top_Countries_BR),2:ncol(SIVEP_PAIS)]))))
+      OTHER=data.frame(OTHER, check.names = F, stringsAsFactors = F)
+      colnames(OTHER)=colnames(SIVEP_PAIS)
+      rownames(OTHER)=1
+      OTHER[,2:ncol(OTHER)]=as.numeric(OTHER[,2:ncol(OTHER)])
+      
+      # Get prop table with Brazil
+      SIVEP_PAIS=bind_rows(SIVEP_PAIS[which(SIVEP_PAIS$PAIS_INF %in% Top_Countries_BR),],OTHER)
+      pSIVEP_PAIS=as.data.frame(prop.table(as.matrix(SIVEP_PAIS[,-1]), 2))
+      pSIVEP_PAIS=cbind(PAIS_INF = SIVEP_PAIS$PAIS_INF,pSIVEP_PAIS)
+      
+      # Get prop table without Brazil
+      sSIVEP_PAIS=bind_rows(SIVEP_PAIS[which(SIVEP_PAIS$PAIS_INF %in% Top_Countries),],OTHER)
+      pwbSIVEP_PAIS=as.data.frame(prop.table(as.matrix(sSIVEP_PAIS[,-1]), 2))
+      pwbSIVEP_PAIS=cbind(PAIS_INF = sSIVEP_PAIS$PAIS_INF,pwbSIVEP_PAIS)
+      
+    }else{
+      
+      cat("By all countries\n")
+      
+      # Get names
+      SIVEP_PAIS[is.na(SIVEP_PAIS)] = 0
+      SIVEP_PAIS$PAIS_INF = PAIS_CODE[match(SIVEP_PAIS$PAIS_INF, PAIS_CODE$PAIS_CODE),"PAIS"]
+      SIVEP_PAIS=SIVEP_PAIS[complete.cases(SIVEP_PAIS$PAIS_INF),]
+      
+      # Combine France and French Guyana
+      SIVEP_PAIS[which(SIVEP_PAIS$PAIS_INF == "GUIANA FRANCESA"),]=c("GUIANA FRANCESA",(SIVEP_PAIS[which(SIVEP_PAIS$PAIS_INF == "FRANCA"),2:ncol(SIVEP_PAIS)] +
+                                                                                          SIVEP_PAIS[which(SIVEP_PAIS$PAIS_INF == "GUIANA FRANCESA"),2:ncol(SIVEP_PAIS)]))
+      SIVEP_PAIS=SIVEP_PAIS[-which(SIVEP_PAIS$PAIS_INF == "FRANCA"),]
+      
+      # Get prop table with Brazil
+      pSIVEP_PAIS=as.data.frame(prop.table(as.matrix(SIVEP_PAIS[,-1]), 2))
+      pSIVEP_PAIS=cbind(PAIS_INF = SIVEP_PAIS$PAIS_INF,pSIVEP_PAIS)
+      
+      # Get prop table without Brazil
+      pwbSIVEP_PAIS=as.data.frame(prop.table(as.matrix(SIVEP_PAIS[-1,-1]), 2))
+      pwbSIVEP_PAIS=cbind(PAIS_INF = SIVEP_PAIS$PAIS_INF[-1],pwbSIVEP_PAIS)
+    }
+  }
+  return(list(SIVEP_PAIS, pSIVEP_PAIS, pwbSIVEP_PAIS))
+}
+
+####
+getSIVEP_MALARIA_TYPE_STATE=function(RES_OR_INF, TYPE){
+  
+  if(RES_OR_INF == "PAIS_RES"){
+    
+    cat("By resident state\n")
+    
+    if(byTOP_COUNTRIES){
+      
+      cat("By top countries\n")
+      
+      # # Get names
+      # SIVEP_PAIS[is.na(SIVEP_PAIS)] = 0
+      # SIVEP_PAIS$PAIS_RES = PAIS_CODE[match(SIVEP_PAIS$PAIS_RES, PAIS_CODE$PAIS_CODE),"PAIS"]
+      # SIVEP_PAIS=SIVEP_PAIS[complete.cases(SIVEP_PAIS$PAIS_RES),]
+      # 
+      # # Get other category
+      # OTHER=t(as.data.frame(c(OTHER="OTHER", colSums(SIVEP_PAIS[!(SIVEP_PAIS$PAIS_RES %in% Top_Countries_BR),2:ncol(SIVEP_PAIS)]))))
+      # OTHER=data.frame(OTHER, check.names = F, stringsAsFactors = F)
+      # colnames(OTHER)=colnames(SIVEP_PAIS)
+      # rownames(OTHER)=1
+      # OTHER[,2:ncol(OTHER)]=as.numeric(OTHER[,2:ncol(OTHER)])
+      # 
+      # # Get prop table with Brazil
+      # SIVEP_PAIS=bind_rows(SIVEP_PAIS[which(SIVEP_PAIS$PAIS_RES %in% Top_Countries_BR),],OTHER)
+      # pSIVEP_PAIS=as.data.frame(prop.table(as.matrix(SIVEP_PAIS[,-1]), 2))
+      # pSIVEP_PAIS=cbind(PAIS_RES = SIVEP_PAIS$PAIS_RES,pSIVEP_PAIS)
+      # 
+      # # Get prop table without Brazil
+      # sSIVEP_PAIS=bind_rows(SIVEP_PAIS[which(SIVEP_PAIS$PAIS_RES %in% Top_Countries),],OTHER)
+      # pwbSIVEP_PAIS=as.data.frame(prop.table(as.matrix(sSIVEP_PAIS[,-1]), 2))
+      # pwbSIVEP_PAIS=cbind(PAIS_RES = sSIVEP_PAIS$PAIS_RES,pwbSIVEP_PAIS)
+      
+    }else{
+      
+      cat("By all countries\n")
+      
+      cat("Aggregate by type and state\n")
+      SIVEP_UF = df %>%
+        select(DT_NOTIF, UF_NOTIF, UF_RESID, RES_EXAM) %>% 
+        mutate(YEAR = year(DT_NOTIF)) %>% 
+        select(-DT_NOTIF) %>%
+        group_by(YEAR, UF_NOTIF, UF_RESID) %>%
+        count(RES_EXAM) %>%
+        spread(RES_EXAM, n, fill = 0) %>%
+        rename(FALCI = "F") %>%
+        rename(FV = "F+V") %>%
+        rename(VIVAX = "V") %>%
+        mutate(Falciparum = FALCI + FV) %>%
+        mutate(Vivax = VIVAX + FV) %>%
+        select(YEAR, UF_NOTIF, UF_RESID, Vivax) %>%
+        spread(key = YEAR, value = Vivax)
+      
+      # # Get names
+      # SIVEP_PAIS[is.na(SIVEP_PAIS)] = 0
+      # SIVEP_PAIS$PAIS_RES = PAIS_CODE[match(SIVEP_PAIS$PAIS_RES, PAIS_CODE$PAIS_CODE),"PAIS"]
+      # SIVEP_PAIS=SIVEP_PAIS[complete.cases(SIVEP_PAIS$PAIS_RES),]
+      # 
+      # # Get prop table with Brazil
+      # pSIVEP_PAIS=as.data.frame(prop.table(as.matrix(SIVEP_PAIS[,-1]), 2))
+      # pSIVEP_PAIS=cbind(PAIS_RES = SIVEP_PAIS$PAIS_RES,pSIVEP_PAIS)
+      # 
+      # # Get prop table without Brazil
+      # pwbSIVEP_PAIS=as.data.frame(prop.table(as.matrix(SIVEP_PAIS[-1,-1]), 2))
+      # pwbSIVEP_PAIS=cbind(PAIS_RES = SIVEP_PAIS$PAIS_RES[-1],pwbSIVEP_PAIS)
+    }
+    
+  }else{
+    
+    cat("By infection country\n")
+    
+    if(byTOP_COUNTRIES){
+      
+      cat("By top countries\n")
+      
+      # Get names
+      SIVEP_PAIS[is.na(SIVEP_PAIS)] = 0
+      SIVEP_PAIS$PAIS_INF = PAIS_CODE[match(SIVEP_PAIS$PAIS_INF, PAIS_CODE$PAIS_CODE),"PAIS"]
+      SIVEP_PAIS=SIVEP_PAIS[complete.cases(SIVEP_PAIS$PAIS_INF),]
+      
+      # Get other category
+      OTHER=t(as.data.frame(c(OTHER="OTHER", colSums(SIVEP_PAIS[!(SIVEP_PAIS$PAIS_INF %in% Top_Countries_BR),2:ncol(SIVEP_PAIS)]))))
+      OTHER=data.frame(OTHER, check.names = F, stringsAsFactors = F)
+      colnames(OTHER)=colnames(SIVEP_PAIS)
+      rownames(OTHER)=1
+      OTHER[,2:ncol(OTHER)]=as.numeric(OTHER[,2:ncol(OTHER)])
+      
+      # Get prop table with Brazil
+      SIVEP_PAIS=bind_rows(SIVEP_PAIS[which(SIVEP_PAIS$PAIS_INF %in% Top_Countries_BR),],OTHER)
+      pSIVEP_PAIS=as.data.frame(prop.table(as.matrix(SIVEP_PAIS[,-1]), 2))
+      pSIVEP_PAIS=cbind(PAIS_INF = SIVEP_PAIS$PAIS_INF,pSIVEP_PAIS)
+      
+      # Get prop table without Brazil
+      sSIVEP_PAIS=bind_rows(SIVEP_PAIS[which(SIVEP_PAIS$PAIS_INF %in% Top_Countries),],OTHER)
+      pwbSIVEP_PAIS=as.data.frame(prop.table(as.matrix(sSIVEP_PAIS[,-1]), 2))
+      pwbSIVEP_PAIS=cbind(PAIS_INF = sSIVEP_PAIS$PAIS_INF,pwbSIVEP_PAIS)
+      
+    }else{
+      
+      cat("By all countries\n")
+      
+      # Get names
+      SIVEP_PAIS[is.na(SIVEP_PAIS)] = 0
+      SIVEP_PAIS$PAIS_INF = PAIS_CODE[match(SIVEP_PAIS$PAIS_INF, PAIS_CODE$PAIS_CODE),"PAIS"]
+      SIVEP_PAIS=SIVEP_PAIS[complete.cases(SIVEP_PAIS$PAIS_INF),]
+      
+      # Get prop table with Brazil
+      pSIVEP_PAIS=as.data.frame(prop.table(as.matrix(SIVEP_PAIS[,-1]), 2))
+      pSIVEP_PAIS=cbind(PAIS_INF = SIVEP_PAIS$PAIS_INF,pSIVEP_PAIS)
+      
+      # Get prop table without Brazil
+      pwbSIVEP_PAIS=as.data.frame(prop.table(as.matrix(SIVEP_PAIS[-1,-1]), 2))
+      pwbSIVEP_PAIS=cbind(PAIS_INF = SIVEP_PAIS$PAIS_INF[-1],pwbSIVEP_PAIS)
+    }
+  }
+  return(list(SIVEP_PAIS, pSIVEP_PAIS, pwbSIVEP_PAIS))
+}
+
+
+# Get stacked box plots - country level
+getSTACKED_BOX_PLOT=function(DATA, RES_OR_INF){
+  
+  # melt the data frame for plotting
+  mDATA <- melt(DATA, id.vars=RES_OR_INF)
+  levels(mDATA[,RES_OR_INF]) = levels(DATA[,RES_OR_INF]) 
+  mDATA$value=mDATA$value*100
+  
+  # Stacked
+  mDATA_Plot=ggplot(mDATA, aes(y=value, x=variable, fill = PAIS_RES)) +   
+    geom_bar(stat = "identity") +
+    scale_fill_manual(values=Colors,
+                      labels=names(Colors)) +
+    theme_minimal() +
+    labs(title=title, y="Proportion (%)", x="") +
+    theme(axis.text.x = element_text(size = 12, angle = 90, hjust = 1),
+          axis.title.y=element_text(size=12),
+          legend.position="right",
+          legend.title=element_text(size=12, face = "bold"))  +
+    guides(fill=guide_legend(title=legend_title))
+  
+  return(mDATA_Plot)
+}
+
+# Get importation chord diagram - country and state
+getCHORD_DIAGRAMS=function(LEVEL, DATA, RES_OR_INF){
+  
+  # Get edgelist by country
+  Years=2003:2018
+  COUNTRY_EDGELIST=foreach(i=1:length(Years)) %do% {
+    Edgelist_Name=paste0("COUNTRY_EDGELIST",Years[i])
+    Edgelist=assign(Edgelist_Name, 
+                    setNames(data.frame(from = DATA[RES_OR_INF],
+                                        to = "BRASIL",
+                                        values = DATA[,as.character(Years[i])]),
+                             c("to","from","weight")))
+  }
+  COUNTRY_EDGELIST=lapply(COUNTRY_EDGELIST, function(x) x[-1,])
+  
+  # Colors
+  if(LEVEL == "COUNTRY"){
+    Colors=c("slategray4", colorRampPalette(c("deeppink4","deeppink3",
+                                              "darkorchid4","darkorchid3",
+                                              "royalblue","cyan3",
+                                              "aquamarine3","springgreen3",
+                                              "mediumseagreen","darkolivegreen2",
+                                              "gold","darkgoldenrod2",
+                                              "darkorange","coral1","indianred2",
+                                              "firebrick1","firebrick"))
+             (nrow(COUNTRY_EDGELIST[[1]])))
+    names(Colors)=c("BRASIL", as.character(COUNTRY_EDGELIST[[1]]$to))
+  }
+  if(LEVEL == "UF"){
+    # Colors
+    getColors=colorRampPalette(brewer.pal(10,"Spectral"))
+    Colors=c(rev(getColors(length(unique(DATA$UF_NOTIF)))),rep("gray",length(unique(DATA$UF_RESID))-length(unique(DATA$UF_NOTIF))))
+    names(Colors)=c(unique(DATA$UF_NOTIF),unique(DATA$UF_RESID[!DATA$UF_RESID %in% DATA$UF_NOTIF]))
+  }
+  
+  
+  # Plot 
+  plot.new()
+  par(mfrow=c(1,1))
+  for(i in 1:length(Years)){
+    circos.clear()
+    circos.par(start.degree = 240, clock.wise = F, track.margin=c(-0.03,0.05))
+    chordDiagram(COUNTRY_EDGELIST[[i]], 
+                 grid.col = Colors, 
+                 directional = -1,
+                 self.link = F,
+                 annotationTrack = "grid", 
+                 preAllocateTracks = list(track.height = 0.1),
+                 transparency = 0.5)
+    circos.trackPlotRegion(track.index = 1, panel.fun = function(x, y){
+      xlim = get.cell.meta.data("xlim")
+      xplot = get.cell.meta.data("xplot")
+      ylim = get.cell.meta.data("ylim")
+      sector.name = get.cell.meta.data("sector.index")
+      circos.text(mean(xlim), 0, sector.name, facing = "clockwise", niceFacing = T, cex = 0.7, adj = c(0, 0.5))
+    }, bg.border = NA)
+    title(paste(title, "Brazil",as.character(2002+i)), line = -1, cex = 2, outer = F)
+    
+    # Save
+    dev.copy(png, paste0(Plot_Folder, title, "Brazil ",as.character(2002+i),".png"),
+             width = 1000, height = 1000, units = "px", pointsize = 12,
+             res = 100)
+    dev.off()
+    
+  }
+}
 
 ########################################
 ## API AND RATIO CALCULATION FUNCTION ##
@@ -391,6 +738,7 @@ getAPI=function(TS, Level, Date_Type, Denominator){
   
   return(TS_API_RATIO)
 }
+
 
 
 ###################################
