@@ -42,8 +42,6 @@ summary(df)
 - Malaria type and TIPO_LAM per year.
 ```{r}
 LAM_M_type <- df %>%
-              mutate(RES_EXAM = factor(RES_EXAM, c("V", "F", "F+V"), c("Vivax", "Falciparum", "V+F")),
-                     TIPO_LAM = factor(TIPO_LAM, c("PCD", "ACD", "CV"), c("PCD", "ACD", "CV"))) %>%
               group_by(ANO, TIPO_LAM) %>%
               count(RES_EXAM)  
               
@@ -68,7 +66,6 @@ From paper **WIEFELS et al. 2016**. Accuracy of the malaria epidemiological surv
 "The follow-up consultation was related to the active/ passive notification. The patient’s follow-up consultation occurs weeks after the confirmation of the malaria infection (World Health Organization 2012). It is a second consultation to certify the healing and is registered as a new notification, which is why it is essential to distinguish it from the first consultation to avoid duplicates. Two variables - the detection type, called TIPO_LAM (1-Passive, 2-Active and 3- Follow-up consultation) and the follow-up consultation, called ID_LVC (1-Yes, 2-No) certify the follow-up consultation. There were 201 inconsistent notifications checked as a follow- up consultation notification (TIPO_LAM=3) but also as its opposite (ID_LVC=2)."
 ```{r}
 LAM_ID_type <- df %>%
-              mutate(TIPO_LAM = factor(TIPO_LAM, c("PCD", "ACD", "CV"), c("PCD", "ACD", "CV"))) %>%
               group_by(ANO, TIPO_LAM) %>%
               count(ID_LVC_)  
               
@@ -90,16 +87,14 @@ dev.off()
 - Malaria type and age
 ```{r}
 M_age_gender <- df %>%
-                  mutate(TIPO_LAM = factor(TIPO_LAM, c("PCD", "ACD", "CV"), c("PCD", "ACD", "CV")),
-                         RES_EXAM = factor(RES_EXAM, c("V", "F", "F+V"), c("Vivax", "Falciparum", "V+F"))) %>%
                   group_by(ANO, RES_EXAM) %>%
-                  count(AGE_RANGE, SEXO)
+                  count(AGE_CAT, SEXO)
 
 options(scipen = 10000)
 
 dev.copy(png, "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Plots_results/AgeCategories_MalariaType", width = 1100, height = 1000, units = "px", pointsize = 12, res = 100)
 
-MA <- ggplot(aes(y = n, x = AGE_RANGE, fill = RES_EXAM), data = M_age_gender[which(M_age_gender$SEXO == "F" | M_age_gender$SEXO == "M"),]) +
+MA <- ggplot(aes(y = n, x = AGE_CAT, fill = RES_EXAM), data = M_age_gender[which(M_age_gender$SEXO == "F" | M_age_gender$SEXO == "M"),]) +
             geom_bar(stat = "identity", position = "dodge") +
             facet_wrap(~ANO) +
             labs(x = "Age Categories", y = "Malaria cases") +
@@ -132,11 +127,11 @@ df1 <- df %>%
         group_by(ANO, TIPO_LAM, SEXO, SINTOMAS, ID_LVC_, AGE_CAT) %>%
         count(RES_EXAM) %>%
         spread(RES_EXAM, n, fill = 0) %>%
-        rename(FALCI = "F") %>%
-        rename(FV = "F+V") %>%
-        rename(VIVAX = "V") %>%
-        mutate(Falciparum = FALCI + FV) %>%
-        mutate(Vivax = VIVAX + FV) %>%
+        rename(FALCI = "Falciparum") %>%
+        rename(VF = "V+F") %>%
+        rename(VIVAX = "Vivax") %>%
+        mutate(Falciparum = FALCI + VF) %>%
+        mutate(Vivax = VIVAX + VF) %>%
         select(ANO, TIPO_LAM, SEXO, SINTOMAS, ID_LVC_, AGE_CAT, Falciparum, Vivax) %>%
         gather(key = 'MALARIA_TYPE', value = 'CASES', -c(ANO, TIPO_LAM, SEXO, SINTOMAS, ID_LVC_, AGE_CAT))
 
@@ -148,13 +143,13 @@ df1 <- df %>%
 #Change the title when change the type
 dev.copy(png, "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Plots_results/AgeCategory_Gender_Falciparum", width = 1100, height = 1000, units = "px", pointsize = 12, res = 100)
 
-#Change the type
-#df2 <- df1 %>% filter(MALARIA_TYPE == "Falciparum")
+#Change the type: Falciparum/Vivax
+df2 <- df1 %>% filter(MALARIA_TYPE == "Falciparum")
 
 AG <- ggplot(aes(y = CASES, x = AGE_CAT, fill = SEXO), data = df2[which(df2$SEXO == "F" | df2$SEXO == "M"),]) +
             geom_bar(stat = "identity", position = "dodge") +
             facet_wrap(~ANO) +
-            labs(x = "Age categories", y = "Malaria falciparum cases") + #Change to vivax
+            labs(x = "Age categories", y = "Malaria falciparum cases") + #Change to vivax/falciparum
             theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
             guides(fill = guide_legend(title = "Gender")) 
 
@@ -165,15 +160,10 @@ dev.off()
 
 - SINTOMAS- ver com LVC e com TIPO_LAM
 ```{r}
-Sint <- df1 %>%
-          mutate(TIPO_LAM1 = factor(TIPO_LAM, c("PCD", "ACD", "CV"), c("PCD", "ACD", "CV")),
-                 SINTOMAS1 = factor(SINTOMAS, c("YES", "NO"), c("YES", "NO")),
-                 ID_LVC_1 = factor(ID_LVC_, c("YES", "NO"), c("YES", "NO")))
-
-#Change the title when change the type
+#Change the title when change the type falciparum/vivax
 dev.copy(png, "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Plots_results/Symptoms_DetectionType_Vivax", width = 1100, height = 1000, units = "px", pointsize = 12, res = 100)
 
-# SCD <- ggplot(aes(y = CASES, x = SINTOMAS1, fill = ID_LVC_1), data = Sint[Sint$MALARIA_TYPE == "Vivax",]) +
+# SCD <- ggplot(aes(y = CASES, x = SINTOMAS, fill = ID_LVC_), data = df1[df1$MALARIA_TYPE == "Vivax",]) +
 #             geom_bar(stat = "identity", position = "dodge") +
 #             facet_wrap(~ANO) +
 #             labs(x = "Symptoms", y = "Malaria vivax cases") +
@@ -181,7 +171,7 @@ dev.copy(png, "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesR
 #             guides(fill = guide_legend(title ="Cure Verification"))
 # dev.off()
 
-SCD2 <- ggplot(aes(y = CASES, x = SINTOMAS1, fill = TIPO_LAM1), data = Sint[Sint$MALARIA_TYPE == "Vivax",]) +
+SCD2 <- ggplot(aes(y = CASES, x = SINTOMAS, fill = TIPO_LAM), data = df1[df1$MALARIA_TYPE == "Vivax",]) +
             geom_bar(stat = "identity", position = "dodge") +
             facet_wrap(~ANO) +
             labs(x = "Symptoms", y = "Malaria vivax cases") +
@@ -189,9 +179,9 @@ SCD2 <- ggplot(aes(y = CASES, x = SINTOMAS1, fill = TIPO_LAM1), data = Sint[Sint
             guides(fill = guide_legend(title ="Detection type"))
 dev.off()
 
-# SCD3 <- ggplot(aes(y = CASES, x = TIPO_LAM1, fill = SINTOMAS1), data = Sint[Sint$MALARIA_TYPE == "Falciparum",]) +
+# SCD3 <- ggplot(aes(y = CASES, x = TIPO_LAM, fill = SINTOMAS), data = df1[df1$MALARIA_TYPE == "Falciparum",]) +
 #             geom_bar(stat = "identity", position = "dodge") +
-#             facet_wrap(~ID_LVC_1) +
+#             facet_wrap(~ID_LVC_) +
 #             labs(x = "Detection type stratified by Cure verification", y = "Malaria falciparum cases") +
 #             guides(fill = guide_legend(title ="Symptoms"))
 # 
@@ -199,9 +189,9 @@ dev.off()
             
 ```
 
-Pregnant 
+Pregnant - check percentage of pregnant
 ```{r}
-unique(df$GESTANTE_1)
+unique(df$GESTANTE_)
 preg <- df %>%
           group_by(ANO, RES_EXAM, SEXO) %>%
           count(GESTANTE_)
@@ -212,8 +202,6 @@ pms <- ggplot(aes(y = n, x = GESTANTE_), data = preg) +
          
   
 ```
-
-
 
 
 - Case per age and gender population size
