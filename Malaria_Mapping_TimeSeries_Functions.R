@@ -325,6 +325,74 @@ getDAILY_SIVEP_MALARIA_AGE=function(FilePath, StartYear, EndYear, Melted){
   }
 }
 
+# Get SIVEP data cleaned up and by species and treatment
+getSIVEP_MALARIA_TYPE_TREATMENT=function(FilePath){
+  
+  # Get SIVEP raw notification data
+  load(FilePath)
+  
+  # Choose time period
+  # df=df[which(df[,"DT_NOTIF"] >= paste0(StartYear,"-01-01") & df[,"DT_NOTIF"] <= paste0(EndYear, "-12-31")),]
+  
+  cat("Aggregate by type, gender, age, treatment\n")
+  SIVEP_TREAT = df %>%
+    select(DT_NOTIF, RES_EXAM, SEXO, GESTANTE_,AGE_CAT, ESQUEMA) %>% 
+    mutate(YEAR = year(DT_NOTIF)) %>% 
+    select(-DT_NOTIF) %>%
+    mutate(GESTANTE = as.character(GESTANTE_)) %>%
+    mutate(GESTANTE = replace(GESTANTE, is.na(GESTANTE), "NA")) %>%
+    mutate(GESTANTE = replace(GESTANTE, which(GESTANTE=="NO"), "NA")) %>%
+    mutate(GESTANTE = replace(GESTANTE, which(GESTANTE=="Ignored"), "NA")) %>%
+    mutate(GESTANTE = as.factor(GESTANTE)) %>%
+    select(YEAR, RES_EXAM, SEXO, GESTANTE,AGE_CAT, ESQUEMA) %>%
+    group_by(YEAR, RES_EXAM, SEXO, GESTANTE,AGE_CAT, ESQUEMA) %>%
+    count(RES_EXAM) %>%
+    spread(RES_EXAM, n, fill = 0) %>%
+    rename(FALCI = "Falciparum") %>%
+    rename(FV = "V+F") %>%
+    rename(VIVAX = "Vivax") %>%
+    mutate(Falciparum = FALCI + FV) %>%
+    mutate(Vivax = VIVAX + FV) %>%
+    select(YEAR, SEXO, GESTANTE, AGE_CAT, ESQUEMA, Falciparum, Vivax) %>%
+    gather(key = 'TYPE', value = 'CASES', -c(YEAR, SEXO, GESTANTE, AGE_CAT, ESQUEMA))
+  
+  # # Get week, month, and year
+  # SIVEP_TREAT=data.frame(cbind(SIVEP_TREAT,
+  #                                     DT_YEAR=floor_date(SIVEP_TREAT$DT_NOTIF, unit = "year"),
+  #                                     DT_MONTH=floor_date(SIVEP_TREAT$DT_NOTIF, unit = "month"),
+  #                                     DT_WEEK=floor_date(SIVEP_TREAT$DT_NOTIF, unit = "week")))
+  # 
+  # if(Melted){
+  #   #########################
+  #   ## General Plots (Melted)
+  #   #########################
+  #   
+  #   # Melt by date
+  #   mSIVEP_MALARIA_TYPE=melt(setDT(SIVEP_MALARIA_TYPE),
+  #                            measure.vars = list(c("DT_NOTIF",
+  #                                                  "DT_YEAR",
+  #                                                  "DT_MONTH",
+  #                                                  "DT_WEEK")),
+  #                            variable.name = "DATE_TYPE", 
+  #                            value.name = "DATE",
+  #                            id.vars = c("LEVEL","CODE","TYPE","CASES"))
+  #   
+  #   # Reorder and relabel date type
+  #   levels(mSIVEP_MALARIA_TYPE$DATE_TYPE) = c("Daily","Yearly","Monthly","Weekly")
+  #   mSIVEP_MALARIA_TYPE$DATE_TYPE = factor(mSIVEP_MALARIA_TYPE$DATE_TYPE,
+  #                                          levels = c("Daily","Weekly","Monthly","Yearly"))
+  #   
+  #   return(mSIVEP_MALARIA_TYPE)
+  #   
+  # }else{
+  #   
+  #   return(SIVEP_TREAT)
+  # }
+  
+  return(SIVEP_TREAT)
+  
+}
+
 # Get importation tables at country level
 getSIVEP_MALARIA_TYPE_COUNTRY=function(RES_OR_INF, TYPE){
   
@@ -463,7 +531,7 @@ getSIVEP_MALARIA_TYPE_COUNTRY=function(RES_OR_INF, TYPE){
   return(list(SIVEP_PAIS, pSIVEP_PAIS, pwbSIVEP_PAIS))
 }
 
-####
+########################## Fix
 getSIVEP_MALARIA_TYPE_STATE=function(RES_OR_INF, TYPE){
   
   if(RES_OR_INF == "PAIS_RES"){

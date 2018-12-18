@@ -274,6 +274,16 @@ dev.copy(png, paste0(Plot_Folder,title,".png"),
 dev.off()
 
 
+###########################
+## PLOT WITH CASE COUNTS ##
+
+# Load case count data
+WHO_Malaria=read.csv(paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/WHO_Malaria_Cases_Estimates.csv"), check.names = F)
+mWHO_Malaria=melt(WHO_Malaria)
+
+  # Plot
+ggplot(WHO_Malaria, aes(Country))
+
 ################
 ## CORD GRAPH ##
 
