@@ -15,6 +15,7 @@ library(foreign)
 library('stringr')
 library(tidyverse)
 library('data.table')
+library('forcats')
 
 ```
 
@@ -289,8 +290,85 @@ day_malaria_type_places_muni <- df %>%
 ```
 
 
-# Case per age and gender population size
-- fazer essa tabela ficar no ponto para o merge com a tabela de casos por faixa etaria e sexo do sivep. Antes do merge, fazer um rbind dessa tabela do SIVEP considerando. BR, UF e MU também. Fazer o mesmo para essa.
+# Case per age and gender population size - API
+
+### Counting malaria cases by day, municipality, age categories, gender, malaria type.
+```{r}
+day_malaria_type_age_gender <- df %>%
+                            group_by(DT_NOTIF, MUN_NOTI, AGE_CAT, SEXO) %>%
+                            count(RES_EXAM) %>%
+                            mutate(LEVEL = "MU") %>%
+                            select(DT_NOTIF, LEVEL, MUN_NOTI, RES_EXAM, AGE_CAT, SEXO, n) %>%
+                            spread(RES_EXAM, n, fill = 0) %>%
+                            rename(CODE = MUN_NOTI, GENDER = SEXO, FALCI = "Falciparum", VF = "V+F", VIVAX = "Vivax") %>%
+                            mutate(Falciparum = FALCI + VF) %>%
+                            mutate(Vivax = VIVAX + VF) %>%
+                            select(DT_NOTIF, LEVEL, CODE, AGE_CAT, GENDER, Falciparum, Vivax) %>%
+                            gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE, AGE_CAT, GENDER))
+                           
+
+```
+
+### Counting malaria cases by day, state, age caterories, gender and malaria type
+```{r}
+day_malaria_type_state_age_gender <- df %>%
+                          group_by(DT_NOTIF, UF_NOTIF, AGE_CAT, SEXO) %>%
+                          count(RES_EXAM) %>%
+                          mutate(LEVEL = "UF") %>%
+                          select(DT_NOTIF, LEVEL, UF_NOTIF, RES_EXAM, AGE_CAT, SEXO, n) %>%
+                          spread(RES_EXAM, n, fill = 0) %>%
+                          rename(CODE = UF_NOTIF, GENDER = SEXO, FALCI = "Falciparum", VF = "V+F", VIVAX = "Vivax") %>%
+                          mutate(Falciparum = FALCI + VF) %>%
+                          mutate(Vivax = VIVAX + VF) %>%
+                          select(DT_NOTIF, LEVEL, CODE, AGE_CAT, GENDER, Falciparum, Vivax) %>%
+                          gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE, AGE_CAT, GENDER))
+
+```
+
+
+### Counting malaria cases by day, country, age categories, gender and malaria type
+```{r}
+day_malaria_type_brazil_age_gender <- df %>%
+                          group_by(DT_NOTIF, AGE_CAT, SEXO) %>%
+                          count(RES_EXAM)%>%
+                          mutate(LEVEL = "BR",
+                                 CODE = "1") %>%
+                          select(DT_NOTIF, LEVEL, CODE, RES_EXAM, AGE_CAT, SEXO, n) %>%
+                          spread(RES_EXAM, n, fill = 0) %>%
+                          rename(GENDER = SEXO, FALCI = "Falciparum", VF = "V+F", VIVAX = "Vivax") %>%
+                          mutate(Falciparum = FALCI + VF) %>%
+                          mutate(Vivax = VIVAX + VF) %>%
+                          select(DT_NOTIF, LEVEL, CODE, AGE_CAT, GENDER, Falciparum, Vivax) %>%
+                          gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE, AGE_CAT, GENDER))
+
+```
+
+# rbind population table per level
+- Rename GENDER and exclude "I" and NA's
+```{r}
+sivep_strat <- rbind(day_malaria_type_brazil_age_gender, day_malaria_type_state_age_gender, day_malaria_type_age_gender)
+
+sivep_strat$GENDER1 <- NA
+sivep_strat[which(sivep_strat$GENDER == "F"),]$GENDER1 <- "Female" 
+sivep_strat[which(sivep_strat$GENDER == "M"),]$GENDER1 <- "Male" 
+sivep_strat[which(sivep_strat$GENDER == "I"),]$GENDER1 <- NA 
+
+unique(sivep_strat$GENDER1)
+class(sivep_strat$GENDER1)
+table(sivep_strat$GENDER1)
+
+sivep_strat <- sivep_strat[, c(1, 2, 3, 4, 8, 6, 7)]
+
+sivep_strat <- sivep_strat %>%
+                        rename(GENDER = GENDER1)
+
+
+
+```
+
+
+
+# Population size per level, code, age categories and gender
 ```{r}
 if(envNN){
   pop_strat <- read.csv("/BRA_AGE_SEX_MUNICIP_2010.csv")
@@ -307,53 +385,37 @@ summary(pop_strat)
 
 ```
 
-LEVEL| CODE | AGE_CAT == Group | Total | Male | Female
-
-
-- Filtrar o group 0 ano, mudar as categorias da variável group para deixar igual do SIVEP, mudar o nome da variaǘel tb. E ver se o código de município bate com do SIVEP.
-- recategorizar Group para "0-4","5-9","10-14","15-19","20-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64","65-69","70-74","75-79","80+"), levels= c("0-4","5-9","10-14","15-19","20-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64","65-69","70-74","75-79","80+".
-
-- A categoria "80 anos ou mais" está como NA ára todos. Vou ter que gerar somando as categorias que são iguais ou maiores.
-- Na categoria "100 anos ou mais", substituir em Total, Men e Women, os "-" que deveria na verdade ser NA.
+- recategorizing age categories and cleaning
 ```{r}
-pop_strat1 <- pop_strat %>%
+pop_strat <- pop_strat %>%
                   filter(Group == "0 a 4 anos" | Group == "5 a 9 anos" | Group == "10 a 14 anos" | Group == "15 a 19 anos" | Group == "20 a 24 anos" | Group == "25 a 29 anos" | Group == "30 a 34 anos" | Group == "35 a 39 anos" | Group == "40 a 44 anos" | Group == "45 a 49 anos"  | Group == "50 a 54 anos" | Group == "55 a 59 anos" | Group == "60 a 64 anos" | Group == "65 a 69 anos" | Group == "70 a 74 anos" | Group == "75 a 79 anos" | Group == "80 a 84 anos" | Group == "85 a 89 anos" | Group == "90 a 94 anos" | Group == "95 a 99 anos" | Group == "100 anos ou mais") %>%
                   mutate(Group = ifelse(Group == "80 anos ou mais" | Group == "80 a 84 anos" | Group == "85 a 89 anos" | Group == "90 a 94 anos" | Group == "95 a 99 anos" | Group == "100 anos ou mais", "80 anos ou mais", Group))
 
-# Não sei fazer em Tidyverse, fiz no base.   
-pop_strat1$Men <- as.integer(pop_strat1$Men)
-pop_strat1$Women <- as.integer(pop_strat1$Women)
-pop_strat1 <- aggregate(cbind(Total, Men, Women) ~ Level + Code + Name + Group, data = pop_strat1, FUN = sum)
+
+# Sum lines with the category "80 anos ou mais"   
+pop_strat$Men <- as.integer(pop_strat$Men)
+pop_strat$Women <- as.integer(pop_strat$Women)
+pop_strat <- aggregate(cbind(Total, Men, Women) ~ Level + Code + Name + Group, data = pop_strat, FUN = sum)
   
-  
-#pop_strat1 <- pop_strat1 %>%
-#                    mutate(Group = factor(Group, levels= c("0 a 4 anos", "10 a 14 anos", "15 a 19 anos", "20 a 24 anos", "25 a 29 anos", "30 a #34 anos",  "35 a 39 anos", "40 a 44 anos", "45 a 49 anos"    "5 a 9 anos"      "50 a 54 anos"    "55 a 59 anos"   
-#[13] "60 a 64 anos"    "65 a 69 anos"    "70 a 74 anos"    "75 a 79 anos"    "80 anos ou mais"), #label=c("0-4","5-9","10-14","15-19","20-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64","65-69","70-74","75-79","80+"))) #%>%
- #                   filter(Level == "GR") %>%
-                 
-
-
-
+ 
+pop_strat <- pop_strat %>%
+                   mutate(Group = factor(Group, levels= c("0 a 4 anos", "5 a 9 anos", "10 a 14 anos", "15 a 19 anos", "20 a 24 anos", "25 a 29 anos", "30 a 34 anos",  "35 a 39 anos", "40 a 44 anos", "45 a 49 anos", "50 a 54 anos", "55 a 59 anos", "60 a 64 anos", "65 a 69 anos", "70 a 74 anos", "75 a 79 anos", "80 anos ou mais"), label=c("0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80+"))) %>%
+                  filter(Level != "GR") %>%
+                  rename(LEVEL = Level, CODE = Code, NAME = Name, AGE_CAT = Group, Male = Men, Female = Women) %>%
+                  gather(key = 'GENDER', value = 'POP_SIZE', -c(LEVEL, CODE, NAME, AGE_CAT)) %>%
+                  mutate(CODE = str_sub(CODE, 1, 6))
      
-
-# BR
-# 2933764 + 2891614 + 2958801 + 2985271 + 3198318 = 14967768
-# BR total
-# 14967767
-# 
-# testesub <- pop_strat %>% filter(pop_strat$Code == "2304202") %>% filter(Group == "5 anos" | Group == "6 anos" | Group == "7 anos" | Group == "8 anos" | Group == "9 anos")
-# 139444
-# 
-# pop_strat %>% filter(pop_strat$Code == "2304202") %>% filter(Group == "5 a 9 anos") #139443
-# 
-# testesub <- pop_strat %>% filter(pop_strat$Code == "12") %>% filter(Group == "5 anos" | Group == "6 anos" | Group == "7 anos" | Group == "8 anos" | Group == "9 anos")
-# 82159
-# 
-# pop_strat %>% filter(pop_strat$Code == "12") %>% filter(Group == "5 a 9 anos") #82158
-# 
-# 
-# 2304202
-
 ```
+
+
+
+
+#REver isso para retirar a categoria "I" de GENDER para fazer o merge com SIVEP- ver se vai precisar
+                            # spread(GENDER, n, fill = 0) %>%
+                            # rename(Male = M, Female = F) %>%
+                            # select(DT_NOTIF, LEVEL, CODE, AGE_CAT, Male, Female, TYPE) %>%
+                            # gather(key = 'GENDER', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE, AGE_CAT, TYPE)
+  
+
 
 - abrir o shape de assentamentos e ver se tem de grandes empreendimentos e suas infos.
