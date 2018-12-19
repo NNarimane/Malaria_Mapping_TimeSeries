@@ -376,12 +376,15 @@ if(envNN){
 
 #pop_strat <- fread("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/BRA_AGE_SEX_MUNICIP_2010.csv", stringsAsFactors = F, encoding = 'Latin-1') #my pc
 
+pop_strat <- pop_strat[, -5]
+pop_strat 
+
 head(pop_strat)
-unique(pop_strat$Level) #"BR" "GR" "UF" "MU" --> cortar "GR"
-unique(pop_strat$Code) # cortar o último dígito
-unique(pop_strat$Group) # retirar "0 ano", "1 ano", "2 anos", 3 anos", "4 anos", "5 anos", "6 anos", "7 anos", "8 anos", "9 anos", "10 anos", "11 anos", "12 anos", "13 anos", "14 anos", "15 anos", "16 anos", "17 anos",  "18 anos", "19 anos", "20 anos", "21 anos", "22 anos", "23 anos", "24 anos". Virar tudo uma só a aprtir daqui: "80 anos ou mais", "80 a 84 anos", "85 a 89 anos", "90 a 94 anos", "95 a 99 anos", "100 anos ou mais".
+unique(pop_strat$Level) 
+unique(pop_strat$Code) 
+unique(pop_strat$Group) 
 summary(pop_strat)
-#Tranformar Men e Women em números.
+
 
 ```
 
@@ -395,8 +398,9 @@ pop_strat <- pop_strat %>%
 # Sum lines with the category "80 anos ou mais"   
 pop_strat$Men <- as.integer(pop_strat$Men)
 pop_strat$Women <- as.integer(pop_strat$Women)
-pop_strat <- aggregate(cbind(Total, Men, Women) ~ Level + Code + Name + Group, data = pop_strat, FUN = sum)
-  
+pop_strat <- aggregate(cbind(Men, Women) ~ Level + Code + Name + Group, data = pop_strat, FUN = sum)
+
+pop_strat %>% filter(Code == "4304101")  
  
 pop_strat <- pop_strat %>%
                    mutate(Group = factor(Group, levels= c("0 a 4 anos", "5 a 9 anos", "10 a 14 anos", "15 a 19 anos", "20 a 24 anos", "25 a 29 anos", "30 a 34 anos",  "35 a 39 anos", "40 a 44 anos", "45 a 49 anos", "50 a 54 anos", "55 a 59 anos", "60 a 64 anos", "65 a 69 anos", "70 a 74 anos", "75 a 79 anos", "80 anos ou mais"), label=c("0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80+"))) %>%
@@ -404,18 +408,41 @@ pop_strat <- pop_strat %>%
                   rename(LEVEL = Level, CODE = Code, NAME = Name, AGE_CAT = Group, Male = Men, Female = Women) %>%
                   gather(key = 'GENDER', value = 'POP_SIZE', -c(LEVEL, CODE, NAME, AGE_CAT)) %>%
                   mutate(CODE = str_sub(CODE, 1, 6))
-     
+
+pop_strat %>% filter(CODE == "310010")
+pop_strat[which(pop_strat$CODE == "310010" & is.na(pop_strat$AGE_CAT)),]
+
+write.csv(pop_strat, file = "pop_strat_2010.csv", row.names = F)
+   
+
+  
+```
+
+Proportion of males and females by gender
+```{r}
+pop_strat1 <- pop_strat %>% 
+                    add_count(CODE, wt = POP_SIZE)
+                                
+pop_strat1 %>% filter(CODE == "520005")
+
+pop_strat1 <- pop_strat1 %>%
+                 #   mutate(PROPORTION = POP_SIZE/n) %>%
+                    rename(POP_TOTAL = n)
+
+
+write.csv(pop_strat, file = "pop_strat_2010_prop.csv", row.names = F)
+
 ```
 
 
 
+Merge of pop size and malaria cases
+```{r}
 
-#REver isso para retirar a categoria "I" de GENDER para fazer o merge com SIVEP- ver se vai precisar
-                            # spread(GENDER, n, fill = 0) %>%
-                            # rename(Male = M, Female = F) %>%
-                            # select(DT_NOTIF, LEVEL, CODE, AGE_CAT, Male, Female, TYPE) %>%
-                            # gather(key = 'GENDER', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE, AGE_CAT, TYPE)
-  
+
+
+
+```  
 
 
 - abrir o shape de assentamentos e ver se tem de grandes empreendimentos e suas infos.
