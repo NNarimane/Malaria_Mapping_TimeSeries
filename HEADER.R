@@ -34,6 +34,7 @@ library("RColorBrewer")
 library("colorspace")
 library("foreign")
 library("tidyverse")
+library("naniar")
 
 ####################
 ## Load Functions ##

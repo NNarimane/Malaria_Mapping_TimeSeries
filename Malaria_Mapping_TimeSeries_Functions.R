@@ -339,13 +339,24 @@ getSIVEP_MALARIA_TYPE_TREATMENT=function(FilePath){
     select(DT_NOTIF, RES_EXAM, SEXO, GESTANTE_,AGE_CAT, ESQUEMA) %>% 
     mutate(YEAR = year(DT_NOTIF)) %>% 
     select(-DT_NOTIF) %>%
+    mutate(ESQUEMA = replace(ESQUEMA, ESQUEMA == "N/A", NA)) %>%
     mutate(GESTANTE = as.character(GESTANTE_)) %>%
     mutate(GESTANTE = replace(GESTANTE, is.na(GESTANTE), "NA")) %>%
     mutate(GESTANTE = replace(GESTANTE, which(GESTANTE=="NO"), "NA")) %>%
     mutate(GESTANTE = replace(GESTANTE, which(GESTANTE=="Ignored"), "NA")) %>%
     mutate(GESTANTE = as.factor(GESTANTE)) %>%
-    select(YEAR, RES_EXAM, SEXO, GESTANTE,AGE_CAT, ESQUEMA) %>%
-    group_by(YEAR, RES_EXAM, SEXO, GESTANTE,AGE_CAT, ESQUEMA) %>%
+    mutate(PREGNANT = as.character(GESTANTE_)) %>%
+    mutate(PREGNANT = replace(PREGNANT, which(GESTANTE_=="1qtr"), "Yes")) %>%
+    mutate(PREGNANT = replace(PREGNANT, which(GESTANTE_=="2qtr"), "Yes")) %>%
+    mutate(PREGNANT = replace(PREGNANT, which(GESTANTE_=="3qtr"), "Yes")) %>%
+    mutate(PREGNANT = replace(PREGNANT, which(GESTANTE_=="Ignored" & SEXO=="F"), "Yes")) %>%
+    mutate(PREGNANT = replace(PREGNANT, which(GESTANTE_=="Ignored" & SEXO=="I"), "No")) %>%
+    mutate(PREGNANT = replace(PREGNANT, which(GESTANTE_=="Ignored" & SEXO=="M"), "No")) %>%
+    mutate(PREGNANT = replace(PREGNANT, is.na(GESTANTE_), "No")) %>%
+    mutate(PREGNANT = replace(PREGNANT, which(GESTANTE_=="NO"), "No")) %>%
+    mutate(PREGNANT = replace(PREGNANT, which(GESTANTE_=="NA"), "No")) %>%
+    select(YEAR, RES_EXAM, SEXO, GESTANTE, PREGNANT, AGE_CAT, ESQUEMA) %>%
+    group_by(YEAR, RES_EXAM, SEXO, GESTANTE, PREGNANT, AGE_CAT, ESQUEMA) %>%
     count(RES_EXAM) %>%
     spread(RES_EXAM, n, fill = 0) %>%
     rename(FALCI = "Falciparum") %>%
@@ -353,41 +364,102 @@ getSIVEP_MALARIA_TYPE_TREATMENT=function(FilePath){
     rename(VIVAX = "Vivax") %>%
     mutate(Falciparum = FALCI + FV) %>%
     mutate(Vivax = VIVAX + FV) %>%
-    select(YEAR, SEXO, GESTANTE, AGE_CAT, ESQUEMA, Falciparum, Vivax) %>%
-    gather(key = 'TYPE', value = 'CASES', -c(YEAR, SEXO, GESTANTE, AGE_CAT, ESQUEMA))
+    select(YEAR, SEXO, GESTANTE, PREGNANT, AGE_CAT, ESQUEMA, Falciparum, Vivax) %>%
+    gather(key = 'TYPE', value = 'CASES', -c(YEAR, SEXO, GESTANTE, PREGNANT, AGE_CAT, ESQUEMA))
   
-  # # Get week, month, and year
-  # SIVEP_TREAT=data.frame(cbind(SIVEP_TREAT,
-  #                                     DT_YEAR=floor_date(SIVEP_TREAT$DT_NOTIF, unit = "year"),
-  #                                     DT_MONTH=floor_date(SIVEP_TREAT$DT_NOTIF, unit = "month"),
-  #                                     DT_WEEK=floor_date(SIVEP_TREAT$DT_NOTIF, unit = "week")))
-  # 
-  # if(Melted){
-  #   #########################
-  #   ## General Plots (Melted)
-  #   #########################
-  #   
-  #   # Melt by date
-  #   mSIVEP_MALARIA_TYPE=melt(setDT(SIVEP_MALARIA_TYPE),
-  #                            measure.vars = list(c("DT_NOTIF",
-  #                                                  "DT_YEAR",
-  #                                                  "DT_MONTH",
-  #                                                  "DT_WEEK")),
-  #                            variable.name = "DATE_TYPE", 
-  #                            value.name = "DATE",
-  #                            id.vars = c("LEVEL","CODE","TYPE","CASES"))
-  #   
-  #   # Reorder and relabel date type
-  #   levels(mSIVEP_MALARIA_TYPE$DATE_TYPE) = c("Daily","Yearly","Monthly","Weekly")
-  #   mSIVEP_MALARIA_TYPE$DATE_TYPE = factor(mSIVEP_MALARIA_TYPE$DATE_TYPE,
-  #                                          levels = c("Daily","Weekly","Monthly","Yearly"))
-  #   
-  #   return(mSIVEP_MALARIA_TYPE)
-  #   
-  # }else{
-  #   
-  #   return(SIVEP_TREAT)
-  # }
+  # Recode ESQUEMA
+  SIVEP_TREAT$ESQUEMA=as.character(SIVEP_TREAT$ESQUEMA)
+  SIVEP_TREAT$ESQUEMA=recode(SIVEP_TREAT$ESQUEMA,
+                             "1" = "Pv/Po:CQ-3d + PQ-7d",
+                             "2" = "Pv/Po:CQ-3d + PQ-14d",
+                             "3" = "Pv/Po preg & <6mo & Pm all ages: CQ-3d",
+                             "4" = "Pv/Po: CQ-12weeks",
+                             "5" = "Pf:AM+LF-3d",
+                             "6" = "Pf:AS+MQ-3d",
+                             "7" = "Pf:QQ-1dose + DC-1dose + PQ-1dose",
+                             "8" = "Pf/Po/Pv: AM+LF or AS+MF-3d + PQ-7d",
+                             "9" = "Pf 1st trimester & age<6mo:QQ-3d & CM-5d",
+                             "10" = "Severe Pf",
+                             "11" = "Pf:AM+LF-3d + PQ-1dose",
+                             "12" = "Pf:AS+MQ-3d + PQ-1dose",
+                             "83" = "*Pv/Pf:MQ-1dose + PQ-7d",
+                             "85" = "*Pv children:AS-capsule-4d + PQ-7d",
+                             "86" = "*Pf:MQ-1dose + PQ-1dose",
+                             "87" = "*Pf:QQ-1dose",
+                             "88" = "*Pf children:AS-capsule-4d + MQ-3d + PQ-1dose",
+                             "89" = "*Pv/Pf:QQ-1dose + DC-1dose + PQ-1dose",
+                             "99" = "Other scheme")
+  SIVEP_TREAT$ESQUEMA[which(SIVEP_TREAT$ESQUEMA == "123")] = NA
+  SIVEP_TREAT$ESQUEMA=as.factor(SIVEP_TREAT$ESQUEMA)
+  SIVEP_TREAT$TYPE=as.factor(SIVEP_TREAT$TYPE)
+  
+  # Reorder
+  SIVEP_TREAT$ESQUEMA=factor(SIVEP_TREAT$ESQUEMA, 
+                             levels=c("Pv/Po:CQ-3d + PQ-7d",
+                                      "Pv/Po:CQ-3d + PQ-14d",
+                                      "Pv/Po: CQ-12weeks",
+                                      "*Pv children:AS-capsule-4d + PQ-7d",
+                                      "Pv/Po preg & <6mo & Pm all ages: CQ-3d",
+                                      "Pv/Po/Pf: AM+LF or AS+MF-3d + PQ-7d",
+                                      "*Pv/Pf:MQ-1dose + PQ-7d",
+                                      "*Pv/Pf:QQ-1dose + DC-1dose + PQ-1dose",
+                                      "Pf:QQ-1dose + DC-1dose + PQ-1dose",
+                                      "Pf:AM+LF-3d + PQ-1dose",
+                                      "Pf:AS+MQ-3d + PQ-1dose", 
+                                      "*Pf:MQ-1dose + PQ-1dose",
+                                      "Pf:AM+LF-3d",
+                                      "Pf:AS+MQ-3d",
+                                      "*Pf:QQ-1dose",
+                                      "Pf 1st trimester & age<6mo:QQ-3d & CM-5d",
+                                      "*Pf children:AS-capsule-4d + MQ-3d + PQ-1dose",
+                                      "Severe Pf",
+                                      "Other scheme"))
+  
+  # Primaquine
+  SIVEP_TREAT$PQ=SIVEP_TREAT$ESQUEMA
+  SIVEP_TREAT$PQ=recode_factor(SIVEP_TREAT$PQ, 
+                               `Pv/Po:CQ-3d + PQ-7d` = "Yes",
+                               `Pv/Po:CQ-3d + PQ-14d` = "Yes",
+                               `Pv/Po: CQ-12weeks` = "No",
+                               `*Pv children:AS-capsule-4d + PQ-7d` = "Yes",
+                               `Pv/Po preg & <6mo & Pm all ages: CQ-3d` = "No",
+                               `Pv/Po/Pf: AM+LF or AS+MF-3d + PQ-7d` = "Yes",
+                               `*Pv/Pf:MQ-1dose + PQ-7d` = "Yes",
+                               `*Pv/Pf:QQ-1dose + DC-1dose + PQ-1dose` = "Yes",
+                               `Pf:QQ-1dose + DC-1dose + PQ-1dose` = "Yes",
+                               `Pf:AM+LF-3d + PQ-1dose` = "Yes",
+                               `Pf:AS+MQ-3d + PQ-1dose` = "Yes", 
+                               `*Pf:MQ-1dose + PQ-1dose` = "Yes",
+                               `Pf:AM+LF-3d` = "No",
+                               `Pf:AS+MQ-3d` = "No",
+                               `*Pf:QQ-1dose` = "No",
+                               `Pf 1st trimester & age<6mo:QQ-3d & CM-5d` = "No",
+                               `*Pf children:AS-capsule-4d + MQ-3d + PQ-1dose` = "Yes",
+                               `Severe Pf` = "Unknown",
+                               `Other scheme` = "Unknown")
+  
+  # Dose of PQ
+  SIVEP_TREAT$PQ_Amount=SIVEP_TREAT$ESQUEMA
+  SIVEP_TREAT$PQ_Amount=recode_factor(SIVEP_TREAT$PQ_Amount, 
+                                      `Pv/Po:CQ-3d + PQ-7d` = "7-day",
+                                      `Pv/Po:CQ-3d + PQ-14d` = "14-day",
+                                      `Pv/Po: CQ-12weeks` = "None",
+                                      `*Pv children:AS-capsule-4d + PQ-7d` = "7-day",
+                                      `Pv/Po preg & <6mo & Pm all ages: CQ-3d` = "None",
+                                      `Pv/Po/Pf: AM+LF or AS+MF-3d + PQ-7d` = "7-day",
+                                      `*Pv/Pf:MQ-1dose + PQ-7d` = "7-day",
+                                      `*Pv/Pf:QQ-1dose + DC-1dose + PQ-1dose` = "1-dose",
+                                      `Pf:QQ-1dose + DC-1dose + PQ-1dose` = "1-dose",
+                                      `Pf:AM+LF-3d + PQ-1dose` = "1-dose",
+                                      `Pf:AS+MQ-3d + PQ-1dose` = "1-dose", 
+                                      `*Pf:MQ-1dose + PQ-1dose` = "1-dose",
+                                      `Pf:AM+LF-3d` = "None",
+                                      `Pf:AS+MQ-3d` = "None",
+                                      `*Pf:QQ-1dose` = "None",
+                                      `Pf 1st trimester & age<6mo:QQ-3d & CM-5d` = "None",
+                                      `*Pf children:AS-capsule-4d + MQ-3d + PQ-1dose` = "1-dose",
+                                      `Severe Pf` = "Unknown",
+                                      `Other scheme` = "Unknown")
   
   return(SIVEP_TREAT)
   
