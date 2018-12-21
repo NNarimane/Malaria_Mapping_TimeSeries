@@ -476,9 +476,9 @@ getSIVEP_MALARIA_TYPE_COUNTRY=function(RES_OR_INF, TYPE){
     group_by_("YEAR", RES_OR_INF) %>%
     count(RES_EXAM) %>%
     spread(RES_EXAM, n, fill = 0) %>%
-    rename(FALCI = "F") %>%
-    rename(FV = "F+V") %>%
-    rename(VIVAX = "V") %>%
+    rename(FALCI = "Falciparum") %>%
+    rename(FV = "V+F") %>%
+    rename(VIVAX = "Vivax") %>%
     mutate(Falciparum = FALCI + FV) %>%
     mutate(Vivax = VIVAX + FV) %>%
     select_("YEAR", RES_OR_INF, TYPE) %>%
@@ -497,10 +497,10 @@ getSIVEP_MALARIA_TYPE_COUNTRY=function(RES_OR_INF, TYPE){
       SIVEP_PAIS$PAIS_RES = PAIS_CODE[match(SIVEP_PAIS$PAIS_RES, PAIS_CODE$PAIS_CODE),"PAIS"]
       SIVEP_PAIS=SIVEP_PAIS[complete.cases(SIVEP_PAIS$PAIS_RES),]
       
-      # Combine France and French Guyana
-      SIVEP_PAIS[which(SIVEP_PAIS$PAIS_RES == "GUIANA FRANCESA"),]=c("GUIANA FRANCESA",(SIVEP_PAIS[which(SIVEP_PAIS$PAIS_RES == "FRANCA"),2:ncol(SIVEP_PAIS)] +
-                                                                                          SIVEP_PAIS[which(SIVEP_PAIS$PAIS_RES == "GUIANA FRANCESA"),2:ncol(SIVEP_PAIS)]))
-      SIVEP_PAIS=SIVEP_PAIS[-which(SIVEP_PAIS$PAIS_RES == "FRANCA"),]
+      # # Combine France and French Guyana
+      # SIVEP_PAIS[which(SIVEP_PAIS$PAIS_RES == "GUIANA FRANCESA"),]=c("GUIANA FRANCESA",(SIVEP_PAIS[which(SIVEP_PAIS$PAIS_RES == "FRANCA"),2:ncol(SIVEP_PAIS)] +
+      #                                                                                     SIVEP_PAIS[which(SIVEP_PAIS$PAIS_RES == "GUIANA FRANCESA"),2:ncol(SIVEP_PAIS)]))
+      # SIVEP_PAIS=SIVEP_PAIS[-which(SIVEP_PAIS$PAIS_RES == "FRANCA"),]
       
       # Get other category
       OTHER=t(as.data.frame(c(OTHER="OTHER", colSums(SIVEP_PAIS[!(SIVEP_PAIS$PAIS_RES %in% Top_Countries_BR),2:ncol(SIVEP_PAIS)]))))
@@ -528,10 +528,10 @@ getSIVEP_MALARIA_TYPE_COUNTRY=function(RES_OR_INF, TYPE){
       SIVEP_PAIS$PAIS_RES = PAIS_CODE[match(SIVEP_PAIS$PAIS_RES, PAIS_CODE$PAIS_CODE),"PAIS"]
       SIVEP_PAIS=SIVEP_PAIS[complete.cases(SIVEP_PAIS$PAIS_RES),]
       
-      # Combine France and French Guyana
-      SIVEP_PAIS[which(SIVEP_PAIS$PAIS_RES == "GUIANA FRANCESA"),]=c("GUIANA FRANCESA",(SIVEP_PAIS[which(SIVEP_PAIS$PAIS_RES == "FRANCA"),2:ncol(SIVEP_PAIS)] +
-                                                                                          SIVEP_PAIS[which(SIVEP_PAIS$PAIS_RES == "GUIANA FRANCESA"),2:ncol(SIVEP_PAIS)]))
-      SIVEP_PAIS=SIVEP_PAIS[-which(SIVEP_PAIS$PAIS_RES == "FRANCA"),]
+      # # Combine France and French Guyana
+      # SIVEP_PAIS[which(SIVEP_PAIS$PAIS_RES == "GUIANA FRANCESA"),]=c("GUIANA FRANCESA",(SIVEP_PAIS[which(SIVEP_PAIS$PAIS_RES == "FRANCA"),2:ncol(SIVEP_PAIS)] +
+      #                                                                                     SIVEP_PAIS[which(SIVEP_PAIS$PAIS_RES == "GUIANA FRANCESA"),2:ncol(SIVEP_PAIS)]))
+      # SIVEP_PAIS=SIVEP_PAIS[-which(SIVEP_PAIS$PAIS_RES == "FRANCA"),]
       
       # Get prop table with Brazil
       pSIVEP_PAIS=as.data.frame(prop.table(as.matrix(SIVEP_PAIS[,-1]), 2))
@@ -555,10 +555,10 @@ getSIVEP_MALARIA_TYPE_COUNTRY=function(RES_OR_INF, TYPE){
       SIVEP_PAIS$PAIS_INF = PAIS_CODE[match(SIVEP_PAIS$PAIS_INF, PAIS_CODE$PAIS_CODE),"PAIS"]
       SIVEP_PAIS=SIVEP_PAIS[complete.cases(SIVEP_PAIS$PAIS_INF),]
       
-      # Combine France and French Guyana
-      SIVEP_PAIS[which(SIVEP_PAIS$PAIS_INF == "GUIANA FRANCESA"),]=c("GUIANA FRANCESA",(SIVEP_PAIS[which(SIVEP_PAIS$PAIS_INF == "FRANCA"),2:ncol(SIVEP_PAIS)] +
-                                                                       SIVEP_PAIS[which(SIVEP_PAIS$PAIS_INF == "GUIANA FRANCESA"),2:ncol(SIVEP_PAIS)]))
-      SIVEP_PAIS=SIVEP_PAIS[-which(SIVEP_PAIS$PAIS_INF == "FRANCA"),]
+      # # Combine France and French Guyana
+      # SIVEP_PAIS[which(SIVEP_PAIS$PAIS_INF == "GUIANA FRANCESA"),]=c("GUIANA FRANCESA",(SIVEP_PAIS[which(SIVEP_PAIS$PAIS_INF == "FRANCA"),2:ncol(SIVEP_PAIS)] +
+      #                                                                  SIVEP_PAIS[which(SIVEP_PAIS$PAIS_INF == "GUIANA FRANCESA"),2:ncol(SIVEP_PAIS)]))
+      # SIVEP_PAIS=SIVEP_PAIS[-which(SIVEP_PAIS$PAIS_INF == "FRANCA"),]
       
       # Get other category
       OTHER=t(as.data.frame(c(OTHER="OTHER", colSums(SIVEP_PAIS[!(SIVEP_PAIS$PAIS_INF %in% Top_Countries_BR),2:ncol(SIVEP_PAIS)]))))
@@ -586,10 +586,10 @@ getSIVEP_MALARIA_TYPE_COUNTRY=function(RES_OR_INF, TYPE){
       SIVEP_PAIS$PAIS_INF = PAIS_CODE[match(SIVEP_PAIS$PAIS_INF, PAIS_CODE$PAIS_CODE),"PAIS"]
       SIVEP_PAIS=SIVEP_PAIS[complete.cases(SIVEP_PAIS$PAIS_INF),]
       
-      # Combine France and French Guyana
-      SIVEP_PAIS[which(SIVEP_PAIS$PAIS_INF == "GUIANA FRANCESA"),]=c("GUIANA FRANCESA",(SIVEP_PAIS[which(SIVEP_PAIS$PAIS_INF == "FRANCA"),2:ncol(SIVEP_PAIS)] +
-                                                                                          SIVEP_PAIS[which(SIVEP_PAIS$PAIS_INF == "GUIANA FRANCESA"),2:ncol(SIVEP_PAIS)]))
-      SIVEP_PAIS=SIVEP_PAIS[-which(SIVEP_PAIS$PAIS_INF == "FRANCA"),]
+      # # Combine France and French Guyana
+      # SIVEP_PAIS[which(SIVEP_PAIS$PAIS_INF == "GUIANA FRANCESA"),]=c("GUIANA FRANCESA",(SIVEP_PAIS[which(SIVEP_PAIS$PAIS_INF == "FRANCA"),2:ncol(SIVEP_PAIS)] +
+      #                                                                                     SIVEP_PAIS[which(SIVEP_PAIS$PAIS_INF == "GUIANA FRANCESA"),2:ncol(SIVEP_PAIS)]))
+      # SIVEP_PAIS=SIVEP_PAIS[-which(SIVEP_PAIS$PAIS_INF == "FRANCA"),]
       
       # Get prop table with Brazil
       pSIVEP_PAIS=as.data.frame(prop.table(as.matrix(SIVEP_PAIS[,-1]), 2))
@@ -723,25 +723,52 @@ getSIVEP_MALARIA_TYPE_STATE=function(RES_OR_INF, TYPE){
 
 
 # Get stacked box plots - country level
-getSTACKED_BOX_PLOT=function(DATA, RES_OR_INF){
+getSTACKED_BOX_PLOT=function(DATA, RES_OR_INF, y, title, legend_title){
   
   # melt the data frame for plotting
   mDATA <- melt(DATA, id.vars=RES_OR_INF)
-  levels(mDATA[,RES_OR_INF]) = levels(DATA[,RES_OR_INF]) 
-  mDATA$value=mDATA$value*100
+  # levels(mDATA[,RES_OR_INF]) = levels(DATA[,RES_OR_INF]) 
+  # mDATA$value=mDATA$value*100
   
-  # Stacked
-  mDATA_Plot=ggplot(mDATA, aes(y=value, x=variable, fill = PAIS_RES)) +   
-    geom_bar(stat = "identity") +
-    scale_fill_manual(values=Colors,
-                      labels=names(Colors)) +
-    theme_minimal() +
-    labs(title=title, y="Proportion (%)", x="") +
-    theme(axis.text.x = element_text(size = 12, angle = 90, hjust = 1),
-          axis.title.y=element_text(size=12),
-          legend.position="right",
-          legend.title=element_text(size=12, face = "bold"))  +
-    guides(fill=guide_legend(title=legend_title))
+  if(RES_OR_INF == "PAIS_RES"){
+    if(byTOP_COUNTRIES){
+      mDATA$PAIS_RES=as.character(mDATA$PAIS_RES)
+      mDATA=mDATA[which(mDATA$PAIS_RES %in% Top_Countries),]
+      mDATA$PAIS_RES=factor(mDATA$PAIS_RES)
+      mDATA=setDT(mDATA)[ , PAIS_RES := factor(PAIS_RES, levels = Top_Countries)]
+    }
+    # Stacked
+    mDATA_Plot=ggplot(mDATA, aes(y=value, x=variable, fill = PAIS_RES)) +   
+      geom_bar(stat = "identity") +
+      scale_fill_manual(values=Colors,
+                        labels=names(Colors)) +
+      theme_minimal() +
+      labs(title=title, y=y, x="") +
+      theme(axis.text.x = element_text(size = 12, angle = 90, hjust = 1),
+            axis.title.y=element_text(size=12),
+            legend.position="right",
+            legend.title=element_text(size=12))  +
+      guides(fill=guide_legend(title=legend_title))
+  }else{
+    if(byTOP_COUNTRIES){
+      mDATA$PAIS_INF=as.character(mDATA$PAIS_INF)
+      mDATA=mDATA[which(mDATA$PAIS_INF %in% Top_Countries),]
+      mDATA$PAIS_INF=factor(mDATA$PAIS_INF)
+      mDATA=setDT(mDATA)[ , PAIS_INF := factor(PAIS_INF, levels = Top_Countries)]
+    }
+    # Stacked
+    mDATA_Plot=ggplot(mDATA, aes(y=value, x=variable, fill = PAIS_INF)) +   
+      geom_bar(stat = "identity") +
+      scale_fill_manual(values=Colors,
+                        labels=names(Colors)) +
+      theme_minimal() +
+      labs(title=title, y=y, x="") +
+      theme(axis.text.x = element_text(size = 12, angle = 90, hjust = 1),
+            axis.title.y=element_text(size=12),
+            legend.position="right",
+            legend.title=element_text(size=12))  +
+      guides(fill=guide_legend(title=legend_title))
+  }
   
   return(mDATA_Plot)
 }

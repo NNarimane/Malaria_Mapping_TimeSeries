@@ -20,6 +20,8 @@ library("chorddiag")
 library("RColorBrewer")
 library("foreach")
 library("colorspace")
+library("ggplot2")
+library("grid")
 
 ###########################################
 ## Set environment and working directory ##
@@ -37,10 +39,21 @@ if(envNN){
 
 # Plot folder
 Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/Importations/")
+options(scipen=999)
 
 # Load state abbreviations
 ADMIN_NAMES=read.csv(file = paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/BRA_ADMIN_NAMES.csv"), sep = "")
 ADMIN_NAMES$Code=as.character(ADMIN_NAMES$Code)
+
+# Load country-level case estimates by WHO
+WHO_MALARIA=read.csv(file = paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/WHO_Malaria_Cases_Estimates.csv"), sep = ",", check.names = F)
+
+#################
+## Load Functions
+#################
+
+# Source functions script
+source(paste0(getwd(),"/Malaria_Mapping_TimeSeries/Malaria_Mapping_TimeSeries_Functions.R"))
 
 
 #########################################################################
@@ -51,11 +64,11 @@ ADMIN_NAMES$Code=as.character(ADMIN_NAMES$Code)
 loadData = T
 
 # For top-countries or all
-byTOP_COUNTRIES = T
+byTOP_COUNTRIES =T
 if(byTOP_COUNTRIES){
   # Top 10 countries including other
-  Top_Countries_BR=c("BRASIL","GUIANA FRANCESA","VENEZUELA","GUIANA","PERU","BOLIVIA","SURINAME","COLOMBIA","PARAGUAI")
-  Top_Countries=c("GUIANA FRANCESA","VENEZUELA","GUIANA","PERU","BOLIVIA","SURINAME","COLOMBIA","PARAGUAI")
+  Top_Countries_BR=c("BOLIVIA","BRASIL","COLOMBIA","GUIANA FRANCESA","GUIANA","PARAGUAI","PERU","SURINAME","VENEZUELA")
+  Top_Countries=c("BOLIVIA","COLOMBIA","GUIANA FRANCESA","GUIANA","PARAGUAI","PERU","SURINAME","VENEZUELA")
 }
 
 # Get country-level aggregates
@@ -234,58 +247,153 @@ if(loadData){
 }
 
 
+##################################
+## COMBINE DATA BY MALARIA TYPE ##
+##################################
+
+##################
+## CASE NUMBERS ##
+
+# P. vivax
+names(SIVEP_PAIS_RES_VIVAX)=c("COUNTRY", as.character(seq(2003,2018,1)))
+SIVEP_PAIS_RES_VIVAX$SOURCE="RESIDENCE"
+names(SIVEP_PAIS_INF_VIVAX)=c("COUNTRY", as.character(seq(2003,2018,1)))
+SIVEP_PAIS_INF_VIVAX$SOURCE="INFECTION"
+SIVEP_PAIS_VIVAX=rbind(SIVEP_PAIS_RES_VIVAX, SIVEP_PAIS_INF_VIVAX)
+# Remove Brasil, vivax
+DATA_VIVAX = SIVEP_PAIS_VIVAX
+DATA_VIVAX$COUNTRY=as.character(DATA_VIVAX$COUNTRY)
+DATA_VIVAX = DATA_VIVAX[-which(DATA_VIVAX$COUNTRY == "BRASIL"),]
+DATA_VIVAX=DATA_VIVAX[order(DATA_VIVAX$COUNTRY),]
+DATA_VIVAX$COUNTRY=factor(DATA_VIVAX$COUNTRY)
+mDATA_VIVAX=melt(DATA_VIVAX, id.vars=c("COUNTRY","SOURCE"))
+
+# P falciparum
+names(SIVEP_PAIS_RES_FALCI)=c("COUNTRY", as.character(seq(2003,2018,1)))
+SIVEP_PAIS_RES_FALCI$SOURCE="RESIDENCE"
+names(SIVEP_PAIS_INF_FALCI)=c("COUNTRY", as.character(seq(2003,2018,1)))
+SIVEP_PAIS_INF_FALCI$SOURCE="INFECTION"
+SIVEP_PAIS_FALCI=rbind(SIVEP_PAIS_RES_FALCI, SIVEP_PAIS_INF_FALCI)
+# Remove Brasil, falciparum
+DATA_FALCI = SIVEP_PAIS_FALCI
+DATA_FALCI$COUNTRY=as.character(DATA_FALCI$COUNTRY)
+DATA_FALCI = DATA_FALCI[-which(DATA_FALCI$COUNTRY == "BRASIL"),]
+DATA_FALCI=DATA_FALCI[order(DATA_FALCI$COUNTRY),]
+DATA_FALCI$COUNTRY=factor(DATA_FALCI$COUNTRY)
+mDATA_FALCI=melt(DATA_FALCI, id.vars=c("COUNTRY","SOURCE"))
+
+#################
+## PROPORTIONS ##
+
+# P. vivax
+names(pwbSIVEP_PAIS_RES_VIVAX)=c("COUNTRY", as.character(seq(2003,2018,1)))
+pwbSIVEP_PAIS_RES_VIVAX$SOURCE="RESIDENCE"
+names(pwbSIVEP_PAIS_INF_VIVAX)=c("COUNTRY", as.character(seq(2003,2018,1)))
+pwbSIVEP_PAIS_INF_VIVAX$SOURCE="INFECTION"
+pwbSIVEP_PAIS_VIVAX=rbind(pwbSIVEP_PAIS_RES_VIVAX, pwbSIVEP_PAIS_INF_VIVAX)
+# Melt
+DATA_VIVAX = pwbSIVEP_PAIS_VIVAX
+DATA_VIVAX$COUNTRY=as.character(DATA_VIVAX$COUNTRY)
+DATA_VIVAX=DATA_VIVAX[order(DATA_VIVAX$COUNTRY),]
+DATA_VIVAX$COUNTRY=factor(DATA_VIVAX$COUNTRY)
+mDATA_VIVAX=melt(DATA_VIVAX, id.vars=c("COUNTRY","SOURCE"))
+
+# P falciparum
+names(pwbSIVEP_PAIS_RES_FALCI)=c("COUNTRY", as.character(seq(2003,2018,1)))
+pwbSIVEP_PAIS_RES_FALCI$SOURCE="RESIDENCE"
+names(pwbSIVEP_PAIS_INF_FALCI)=c("COUNTRY", as.character(seq(2003,2018,1)))
+pwbSIVEP_PAIS_INF_FALCI$SOURCE="INFECTION"
+pwbSIVEP_PAIS_FALCI=rbind(pwbSIVEP_PAIS_RES_FALCI, pwbSIVEP_PAIS_INF_FALCI)
+# Melt
+DATA_FALCI = pwbSIVEP_PAIS_FALCI
+DATA_FALCI$COUNTRY=as.character(DATA_FALCI$COUNTRY)
+DATA_FALCI=DATA_FALCI[order(DATA_FALCI$COUNTRY),]
+DATA_FALCI$COUNTRY=factor(DATA_FALCI$COUNTRY)
+mDATA_FALCI=melt(DATA_FALCI, id.vars=c("COUNTRY","SOURCE"))
 
 #######################
 ## STACKED-BOX PLOTS ##
 #######################
 
-if(RES_OR_INF == "PAIS_RES"){
-  title = "Proportion of imported P. vivax cases by case residence country"
-  legend_title = "Country of residence"
-}else{
-  title = "Proportion of imported P. vivax cases by probable infection country"
-  legend_title = "Country of probable infection"
-}
+# Colors
+getColors=colorRampPalette(brewer.pal(10,"Spectral"))
+Colors=rev(getColors(length(unique(mDATA_FALCI$COUNTRY))))
+names(Colors)=levels(mDATA_FALCI$COUNTRY)
 
-############
-## COLORS ##
-
-if(byTOP_COUNTRIES){
-  getColors=colorRampPalette(brewer.pal(10,"Spectral"))
-  Colors=rev(getColors(10))
-  names(Colors)=Top_Countries
-}else{
-  # getColors=colorRampPalette(brewer.pal(10,"Spectral"))
-  # Colors=rev(getColors(10))
-  # names(Colors)=names(Colors)=c("BOLIVIA","COLOMBIA","FRANCA","GUIANA","GUIANA FRANCESA","OTHER","PARAGUAI",
-  #                               "PERU","SURINAME","VENEZUELA")
-}
 
 #################
 ## PLOT & SAVE ##
 
-Plot=getSTACKED_BOX_PLOT(pwbSIVEP_PAIS, "PAIS_RES")
-Plot
+yaxislab="Proportion (%)"
+xaxislab=""
+title="Proportion of imported P. falciparum cases to Brazil by residence or infection country (top countries)"
+legend_title="Country"
+
+ggplot(mDATA_FALCI, aes(y=value*100, x=variable, fill = COUNTRY)) +   
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values=Colors,
+                    labels=names(Colors)) +
+  facet_wrap(~SOURCE, nrow = 2) +
+  theme_minimal() +
+  labs(title=title, y=yaxislab, x=xaxislab) +
+  theme(axis.text.x = element_text(size = 12, angle = 90, hjust = 1),
+        axis.title.y=element_text(size=12),
+        legend.position="right",
+        legend.title=element_text(size=10),
+        legend.text=element_text(size=7))  +
+  guides(fill=guide_legend(title=legend_title))
+
 
 # Save
 dev.copy(png, paste0(Plot_Folder,title,".png"),
-           width = 1600, height = 1000, units = "px", pointsize = 12,
+           width = 2000, height = 1000, units = "px", pointsize = 12,
            res = 100)
 dev.off()
 
 
-###########################
-## PLOT WITH CASE COUNTS ##
+#######################
+## WHO-MALARIA PLOTS ##
+#######################
 
-# Load case count data
-WHO_Malaria=read.csv(paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/WHO_Malaria_Cases_Estimates.csv"), check.names = F)
-mWHO_Malaria=melt(WHO_Malaria)
+# Melt dataframe
+mWHO_MALARIA=melt(setDT(WHO_MALARIA), variable.name = "YEAR", value.name = "CASES", measure.vars = as.character(seq(2000,2017,1)))
+mWHO_MALARIA=mWHO_MALARIA[order(mWHO_MALARIA$Country),]
 
-  # Plot
-ggplot(WHO_Malaria, aes(Country))
+# Get colors
+getColors=colorRampPalette(brewer.pal(10,"Spectral"))
+Colors2=rev(getColors(length(unique(mWHO_MALARIA$Country))))
+names(Colors2)=unique(mWHO_MALARIA$Country)
+
+# Plot
+WHO_Malaria_Plot=ggplot(data = mWHO_MALARIA, aes(YEAR, CASES, group = Country, color = Country)) + 
+  geom_point(size = 2) + geom_line(data=mWHO_MALARIA[!is.na(mWHO_MALARIA$CASES),], size = 1.1) +
+  scale_color_manual(values=Colors2,
+                     labels=names(Colors2)) +
+  scale_y_continuous(breaks = seq(100000,600000,100000), 
+                     labels=as.character(seq(100000,600000,100000))) +
+  theme_minimal() +
+  labs(title="WHO reported annual malaria cases in South America, 2000-2017",
+       x="", y="")
+WHO_Malaria_Plot
+
+# Save
+dev.copy(png, paste0(Plot_Folder,"WHO reported annual malaria cases in South America, 2000-2017",".png"),
+         width = 1000, height = 500, units = "px", pointsize = 12,
+         res = 100)
+dev.off()
+
+
+################
+## LINE PLOTS ##
+################
+
+
+
+###########################################################################################
 
 ################
 ## CORD GRAPH ##
+################
 
 if(RES_OR_INF == "PAIS_RES"){
   title = "Country of residence of imported P. vivax cases,"
