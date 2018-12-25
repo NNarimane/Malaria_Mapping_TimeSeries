@@ -22,6 +22,7 @@ library("foreach")
 library("colorspace")
 library("ggplot2")
 library("grid")
+library("malariaAtlas")
 
 ###########################################
 ## Set environment and working directory ##
@@ -64,7 +65,7 @@ source(paste0(getwd(),"/Malaria_Mapping_TimeSeries/Malaria_Mapping_TimeSeries_Fu
 loadData = T
 
 # For top-countries or all
-byTOP_COUNTRIES =T
+byTOP_COUNTRIES = T
 if(byTOP_COUNTRIES){
   # Top 10 countries including other
   Top_Countries_BR=c("BOLIVIA","BRASIL","COLOMBIA","GUIANA FRANCESA","GUIANA","PARAGUAI","PERU","SURINAME","VENEZUELA")
@@ -351,6 +352,46 @@ dev.copy(png, paste0(Plot_Folder,title,".png"),
 dev.off()
 
 
+################
+## LINE PLOTS ##
+################
+
+# Colors
+getColors=colorRampPalette(brewer.pal(10,"Spectral"))
+Colors=rev(getColors(length(unique(mDATA_VIVAX$COUNTRY))))
+names(Colors)=levels(mDATA_VIVAX$COUNTRY)
+
+
+#################
+## PLOT & SAVE ##
+
+yaxislab="Proportion (%)"
+xaxislab=""
+title="Proportion of imported P. falciparum cases to Brazil by residence or infection country (top countries) (line)"
+legend_title="Country"
+
+ggplot(mDATA_FALCI, aes(y=value*100, x=variable, group = COUNTRY, color = COUNTRY)) +   
+  geom_line(stat = "identity", size = 1.1) +
+  scale_color_manual(values=Colors,
+                    labels=names(Colors)) +
+  facet_wrap(~SOURCE, nrow = 2) +
+  theme_minimal() +
+  labs(title=title, y=yaxislab, x=xaxislab) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1),
+        axis.title.y=element_text(size=12),
+        legend.position="right",
+        legend.title=element_text(size=10),
+        legend.text=element_text(size=7))  +
+  guides(fill=guide_legend(title=legend_title))
+
+
+# Save
+dev.copy(png, paste0(Plot_Folder,title,".png"),
+         width = 2000, height = 1000, units = "px", pointsize = 12,
+         res = 100)
+dev.off()
+
+
 #######################
 ## WHO-MALARIA PLOTS ##
 #######################
@@ -382,34 +423,101 @@ dev.copy(png, paste0(Plot_Folder,"WHO reported annual malaria cases in South Ame
          res = 100)
 dev.off()
 
+###########################
+## WHO MALARIA AND SIVEP ##
 
-################
-## LINE PLOTS ##
-################
+# Fix countries to match
+WHO_MALARIA$Country=as.character(WHO_MALARIA$Country)
+WHO_MALARIA=WHO_MALARIA[which(WHO_MALARIA$Country != "Brazil"),]
+WHO_MALARIA$Country=recode(WHO_MALARIA$Country,
+                           "Bolivia" = "BOLIVIA",
+                           "Columbia" = "COLOMBIA",
+                           "French Guiana" = "GUIANA FRANCESA",
+                           "Guyana" = "GUIANA",
+                           "Paraguay" = "PARAGUAI",
+                           "Peru" ="PERU",
+                           "Surinam" = "SURINAME",
+                           "Venezuela" = "VENEZUELA"
+                           )
+WHO_MALARIA$Country=factor(WHO_MALARIA$Country)
+
+# Subset for 2010 >
+mWHO_MALARIA=melt(setDT(WHO_MALARIA), variable.name = "YEAR", value.name = "CASES", measure.vars = as.character(seq(2000,2017,1)))
+mWHO_MALARIA$YEAR=as.integer(as.character(mWHO_MALARIA$YEAR))
+sWHO_MALARIA=mWHO_MALARIA[which(mWHO_MALARIA$YEAR >= 2010),]
+sWHO_MALARIA$YEAR=factor(sWHO_MALARIA$YEAR)
+sWHO_MALARIA=sWHO_MALARIA[order(sWHO_MALARIA$Country),]
+sWHO_MALARIA$SOURCE="WHO REPORTED CASES"
+colnames(sWHO_MALARIA)=c("COUNTRY","YEAR","CASES","SOURCE")
+
+# P.vivax (drop other and 2018) 
+mDATA_VIVAX$COUNTRY=as.character(mDATA_VIVAX$COUNTRY)
+mDATA_VIVAX=mDATA_VIVAX[-which(mDATA_VIVAX$COUNTRY == "OTHER"),]
+mDATA_VIVAX$COUNTRY=factor(mDATA_VIVAX$COUNTRY)
+colnames(mDATA_VIVAX)=c("COUNTRY","SOURCE","YEAR","CASES")
+mDATA_VIVAX=mDATA_VIVAX[,c("COUNTRY","YEAR","CASES","SOURCE")]
+mDATA_VIVAX$YEAR=as.integer(as.character(mDATA_VIVAX$YEAR))
+sDATA_VIVAX=mDATA_VIVAX[which(mDATA_VIVAX$YEAR >= 2010 & mDATA_VIVAX$YEAR < 2018),]
+sDATA_VIVAX$YEAR=factor(sDATA_VIVAX$YEAR)
+sDATA_VIVAX=sDATA_VIVAX[order(sDATA_VIVAX$COUNTRY),]
+
+# P.falciparum (drop other)
+mDATA_FALCI$COUNTRY=as.character(mDATA_FALCI$COUNTRY)
+mDATA_FALCI=mDATA_FALCI[-which(mDATA_FALCI$COUNTRY == "OTHER"),]
+mDATA_FALCI$COUNTRY=factor(mDATA_FALCI$COUNTRY)
+colnames(mDATA_FALCI)=c("COUNTRY","SOURCE","YEAR","CASES")
+mDATA_FALCI=mDATA_FALCI[,c("COUNTRY","YEAR","CASES","SOURCE")]
+mDATA_FALCI$YEAR=as.integer(as.character(mDATA_FALCI$YEAR))
+sDATA_FALCI=mDATA_FALCI[which(mDATA_FALCI$YEAR >= 2010 & mDATA_FALCI$YEAR < 2018),]
+sDATA_FALCI$YEAR=factor(sDATA_FALCI$YEAR)
+sDATA_FALCI=sDATA_FALCI[order(sDATA_FALCI$COUNTRY),]
+
+# Merge for P.vivax
+VIVAX=rbind(sWHO_MALARIA,sDATA_VIVAX)
+
+# Merge for P.falciparum
+FALCI=rbind(sWHO_MALARIA,sDATA_FALCI)
+
+#################
+## PLOT & SAVE ##
+
+# Colors
+getColors=colorRampPalette(brewer.pal(10,"Spectral"))
+Colors=rev(getColors(length(unique(VIVAX$COUNTRY))))
+names(Colors)=levels(VIVAX$COUNTRY)
+
+yaxislab="log(Cases)"
+xaxislab=""
+title="WHO reported malaria cases and Brazilian reported imported P. vivax cases, 2010-2017"
+legend_title="Country"
+
+ggplot(VIVAX, aes(y=log(CASES), x=YEAR, group = COUNTRY, color = COUNTRY)) +   
+  geom_line(stat = "identity", size = 1) +
+  scale_color_manual(values=Colors,
+                     labels=names(Colors)) +
+  facet_wrap(~SOURCE, nrow = 3) +
+  theme_minimal() +
+  labs(title=title, y=yaxislab, x=xaxislab) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1.1),
+        axis.title.y=element_text(size=12),
+        legend.position="right",
+        legend.title=element_text(size=10),
+        legend.text=element_text(size=7))  +
+  guides(fill=guide_legend(title=legend_title))
 
 
-
-###########################################################################################
-
-################
-## CORD GRAPH ##
-################
-
-if(RES_OR_INF == "PAIS_RES"){
-  title = "Country of residence of imported P. vivax cases,"
-}else{
-  title = "Country of probable infection of imported P. vivax cases,"
-}
-
-CHORD_DIAGRAMS=getCHORD_DIAGRAMS(SIVEP_PAIS, RES_OR_INF)
-
+# Save
+dev.copy(png, paste0(Plot_Folder,title,".png"),
+         width = 800, height = 1200, units = "px", pointsize = 12,
+         res = 100)
+dev.off()
 
 #######################################################################
 ############################# STATE-LEVEL #############################
 #######################################################################
 
-# Load data or run
-loadData = T
+# Get SIVEP raw notification data
+load(FilePath)
 
 # For top-countries or all
 byTOP_STATES = T
@@ -587,7 +695,7 @@ for(i in 1:length(Years)){
 
 
 
-###############################################################################
+##########################################################################################################
 
 
 ############################
@@ -620,9 +728,9 @@ SIVEP_MU_RES_VIVAX_AC = df %>%
   group_by(YEAR, MUN_NOTI, MUN_RESI) %>%
   count(RES_EXAM) %>%
   spread(RES_EXAM, n, fill = 0) %>%
-  rename(FALCI = "F") %>%
-  rename(FV = "F+V") %>%
-  rename(VIVAX = "V") %>%
+  rename(FALCI = "Falciparum") %>%
+  rename(FV = "V+F") %>%
+  rename(VIVAX = "Vivax") %>%
   mutate(Falciparum = FALCI + FV) %>%
   mutate(Vivax = VIVAX + FV) %>%
   select(YEAR, MUN_NOTI, MUN_RESI, Vivax) %>%
@@ -1037,3 +1145,258 @@ dev.copy(png, paste0(Plot_Folder,"Venezuela/Roraima state municipalities of noti
          width = 1200, height = 1000, units = "px", pointsize = 12,
          res = 100)
 dev.off()
+
+
+
+##########################################################################################################
+
+###########################
+## BORDER MUNICIPALITIES ##
+###########################
+
+#######################################
+## GET BORDER STATES AND MUNICIPALITIES
+
+# Border states
+Border_UF = c("AC","AM","AP","RO","RR","PA","MT")
+
+# Border municipalities
+Border_MU_AC = c("Acrelandia","Assis Brasil","Brasileia","Capixaba","Cruzeiro do Sul","Epitaciolandia",
+                 "Feijo","Jordao","Mancio Lima","Manoel Urbano","Marechal Thaumaturgo","Placido de Castro",
+                 "Porto Walter","Rodrigues Alves","Santa Rosa do Purus","Sena Madureira")
+Border_MU_AM=c("Guajara","Atalaia do Norte","Tabatinga","Santo Antonio do Ica","Japura","Sao Gabriel da Cachoeira",
+               "Santa Isabel do Rio Negro","Barcelos")
+Border_MU_AP=c("Oiapoque","Laranjal do Jari")
+Border_MU_RO=c("Alta Floresta D'oeste","Alto Alegre dos Parecis","Cabixi","Costa Marques","Guajara-Mirim","Nova Mamore",
+               "Pimenteiras do Oeste")
+Border_MU_RR=c("Alto Alegre","Amajari","Bonfim","Caracarai","Caroebe","Iracema","Normandia","Pacaraima","Uiramuta")
+Border_MU_PA=c("Oriximina","Obidos","Almeirim")
+Border_MU_MT=c("Vila Bela da Santissima Trindade","Porto Esperidiao","Caceres","Comodoro")
+# Merge all border MU together
+Border_MU_All=c(Border_MU_AC,Border_MU_AM,Border_MU_AP,Border_MU_RO,Border_MU_RR,Border_MU_PA,Border_MU_MT)
+
+# Merge UF and MU border names
+Border_Names_UF_MU = c(Border_UF, Border_MU_All)
+Border_Codes_UF_MU=data.frame(cbind(NAME = Border_Names_UF_MU,
+                         CODE = ADMIN_NAMES[which(as.character(ADMIN_NAMES$Name) %in% Border_Names_UF_MU),"Code"],
+                         BORDER = "Yes"))
+
+
+#################
+## Get SIVEP data
+
+cat("Run data upload script\n")
+
+# Set file path
+if(envNN){
+  FilePath=paste0(getwd(),"/SIVEP_clean.RData")
+}else{
+  
+}
+
+# Get SIVEP raw notification data
+load(FilePath)
+
+# Read country codes files
+PAIS_CODE=read.csv(file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/COUNTRY_CODES.csv"), header = TRUE, stringsAsFactors = FALSE)
+PAIS_CODE$PAIS_CODE=as.character(PAIS_CODE$PAIS_CODE)
+
+
+################################
+## Plot imports by border status
+
+# Get SIVEP by
+SIVEP_BORDER_MU = df %>%
+  select(DT_NOTIF, PAIS_RES, PAIS_INF, MUN_NOTI, RES_EXAM) %>%
+  mutate(BORDER = ifelse(MUN_NOTI %in% Border_Codes_UF_MU$CODE,"Yes",NA)) %>%
+  mutate(BRASIL_RES = ifelse(PAIS_RES == "1","Yes","No")) %>%
+  mutate(BRASIL_INF = ifelse(PAIS_INF == "1","Yes","No")) %>%
+  mutate(YEAR = year(DT_NOTIF)) %>%
+  select(-DT_NOTIF, -MUN_NOTI) %>%
+  group_by(YEAR, PAIS_RES, PAIS_INF, BRASIL_RES, BRASIL_INF, BORDER, RES_EXAM) %>%
+  count(RES_EXAM) %>%
+  spread(RES_EXAM, n, fill = 0) %>%
+  rename(FALCI = "Falciparum") %>%
+  rename(FV = "V+F") %>%
+  rename(VIVAX = "Vivax") %>%
+  mutate(Falciparum = FALCI + FV) %>%
+  mutate(Vivax = VIVAX + FV) %>%
+  select(YEAR, PAIS_RES, PAIS_INF, BRASIL_RES, BRASIL_INF, BORDER, Falciparum, Vivax)
+
+# Country names
+SIVEP_BORDER_MU$PAIS_RES = PAIS_CODE[match(SIVEP_BORDER_MU$PAIS_RES, PAIS_CODE$PAIS_CODE),"PAIS"]
+SIVEP_BORDER_MU$PAIS_INF = PAIS_CODE[match(SIVEP_BORDER_MU$PAIS_INF, PAIS_CODE$PAIS_CODE),"PAIS"]
+SIVEP_BORDER_MU$YEAR=factor(SIVEP_BORDER_MU$YEAR)
+
+# Plot
+ggplot(data=SIVEP_BORDER_MU[which(SIVEP_BORDER_MU$BRASIL_INF != "NA"),], aes(y=Vivax, x=YEAR, fill = BORDER)) +
+  geom_bar(stat = "identity") +
+  facet_wrap(~BRASIL_INF) +
+  theme_minimal() +
+  labs(title="Number of cases by Brazil infection status in border municipalities", y="", x="") +
+  theme(axis.text.x = element_text(size = 12, angle = 90, hjust = 1),
+        axis.title.y=element_text(size=12),
+        legend.position="right",
+        legend.title=element_text(size=12, face = "bold"))  +
+  guides(fill=guide_legend(title="Border municipalities"))
+
+ggplot(data=SIVEP_BORDER_MU, aes(y=Vivax, x=YEAR, fill = BORDER)) +
+  geom_bar(stat = "identity") +
+  facet_wrap(~BRASIL_RES) +
+  theme_minimal() +
+  labs(title="Number of cases by Brazilian residence status in border municipalities", y="", x="") +
+  theme(axis.text.x = element_text(size = 12, angle = 90, hjust = 1),
+        axis.title.y=element_text(size=12),
+        legend.position="right",
+        legend.title=element_text(size=12, face = "bold"))  +
+  guides(fill=guide_legend(title="Border municipalities"))
+
+ggplot(data=SIVEP_BORDER_MU[which(SIVEP_BORDER_MU$BRASIL_RES == "No"),],
+       aes(y=Vivax, x=YEAR, fill = BORDER)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title="Number of foreign resident cases in border municipalities", y="", x="") +
+  theme(axis.text.x = element_text(size = 12, angle = 90, hjust = 1),
+        axis.title.y=element_text(size=12),
+        legend.position="right",
+        legend.title=element_text(size=12, face = "bold"))  +
+  guides(fill=guide_legend(title="Border municipalities"))
+
+ggplot(data=SIVEP_BORDER_MU[which(SIVEP_BORDER_MU$BRASIL_INF == "No"),],
+       aes(y=Vivax, x=YEAR, fill = BORDER)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title="Number of foreign infected cases in border municipalities", y="", x="") +
+  theme(axis.text.x = element_text(size = 12, angle = 90, hjust = 1),
+        axis.title.y=element_text(size=12),
+        legend.position="right",
+        legend.title=element_text(size=12, face = "bold"))  +
+  guides(fill=guide_legend(title="Border municipalities"))
+
+
+################################
+## Mapping imports and border ##
+
+# Get SIVEP by
+SIVEP_BORDER_MU_MAP_VIVAX = df %>%
+  select(DT_NOTIF, PAIS_RES, PAIS_INF, MUN_NOTI, UF_NOTIF, RES_EXAM) %>% 
+  mutate(BORDER = ifelse(MUN_NOTI %in% Border_Codes_UF_MU$CODE,"Yes",NA)) %>% 
+  mutate(BRASIL_RES = ifelse(PAIS_RES == "1","Yes","No")) %>% 
+  mutate(BRASIL_INF = ifelse(PAIS_INF == "1","Yes","No")) %>%
+  mutate(YEAR = year(DT_NOTIF)) %>% 
+  select(-DT_NOTIF) %>%
+  group_by(YEAR, PAIS_RES, PAIS_INF, BRASIL_RES, BRASIL_INF, MUN_NOTI, UF_NOTIF, BORDER, RES_EXAM) %>%
+  count(RES_EXAM) %>%
+  spread(RES_EXAM, n, fill = 0) %>%
+  rename(FALCI = "Falciparum") %>%
+  rename(FV = "V+F") %>%
+  rename(VIVAX = "Vivax") %>%
+  mutate(Falciparum = FALCI + FV) %>%
+  mutate(Vivax = VIVAX + FV) %>%
+  select(YEAR, PAIS_RES, PAIS_INF, BRASIL_RES, BRASIL_INF, MUN_NOTI, UF_NOTIF, BORDER, Vivax) %>%
+  group_by(YEAR, PAIS_RES, PAIS_INF, BRASIL_RES, BRASIL_INF, MUN_NOTI, UF_NOTIF, BORDER, Vivax)
+
+# Country names
+SIVEP_BORDER_MU_MAP_VIVAX$PAIS_RES = PAIS_CODE[match(SIVEP_BORDER_MU_MAP_VIVAX$PAIS_RES, PAIS_CODE$PAIS_CODE),"PAIS"]
+SIVEP_BORDER_MU_MAP_VIVAX$PAIS_INF = PAIS_CODE[match(SIVEP_BORDER_MU_MAP_VIVAX$PAIS_INF, PAIS_CODE$PAIS_CODE),"PAIS"]
+SIVEP_BORDER_MU_MAP_VIVAX$YEAR=factor(SIVEP_BORDER_MU_MAP_VIVAX$YEAR)
+# State names
+SIVEP_BORDER_MU_MAP_VIVAX$MUN_NOTI = ADMIN_NAMES[match(SIVEP_BORDER_MU_MAP_VIVAX$MUN_NOTI, ADMIN_NAMES$Code),"Name"]
+# Municipality names
+SIVEP_BORDER_MU_MAP_VIVAX$UF_NOTIF = ADMIN_NAMES[match(SIVEP_BORDER_MU_MAP_VIVAX$UF_NOTIF, ADMIN_NAMES$Code),"Name"]
+
+# Imported cases
+SIVEP_BORDER_MU_MAP_VIVAX_IMPORTED=SIVEP_BORDER_MU_MAP_VIVAX[which(SIVEP_BORDER_MU_MAP_VIVAX$PAIS_RES != "BRASIL"
+                                                        | SIVEP_BORDER_MU_MAP_VIVAX$PAIS_INF != "BRASIL"),]
+SIVEP_BORDER_MU_MAP_VIVAX_IMPORTED=aggregate(Vivax~., data = SIVEP_BORDER_MU_MAP_VIVAX_IMPORTED, sum)
+
+###############
+## Venezuela ##
+
+# Get venezualian imports
+Venezuela=SIVEP_BORDER_MU_MAP_VIVAX_IMPORTED[which(SIVEP_BORDER_MU_MAP_VIVAX_IMPORTED$PAIS_RES == "VENEZUELA"
+                                                   | SIVEP_BORDER_MU_MAP_VIVAX_IMPORTED$PAIS_INF == "VENEZUELA"),]
+
+# By residence
+Venezuela_RES=Venezuela[which(Venezuela$PAIS_RES == "VENEZUELA"),]
+Venezuela_RES=Venezuela_RES[,c(1,6:9)]
+Venezuela_RES$YEAR=as.character(Venezuela_RES$YEAR)
+Venezuela_RES=aggregate(Vivax~YEAR+BORDER+MUN_NOTI+UF_NOTIF, Venezuela_RES, sum)
+Venezuela_RES=Venezuela_RES[order(Venezuela_RES$YEAR),]
+Venezuela_RES[which(Venezuela_RES$Vivax == 0),"Vivax"] = NA
+Venezuela_RES=Venezuela_RES[,-2]
+
+#############
+## MAPPING ##
+
+# MU-level shape files
+BRA_SHP_MU=getShp(country = "Brazil", admin_level = "admin2", format = "df")
+
+# Add border variable
+BRA_SHP_MU$name_2=as.character(BRA_SHP_MU$name_2)
+BRA_SHP_MU$BORDER = ifelse((BRA_SHP_MU$name_2 %in% Border_Codes_UF_MU$NAME),"Yes","No")
+
+# Make TS data wide by year and by type
+wVenezuela_RES=reshape(Venezuela_RES, idvar = c("MUN_NOTI","UF_NOTIF"), 
+               timevar = "YEAR", direction = "wide")
+
+# Step 1: make names into character temporarily
+BRA_SHP_MU$name_1=as.character(BRA_SHP_MU$name_1)
+BRA_SHP_MU$name_2=as.character(BRA_SHP_MU$name_2)
+Venezuela_RES$MUN_NOTI=as.character(Venezuela_RES$MUN_NOTI)
+Venezuela_RES$UF_NOTIF=as.character(Venezuela_RES$UF_NOTIF)
+
+# Step 2: merge (left_join will help keep in order)
+BRA_SHP_MU_SIVEP=left_join(BRA_SHP_MU, wVenezuela_RES, by = c("name_1" = "UF_NOTIF", "name_2" = "MUN_NOTI"))
+BRA_SHP_MU_SIVEP$name_1=factor(BRA_SHP_MU_SIVEP$name_1)
+BRA_SHP_MU_SIVEP$name_2=factor(BRA_SHP_MU_SIVEP$name_2)
+
+##########
+## By year
+
+Year = 2003
+Measure = "Vivax"
+
+# Select year to map
+mBRA_SHP_MU_SIVEP=subset(BRA_SHP_MU_SIVEP, select = c(colnames(BRA_SHP_MU_SIVEP)[1:24], paste0(Measure,".",Year)))
+names(mBRA_SHP_MU_SIVEP)[names(mBRA_SHP_MU_SIVEP)==paste0(Measure,".",Year)] <- Measure
+
+# Set break points
+breaks=c(-Inf, 0, 50, 100, 500, 1000, Inf)
+labels=factor(c("0", paste("<", breaks[3:(length(breaks)-1)]), paste(">", breaks[(length(breaks)-1)])))
+
+# Colors
+getColors=colorRampPalette(brewer.pal(6,"Blues"))
+Colors=c("gray85", getColors(length(labels)-1))
+names(Colors)=labels
+
+# Title
+title="Plasmodium vivax notified cases of Venezuelian residents, Brazil 2003"
+fill_label="Vivax cases"
+
+# Categorical variable
+if(Measure == "Vivax"){
+  mBRA_SHP_MU_SIVEP[is.na(mBRA_SHP_MU_SIVEP$Vivax),Measure] = 0
+  mBRA_SHP_MU_SIVEP$CAT <- cut(as.numeric(mBRA_SHP_MU_SIVEP$Vivax), 
+                               breaks = breaks, labels = labels)
+}else{
+  mBRA_SHP_MU_SIVEP[is.na(mBRA_SHP_MU_SIVEP$Falciparum),Measure] = 0
+  mBRA_SHP_MU_SIVEP$CAT <- cut(as.numeric(mBRA_SHP_MU_SIVEP$Falciparum), 
+                               breaks = breaks, labels = labels)
+}
+
+# Plot
+PLOT=ggplot(data=mBRA_SHP_MU_SIVEP) +
+  geom_polygon(aes(long, lat, group=group, fill=CAT, color = BORDER)) +
+  scale_fill_manual(values = Colors) +
+  scale_color_manual(values = c("gray95","black")) +
+  coord_equal() +
+  theme_minimal() + 
+  labs(title = title, fill = fill_label) +  
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())
+PLOT
