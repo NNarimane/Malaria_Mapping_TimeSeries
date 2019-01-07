@@ -150,7 +150,7 @@ day_malaria_type_brazil_gender <- df %>%
 
 ### Counting malaria cases by day, UF, municipality, AGE Categories, malaria type.
 ```{r}
-day_malaria_type_age <- df %>%
+day_malaria_type_age <- df %>%envNN = F
                             group_by(DT_NOTIF, MUN_NOTI, AGE_CAT) %>%
                             count(RES_EXAM) %>%
                             mutate(LEVEL = "MU") %>%
@@ -420,29 +420,129 @@ write.csv(pop_strat, file = "pop_strat_2010.csv", row.names = F)
 
 Proportion of males and females by gender
 ```{r}
-pop_strat1 <- pop_strat %>% 
+pop_strat <- read.csv("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/pop_strat_2010.csv", stringsAsFactors = F)
+head(pop_strat)
+
+pop_strat <- pop_strat %>% 
                     add_count(CODE, wt = POP_SIZE)
                                 
-pop_strat1 %>% filter(CODE == "520005")
+pop_strat %>% filter(CODE == "310010")
 
-pop_strat1 <- pop_strat1 %>%
-                 #   mutate(PROPORTION = POP_SIZE/n) %>%
-                    rename(POP_TOTAL = n)
+pop_strat <- pop_strat %>%
+#                    rename(POP_TOTAL = n) %>%
+                    mutate(PROPORTION = POP_SIZE/POP_TOTAL) %>%
+                    mutate(PROPORTION = as.numeric(PROPORTION))
 
 
-write.csv(pop_strat, file = "pop_strat_2010_prop.csv", row.names = F)
+
+write.csv(pop_strat, file = "/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/pop_strat_2010_prop.csv", row.names = F)
+
+```
+
+- Importing pop size table to apply the pop proportion by age and gender per admin. strat and year
+```{r}
+pop_strat <- read.csv("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/pop_strat_2010_prop.csv")
+head(pop_strat)
+
+pop_strat %>% filter(POP_TOTAL == 8366)
+
+```
+
+- Organizing the pop table per year for the format LEVEL/CODE/NAME
+```{r}
+pop_ym <- read.csv("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/pop_estimated.csv")
+head(pop_ym)
+
+
+```
+
+### Population size per Level, Code, Name and Year: Municipality
+- Obs.: I didn't remane NAME1 to NAME because the difference between the pattern in the other tables.
+```{r}
+pop_Municipality <- pop_ym %>%
+                mutate(LEVEL = "MU") %>%
+                rename(CODE = COD.MUNIC1, NAME1 = NOME.MUNIC) %>%
+                select(LEVEL, CODE, NAME1, POP.EST, YEAR)
+
+head(pop_Municipality)              
+unique(pop_Municipality$LEVEL)
+
+```
+
+### Population size per Level, Code, Name and Year: State
+```{r}
+pop_State <- pop_ym %>%
+                group_by(COD.UF, UF, YEAR) %>%
+                summarise(POP.EST = sum(POP.EST)) %>%
+                mutate(LEVEL = "UF") %>%
+                rename(CODE = COD.UF, NAME1 = UF) %>%
+                select(LEVEL, CODE, NAME1, POP.EST, YEAR)
 
 ```
 
 
-
-Merge of pop size and malaria cases
+### Population size per Level, Code, Name and Year: Brazil
 ```{r}
+pop_Brazil <- pop_ym %>%
+                group_by(YEAR) %>%
+                summarise(POP.EST = sum(POP.EST)) %>%
+                mutate(LEVEL = "BR",
+                       CODE = 1,
+                       NAME1 = "Brazil") %>%
+                mutate(CODE = as.integer(CODE),
+                       NAME1 = as.factor(NAME1)) %>%
+                select(LEVEL, CODE, NAME1, POP.EST, YEAR)
+
+```
+
+- cbind pop size tables
+```{r}
+names(pop_Brazil)
+names(pop_State)
+names(pop_Municipality)
+pop_Brazil1 <- as.data.frame(pop_Brazil)
+pop_State1 <- as.data.frame(pop_State)
+pop_Municipality1 <- as.data.frame(pop_Municipality)
 
 
+str(pop_Brazil1)
+str(pop_State1)
+str(pop_Municipality1)
 
+pop_size <- data.frame(rbind(pop_Brazil1, pop_State1, pop_Municipality1))
+head(pop_size)
+
+write.csv(pop_size, file = "pop_size_adm_levels_years.csv", row.names = F)
+
+```
+
+
+- Join pop size and pop strat
+```{r}
+dim(pop_strat)
+str(pop_strat)
+dim(pop_size)
+str(pop_size)
+pop_strat1 <- pop_strat[,-3]
+
+pop_size_strat <- left_join(x = pop_strat1, y = pop_size)
+head(pop_size_strat)
+dim(pop_size_strat)
 
 ```  
 
+- Calculating pop size per gender, age, adm level and year
+```{r}
+pop_size_strat <- pop_size_strat %>%
+                              mutate(POP.EST.Y = PROPORTION*POP.EST) %>%
+                              select(LEVEL, CODE, AGE_CAT, GENDER, NAME1, YEAR, POP.EST.Y) %>%
+                              rename(NAME = NAME1)
+
+
+head(pop_size_strat)
+
+
+write.csv(pop_size_strat, file = "pop_size_strat.csv", row.names = F)
+```
 
 - abrir o shape de assentamentos e ver se tem de grandes empreendimentos e suas infos.
