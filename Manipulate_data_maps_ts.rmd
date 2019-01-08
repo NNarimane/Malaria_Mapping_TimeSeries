@@ -362,8 +362,7 @@ sivep_strat <- sivep_strat[, c(1, 2, 3, 4, 8, 6, 7)]
 sivep_strat <- sivep_strat %>%
                         rename(GENDER = GENDER1)
 
-
-
+write.csv(sivep_strat, file = "/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/sivep_admlevels_dtnotif_STRAT.csv", row.names = F)
 ```
 
 
@@ -388,7 +387,7 @@ summary(pop_strat)
 
 ```
 
-- recategorizing age categories and cleaning
+- Recategorizing age categories and cleaning
 ```{r}
 pop_strat <- pop_strat %>%
                   filter(Group == "0 a 4 anos" | Group == "5 a 9 anos" | Group == "10 a 14 anos" | Group == "15 a 19 anos" | Group == "20 a 24 anos" | Group == "25 a 29 anos" | Group == "30 a 34 anos" | Group == "35 a 39 anos" | Group == "40 a 44 anos" | Group == "45 a 49 anos"  | Group == "50 a 54 anos" | Group == "55 a 59 anos" | Group == "60 a 64 anos" | Group == "65 a 69 anos" | Group == "70 a 74 anos" | Group == "75 a 79 anos" | Group == "80 a 84 anos" | Group == "85 a 89 anos" | Group == "90 a 94 anos" | Group == "95 a 99 anos" | Group == "100 anos ou mais") %>%
@@ -413,8 +412,6 @@ pop_strat %>% filter(CODE == "310010")
 pop_strat[which(pop_strat$CODE == "310010" & is.na(pop_strat$AGE_CAT)),]
 
 write.csv(pop_strat, file = "pop_strat_2010.csv", row.names = F)
-   
-
   
 ```
 
@@ -424,16 +421,12 @@ pop_strat <- read.csv("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaq
 head(pop_strat)
 
 pop_strat <- pop_strat %>% 
-                    add_count(CODE, wt = POP_SIZE)
-                                
-pop_strat %>% filter(CODE == "310010")
-
-pop_strat <- pop_strat %>%
-#                    rename(POP_TOTAL = n) %>%
+                    add_count(CODE, wt = POP_SIZE) %>%
+                    rename(POP_TOTAL = n) %>%
                     mutate(PROPORTION = POP_SIZE/POP_TOTAL) %>%
                     mutate(PROPORTION = as.numeric(PROPORTION))
 
-
+pop_strat %>% filter(CODE == "310010")
 
 write.csv(pop_strat, file = "/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/pop_strat_2010_prop.csv", row.names = F)
 
@@ -461,8 +454,8 @@ head(pop_ym)
 ```{r}
 pop_Municipality <- pop_ym %>%
                 mutate(LEVEL = "MU") %>%
-                rename(CODE = COD.MUNIC1, NAME1 = NOME.MUNIC) %>%
-                select(LEVEL, CODE, NAME1, POP.EST, YEAR)
+                rename(CODE = COD.MUNIC1, NAME = NOME.MUNIC) %>%
+                select(LEVEL, CODE, NAME, POP.EST, YEAR)
 
 head(pop_Municipality)              
 unique(pop_Municipality$LEVEL)
@@ -475,8 +468,8 @@ pop_State <- pop_ym %>%
                 group_by(COD.UF, UF, YEAR) %>%
                 summarise(POP.EST = sum(POP.EST)) %>%
                 mutate(LEVEL = "UF") %>%
-                rename(CODE = COD.UF, NAME1 = UF) %>%
-                select(LEVEL, CODE, NAME1, POP.EST, YEAR)
+                rename(CODE = COD.UF, NAME = UF) %>%
+                select(LEVEL, CODE, NAME, POP.EST, YEAR)
 
 ```
 
@@ -488,10 +481,10 @@ pop_Brazil <- pop_ym %>%
                 summarise(POP.EST = sum(POP.EST)) %>%
                 mutate(LEVEL = "BR",
                        CODE = 1,
-                       NAME1 = "Brazil") %>%
+                       NAME = "Brazil") %>%
                 mutate(CODE = as.integer(CODE),
-                       NAME1 = as.factor(NAME1)) %>%
-                select(LEVEL, CODE, NAME1, POP.EST, YEAR)
+                       NAME = as.factor(NAME)) %>%
+                select(LEVEL, CODE, NAME, POP.EST, YEAR)
 
 ```
 
@@ -500,16 +493,15 @@ pop_Brazil <- pop_ym %>%
 names(pop_Brazil)
 names(pop_State)
 names(pop_Municipality)
-pop_Brazil1 <- as.data.frame(pop_Brazil)
-pop_State1 <- as.data.frame(pop_State)
-pop_Municipality1 <- as.data.frame(pop_Municipality)
+pop_Brazil <- as.data.frame(pop_Brazil)
+pop_State <- as.data.frame(pop_State)
+pop_Municipality <- as.data.frame(pop_Municipality)
 
+str(pop_Brazil)
+str(pop_State)
+str(pop_Municipality)
 
-str(pop_Brazil1)
-str(pop_State1)
-str(pop_Municipality1)
-
-pop_size <- data.frame(rbind(pop_Brazil1, pop_State1, pop_Municipality1))
+pop_size <- data.frame(rbind(pop_Brazil, pop_State, pop_Municipality))
 head(pop_size)
 
 write.csv(pop_size, file = "pop_size_adm_levels_years.csv", row.names = F)
@@ -523,9 +515,9 @@ dim(pop_strat)
 str(pop_strat)
 dim(pop_size)
 str(pop_size)
-pop_strat1 <- pop_strat[,-3]
+pop_strat <- pop_strat[,-3]
 
-pop_size_strat <- left_join(x = pop_strat1, y = pop_size)
+pop_size_strat <- left_join(x = pop_strat, y = pop_size)
 head(pop_size_strat)
 dim(pop_size_strat)
 
@@ -535,14 +527,28 @@ dim(pop_size_strat)
 ```{r}
 pop_size_strat <- pop_size_strat %>%
                               mutate(POP.EST.Y = PROPORTION*POP.EST) %>%
-                              select(LEVEL, CODE, AGE_CAT, GENDER, NAME1, YEAR, POP.EST.Y) %>%
-                              rename(NAME = NAME1)
+                              mutate(POP.EST.Y = round(POP.EST.Y, 0),
+                                     LEVEL = factor(LEVEL, c("BR", "UF", "MU"), c("BR", "UF", "MU"))) %>%
+                              arrange(CODE) %>%
+                              select(LEVEL, CODE, AGE_CAT, GENDER, NAME, YEAR, POP.EST.Y)
+                              
 
+# I could not save with this category order.
+#pop_size_strat1$AGE_CAT %>% fct_relevel("0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80+" ) 
 
 head(pop_size_strat)
+tail(pop_size_strat)
 
 
-write.csv(pop_size_strat, file = "pop_size_strat.csv", row.names = F)
+write.csv(pop_size_strat, file = "pop_size_admlevels_year_STRAT.csv", row.names = F)
+
 ```
+
+- Join pop size by adm levels, year and strat. with SIVEP.
+```{r}
+
+
+```
+
 
 - abrir o shape de assentamentos e ver se tem de grandes empreendimentos e suas infos.
