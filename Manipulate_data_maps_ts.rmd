@@ -578,7 +578,10 @@ sivep_strat1 <- sivep_strat %>%
 #teste <- sivep_strat1 %>% group_by(CODE) %>% count(AGE_CAT) %>% filter(CODE == 510895)
 
 
-sivep_pop_strat <- left_join(x = sivep_strat, y = pop_strat)
+sivep_pop_strat <- left_join(x = sivep_strat1, y = pop_strat)
+sivep_pop_strat <- sivep_pop_strat %>%
+                                  mutate(API = CASES/POP.EST.Y * 1000)
+                                  
 
 # sivep_strat[which(sivep_strat$AGE_CAT == "0-4" & sivep_strat$CASES == 0),]
 # sivep_strat[which(sivep_strat$AGE_CAT == "0-4" & is.na(sivep_strat$CASES)),]
@@ -593,6 +596,27 @@ sivep_pop_strat <- left_join(x = sivep_strat, y = pop_strat)
 
 
 ```
+
+testing relevel AGE_CAT
+```{r}
+cat_order <- c("0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80+")
+
+sivep_pop_strat <- sivep_pop_strat %>% 
+                        mutate(AGE_CAT1 = factor(AGE_CAT, levels = cat_order)) 
+
+sivep_pop_strat <- sivep_pop_strat[, c(1, 2, 12, 4:11)]
+sivep_pop_strat1 <- sivep_pop_strat %>%
+                                   rename(AGE_CAT = AGE_CAT1)
+
+write.csv(sivep_pop_strat1, file = "/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/API_admlevels_year_STRAT.csv", row.names = F)
+
+AG <- ggplot(aes(y = API, x = AGE_CAT, fill = GENDER), data = sivep_pop_strat1[sivep_pop_strat1$CODE == 1,]) +
+            geom_bar(stat = "identity", position = "dodge") +
+            facet_wrap(~YEAR) +
+            theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+
+```
+
 
 
 - abrir o shape de assentamentos e ver se tem de grandes empreendimentos e suas infos.
