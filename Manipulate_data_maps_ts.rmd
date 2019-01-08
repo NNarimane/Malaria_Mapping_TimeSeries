@@ -16,6 +16,7 @@ library('stringr')
 library(tidyverse)
 library('data.table')
 library('forcats')
+library(lubridate)
 
 ```
 
@@ -504,7 +505,7 @@ str(pop_Municipality)
 pop_size <- data.frame(rbind(pop_Brazil, pop_State, pop_Municipality))
 head(pop_size)
 
-write.csv(pop_size, file = "pop_size_adm_levels_years.csv", row.names = F)
+write.csv(pop_size, file = "/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/pop_size_adm_levels_years.csv", row.names = F)
 
 ```
 
@@ -523,7 +524,7 @@ dim(pop_size_strat)
 
 ```  
 
-- Calculating pop size per gender, age, adm level and year
+### Calculating pop size per gender, age, adm level and year
 ```{r}
 pop_size_strat <- pop_size_strat %>%
                               mutate(POP.EST.Y = PROPORTION*POP.EST) %>%
@@ -540,12 +541,55 @@ head(pop_size_strat)
 tail(pop_size_strat)
 
 
-write.csv(pop_size_strat, file = "pop_size_admlevels_year_STRAT.csv", row.names = F)
+write.csv(pop_size_strat, file = "/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/pop_size_admlevels_year_STRAT.csv", row.names = F)
 
 ```
 
-- Join pop size by adm levels, year and strat. with SIVEP.
+### Join pop size by adm levels, year and strat. with SIVEP.
+- I saved the tables, clear the environment and imported again not to be so slow.
+- I have to create the variable year in sivep table, to link with pop table. Faster that run again the tables including year and week of the original database.
+- Problem: GENDER in SIVEP has NA's - I removed these lines from the database such as YEAR == 2018. 
+- Some municipalities don't have all AGE_CAT, but I couldn't get to visualize it.
+- The ideal table is a table with all AGE_CAT and GENDER in all weeks and year, but I still couldn't get to create it. 
 ```{r}
+pop_strat <- read.csv("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/pop_size_admlevels_year_STRAT.csv")
+sivep_strat <- read.csv("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/sivep_admlevels_dtnotif_STRAT.csv")
+
+length(unique(sivep_strat$CODE[sivep_strat$LEVEL == "MU"]))
+#712
+length(unique(pop_strat$CODE[pop_strat$LEVEL == "MU"]))
+#5565
+
+sivep_strat <- sivep_strat %>%
+                          mutate(WEEK = epiweek(DT_NOTIF),
+                                 YEAR = as.integer(str_sub(DT_NOTIF, start = 1, end = 4))
+                                 )
+
+length(sivep_strat$YEAR == 2018)
+length(sivep_pop_strat$YEAR == 2018)
+
+sivep_strat1 <- sivep_strat %>%
+                            drop_na(GENDER) %>%
+                            filter(YEAR <= 2017) %>%
+                            group_by(LEVEL, CODE, AGE_CAT, GENDER, TYPE, WEEK, YEAR) %>%
+                            summarise(CASES = sum(CASES)) %>%
+                            arrange(CODE, AGE_CAT, WEEK, YEAR)
+                            
+#teste <- sivep_strat1 %>% group_by(CODE) %>% count(AGE_CAT) %>% filter(CODE == 510895)
+
+
+sivep_pop_strat <- left_join(x = sivep_strat, y = pop_strat)
+
+# sivep_strat[which(sivep_strat$AGE_CAT == "0-4" & sivep_strat$CASES == 0),]
+# sivep_strat[which(sivep_strat$AGE_CAT == "0-4" & is.na(sivep_strat$CASES)),]
+# 
+# pop_strat[which(pop_strat$POP.EST.Y == 0),]
+# pop_strat[which(pop_strat$AGE_CAT == "0-4" & is.na(pop_strat$POP.EST.Y)),]
+# 
+# head(sivep_pop_strat1[which(sivep_pop_strat1$AGE_CAT == "0-4" & sivep_pop_strat1$CASES == 0),])
+# sivep_strat[which(sivep_strat$AGE_CAT == "0-4" & is.na(sivep_strat$CASES)),]
+# 
+# head(sivep_pop_strat2[which(is.na(sivep_pop_strat2$POP.EST.Y)),])
 
 
 ```
