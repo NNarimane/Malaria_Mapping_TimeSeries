@@ -14,7 +14,9 @@ editor_options:
 library(foreign)
 library('stringr')
 library(tidyverse)
-library(data.table)
+library('data.table')
+library('forcats')
+library(lubridate)
 
 ```
 
@@ -25,7 +27,9 @@ envNN = F
 
 if(envNN){
   load("/SIVEP_clean.RData")
-}else{load("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/SIVEP_clean.RData")
+}else{load("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/SIVEP_clean.RData") #Fiocruz desktop
+#}else{load("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/SIVEP_clean.RData") #my pc
+  
 }
 
 ```
@@ -147,7 +151,7 @@ day_malaria_type_brazil_gender <- df %>%
 
 ### Counting malaria cases by day, UF, municipality, AGE Categories, malaria type.
 ```{r}
-day_malaria_type_age <- df %>%
+day_malaria_type_age <- df %>%envNN = F
                             group_by(DT_NOTIF, MUN_NOTI, AGE_CAT) %>%
                             count(RES_EXAM) %>%
                             mutate(LEVEL = "MU") %>%
@@ -254,7 +258,7 @@ day_malaria_type_places_country <- df %>%
 ### Counting malaria cases per day, notification, residence, probable infection per state and malaria type.
 ```{r}
 day_malaria_type_places_state <- df %>%
-                          group_by(DT_NOTIF, UF_NOTIF, UF_RESID, UF_INFEC) %>%
+                          group_by(DT_NOTIF, UFenvNN = F_NOTIF, UF_RESID, UF_INFEC) %>%
                           count(RES_EXAM) %>%
                           mutate(LEVEL = "UF") %>%
                           select(DT_NOTIF, LEVEL, UF_NOTIF, UF_RESID, UF_INFEC, RES_EXAM, n) %>%
@@ -287,4 +291,332 @@ day_malaria_type_places_muni <- df %>%
 ```
 
 
+# Case per age and gender population size - API
 
+### Counting malaria cases by day, municipality, age categories, gender, malaria type.
+```{r}
+day_malaria_type_age_gender <- df %>%
+                            group_by(DT_NOTIF, MUN_NOTI, AGE_CAT, SEXO) %>%
+                            count(RES_EXAM) %>%
+                            mutate(LEVEL = "MU") %>%
+                            select(DT_NOTIF, LEVEL, MUN_NOTI, RES_EXAM, AGE_CAT, SEXO, n) %>%
+                            spread(RES_EXAM, n, fill = 0) %>%
+                            rename(CODE = MUN_NOTI, GENDER = SEXO, FALCI = "Falciparum", VF = "V+F", VIVAX = "Vivax") %>%
+                            mutate(Falciparum = FALCI + VF) %>%
+                            mutate(Vivax = VIVAX + VF) %>%
+                            select(DT_NOTIF, LEVEL, CODE, AGE_CAT, GENDER, Falciparum, Vivax) %>%
+                            gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE, AGE_CAT, GENDER))
+                           
+
+```
+
+### Counting malaria cases by day, state, age caterories, gender and malaria type
+```{r}
+day_malaria_type_state_age_gender <- df %>%
+                          group_by(DT_NOTIF, UF_NOTIF, AGE_CAT, SEXO) %>%
+                          count(RES_EXAM) %>%
+                          mutate(LEVEL = "UF") %>%
+                          select(DT_NOTIF, LEVEL, UF_NOTIF, RES_EXAM, AGE_CAT, SEXO, n) %>%
+                          spread(RES_EXAM, n, fill = 0) %>%
+                          rename(CODE = UF_NOTIF, GENDER = SEXO, FALCI = "Falciparum", VF = "V+F", VIVAX = "Vivax") %>%
+                          mutate(Falciparum = FALCI + VF) %>%
+                          mutate(Vivax = VIVAX + VF) %>%
+                          select(DT_NOTIF, LEVEL, CODE, AGE_CAT, GENDER, Falciparum, Vivax) %>%
+                          gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE, AGE_CAT, GENDER))
+
+```
+
+
+### Counting malaria cases by day, country, age categories, gender and malaria type
+```{r}
+day_malaria_type_brazil_age_gender <- df %>%
+                          group_by(DT_NOTIF, AGE_CAT, SEXO) %>%
+                          count(RES_EXAM)%>%
+                          mutate(LEVEL = "BR",
+                                 CODE = "1") %>%
+                          select(DT_NOTIF, LEVEL, CODE, RES_EXAM, AGE_CAT, SEXO, n) %>%
+                          spread(RES_EXAM, n, fill = 0) %>%
+                          rename(GENDER = SEXO, FALCI = "Falciparum", VF = "V+F", VIVAX = "Vivax") %>%
+                          mutate(Falciparum = FALCI + VF) %>%
+                          mutate(Vivax = VIVAX + VF) %>%
+                          select(DT_NOTIF, LEVEL, CODE, AGE_CAT, GENDER, Falciparum, Vivax) %>%
+                          gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE, AGE_CAT, GENDER))
+
+```
+
+# rbind population table per level
+- Rename GENDER and exclude "I" and NA's
+```{r}
+sivep_strat <- rbind(day_malaria_type_brazil_age_gender, day_malaria_type_state_age_gender, day_malaria_type_age_gender)
+
+sivep_strat$GENDER1 <- NA
+sivep_strat[which(sivep_strat$GENDER == "F"),]$GENDER1 <- "Female" 
+sivep_strat[which(sivep_strat$GENDER == "M"),]$GENDER1 <- "Male" 
+sivep_strat[which(sivep_strat$GENDER == "I"),]$GENDER1 <- NA 
+
+unique(sivep_strat$GENDER1)
+class(sivep_strat$GENDER1)
+table(sivep_strat$GENDER1)
+
+sivep_strat <- sivep_strat[, c(1, 2, 3, 4, 8, 6, 7)]
+
+sivep_strat <- sivep_strat %>%
+                        rename(GENDER = GENDER1)
+
+write.csv(sivep_strat, file = "/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/sivep_admlevels_dtnotif_STRAT.csv", row.names = F)
+```
+
+
+
+# Population size per level, code, age categories and gender
+```{r}
+if(envNN){
+  pop_strat <- read.csv("/BRA_AGE_SEX_MUNICIP_2010.csv")
+}else{pop_strat <- fread("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/BRA_AGE_SEX_MUNICIP_2010.csv", stringsAsFactors = F, encoding = 'Latin-1')}
+
+#pop_strat <- fread("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/BRA_AGE_SEX_MUNICIP_2010.csv", stringsAsFactors = F, encoding = 'Latin-1') #my pc
+
+pop_strat <- pop_strat[, -5]
+pop_strat 
+
+head(pop_strat)
+unique(pop_strat$Level) 
+unique(pop_strat$Code) 
+unique(pop_strat$Group) 
+summary(pop_strat)
+
+
+```
+
+- Recategorizing age categories and cleaning
+```{r}
+pop_strat <- pop_strat %>%
+                  filter(Group == "0 a 4 anos" | Group == "5 a 9 anos" | Group == "10 a 14 anos" | Group == "15 a 19 anos" | Group == "20 a 24 anos" | Group == "25 a 29 anos" | Group == "30 a 34 anos" | Group == "35 a 39 anos" | Group == "40 a 44 anos" | Group == "45 a 49 anos"  | Group == "50 a 54 anos" | Group == "55 a 59 anos" | Group == "60 a 64 anos" | Group == "65 a 69 anos" | Group == "70 a 74 anos" | Group == "75 a 79 anos" | Group == "80 a 84 anos" | Group == "85 a 89 anos" | Group == "90 a 94 anos" | Group == "95 a 99 anos" | Group == "100 anos ou mais") %>%
+                  mutate(Group = ifelse(Group == "80 anos ou mais" | Group == "80 a 84 anos" | Group == "85 a 89 anos" | Group == "90 a 94 anos" | Group == "95 a 99 anos" | Group == "100 anos ou mais", "80 anos ou mais", Group))
+
+
+# Sum lines with the category "80 anos ou mais"   
+pop_strat$Men <- as.integer(pop_strat$Men)
+pop_strat$Women <- as.integer(pop_strat$Women)
+pop_strat <- aggregate(cbind(Men, Women) ~ Level + Code + Name + Group, data = pop_strat, FUN = sum)
+
+pop_strat %>% filter(Code == "4304101")  
+ 
+pop_strat <- pop_strat %>%
+                   mutate(Group = factor(Group, levels= c("0 a 4 anos", "5 a 9 anos", "10 a 14 anos", "15 a 19 anos", "20 a 24 anos", "25 a 29 anos", "30 a 34 anos",  "35 a 39 anos", "40 a 44 anos", "45 a 49 anos", "50 a 54 anos", "55 a 59 anos", "60 a 64 anos", "65 a 69 anos", "70 a 74 anos", "75 a 79 anos", "80 anos ou mais"), label=c("0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80+"))) %>%
+                  filter(Level != "GR") %>%
+                  rename(LEVEL = Level, CODE = Code, NAME = Name, AGE_CAT = Group, Male = Men, Female = Women) %>%
+                  gather(key = 'GENDER', value = 'POP_SIZE', -c(LEVEL, CODE, NAME, AGE_CAT)) %>%
+                  mutate(CODE = str_sub(CODE, 1, 6))
+
+pop_strat %>% filter(CODE == "310010")
+pop_strat[which(pop_strat$CODE == "310010" & is.na(pop_strat$AGE_CAT)),]
+
+write.csv(pop_strat, file = "pop_strat_2010.csv", row.names = F)
+  
+```
+
+Proportion of males and females by gender
+```{r}
+pop_strat <- read.csv("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/pop_strat_2010.csv", stringsAsFactors = F)
+head(pop_strat)
+
+pop_strat <- pop_strat %>% 
+                    add_count(CODE, wt = POP_SIZE) %>%
+                    rename(POP_TOTAL = n) %>%
+                    mutate(PROPORTION = POP_SIZE/POP_TOTAL) %>%
+                    mutate(PROPORTION = as.numeric(PROPORTION))
+
+pop_strat %>% filter(CODE == "310010")
+
+write.csv(pop_strat, file = "/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/pop_strat_2010_prop.csv", row.names = F)
+
+```
+
+- Importing pop size table to apply the pop proportion by age and gender per admin. strat and year
+```{r}
+pop_strat <- read.csv("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/pop_strat_2010_prop.csv")
+head(pop_strat)
+
+pop_strat %>% filter(POP_TOTAL == 8366)
+
+```
+
+- Organizing the pop table per year for the format LEVEL/CODE/NAME
+```{r}
+pop_ym <- read.csv("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/pop_estimated.csv")
+head(pop_ym)
+
+
+```
+
+### Population size per Level, Code, Name and Year: Municipality
+- Obs.: I didn't remane NAME1 to NAME because the difference between the pattern in the other tables.
+```{r}
+pop_Municipality <- pop_ym %>%
+                mutate(LEVEL = "MU") %>%
+                rename(CODE = COD.MUNIC1, NAME = NOME.MUNIC) %>%
+                select(LEVEL, CODE, NAME, POP.EST, YEAR)
+
+head(pop_Municipality)              
+unique(pop_Municipality$LEVEL)
+
+```
+
+### Population size per Level, Code, Name and Year: State
+```{r}
+pop_State <- pop_ym %>%
+                group_by(COD.UF, UF, YEAR) %>%
+                summarise(POP.EST = sum(POP.EST)) %>%
+                mutate(LEVEL = "UF") %>%
+                rename(CODE = COD.UF, NAME = UF) %>%
+                select(LEVEL, CODE, NAME, POP.EST, YEAR)
+
+```
+
+
+### Population size per Level, Code, Name and Year: Brazil
+```{r}
+pop_Brazil <- pop_ym %>%
+                group_by(YEAR) %>%
+                summarise(POP.EST = sum(POP.EST)) %>%
+                mutate(LEVEL = "BR",
+                       CODE = 1,
+                       NAME = "Brazil") %>%
+                mutate(CODE = as.integer(CODE),
+                       NAME = as.factor(NAME)) %>%
+                select(LEVEL, CODE, NAME, POP.EST, YEAR)
+
+```
+
+- cbind pop size tables
+```{r}
+names(pop_Brazil)
+names(pop_State)
+names(pop_Municipality)
+pop_Brazil <- as.data.frame(pop_Brazil)
+pop_State <- as.data.frame(pop_State)
+pop_Municipality <- as.data.frame(pop_Municipality)
+
+str(pop_Brazil)
+str(pop_State)
+str(pop_Municipality)
+
+pop_size <- data.frame(rbind(pop_Brazil, pop_State, pop_Municipality))
+head(pop_size)
+
+write.csv(pop_size, file = "/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/pop_size_adm_levels_years.csv", row.names = F)
+
+```
+
+
+- Join pop size and pop strat
+```{r}
+dim(pop_strat)
+str(pop_strat)
+dim(pop_size)
+str(pop_size)
+pop_strat <- pop_strat[,-3]
+
+pop_size_strat <- left_join(x = pop_strat, y = pop_size)
+head(pop_size_strat)
+dim(pop_size_strat)
+
+```  
+
+### Calculating pop size per gender, age, adm level and year
+```{r}
+pop_size_strat <- pop_size_strat %>%
+                              mutate(POP.EST.Y = PROPORTION*POP.EST) %>%
+                              mutate(POP.EST.Y = round(POP.EST.Y, 0),
+                                     LEVEL = factor(LEVEL, c("BR", "UF", "MU"), c("BR", "UF", "MU"))) %>%
+                              arrange(CODE) %>%
+                              select(LEVEL, CODE, AGE_CAT, GENDER, NAME, YEAR, POP.EST.Y)
+                              
+
+# I could not save with this category order.
+#pop_size_strat1$AGE_CAT %>% fct_relevel("0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80+" ) 
+
+head(pop_size_strat)
+tail(pop_size_strat)
+
+
+write.csv(pop_size_strat, file = "/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/pop_size_admlevels_year_STRAT.csv", row.names = F)
+
+```
+
+### Join pop size by adm levels, year and strat. with SIVEP.
+- I saved the tables, clear the environment and imported again not to be so slow.
+- I have to create the variable year in sivep table, to link with pop table. Faster that run again the tables including year and week of the original database.
+- Problem: GENDER in SIVEP has NA's - I removed these lines from the database such as YEAR == 2018. 
+- Some municipalities don't have all AGE_CAT, but I couldn't get to visualize it.
+- The ideal table is a table with all AGE_CAT and GENDER in all weeks and year, but I still couldn't get to create it. 
+```{r}
+pop_strat <- read.csv("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/pop_size_admlevels_year_STRAT.csv")
+sivep_strat <- read.csv("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/sivep_admlevels_dtnotif_STRAT.csv")
+
+length(unique(sivep_strat$CODE[sivep_strat$LEVEL == "MU"]))
+#712
+length(unique(pop_strat$CODE[pop_strat$LEVEL == "MU"]))
+#5565
+
+sivep_strat <- sivep_strat %>%
+                          mutate(WEEK = epiweek(DT_NOTIF),
+                                 YEAR = as.integer(str_sub(DT_NOTIF, start = 1, end = 4))
+                                 )
+
+length(sivep_strat$YEAR == 2018)
+length(sivep_pop_strat$YEAR == 2018)
+
+sivep_strat1 <- sivep_strat %>%
+                            drop_na(GENDER) %>%
+                            filter(YEAR <= 2017) %>%
+                            group_by(LEVEL, CODE, AGE_CAT, GENDER, TYPE, WEEK, YEAR) %>%
+                            summarise(CASES = sum(CASES)) %>%
+                            arrange(CODE, AGE_CAT, WEEK, YEAR)
+                            
+#teste <- sivep_strat1 %>% group_by(CODE) %>% count(AGE_CAT) %>% filter(CODE == 510895)
+
+
+sivep_pop_strat <- left_join(x = sivep_strat1, y = pop_strat)
+sivep_pop_strat <- sivep_pop_strat %>%
+                                  mutate(API = CASES/POP.EST.Y * 1000)
+                                  
+
+# sivep_strat[which(sivep_strat$AGE_CAT == "0-4" & sivep_strat$CASES == 0),]
+# sivep_strat[which(sivep_strat$AGE_CAT == "0-4" & is.na(sivep_strat$CASES)),]
+# 
+# pop_strat[which(pop_strat$POP.EST.Y == 0),]
+# pop_strat[which(pop_strat$AGE_CAT == "0-4" & is.na(pop_strat$POP.EST.Y)),]
+# 
+# head(sivep_pop_strat1[which(sivep_pop_strat1$AGE_CAT == "0-4" & sivep_pop_strat1$CASES == 0),])
+# sivep_strat[which(sivep_strat$AGE_CAT == "0-4" & is.na(sivep_strat$CASES)),]
+# 
+# head(sivep_pop_strat2[which(is.na(sivep_pop_strat2$POP.EST.Y)),])
+
+
+```
+
+testing relevel AGE_CAT
+```{r}
+cat_order <- c("0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80+")
+
+sivep_pop_strat <- sivep_pop_strat %>% 
+                        mutate(AGE_CAT1 = factor(AGE_CAT, levels = cat_order)) 
+
+sivep_pop_strat <- sivep_pop_strat[, c(1, 2, 12, 4:11)]
+sivep_pop_strat1 <- sivep_pop_strat %>%
+                                   rename(AGE_CAT = AGE_CAT1)
+
+write.csv(sivep_pop_strat1, file = "/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/API_admlevels_year_STRAT.csv", row.names = F)
+
+AG <- ggplot(aes(y = API, x = AGE_CAT, fill = GENDER), data = sivep_pop_strat1[sivep_pop_strat1$CODE == 1,]) +
+            geom_bar(stat = "identity", position = "dodge") +
+            facet_wrap(~YEAR) +
+            theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+
+```
+
+
+
+- abrir o shape de assentamentos e ver se tem de grandes empreendimentos e suas infos.

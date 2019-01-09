@@ -204,53 +204,9 @@ pms <- ggplot(aes(y = n, x = GESTANTE_), data = preg) +
 ```
 
 
-- Case per age and gender population size
-- fazer essa tabela ficar no ponto para o merge com a tabela de casos por faixa etaria e sexo do sivep que eu fiz no scrpit Manipulate_data_maps_ts. Antes do merge, fazer um rbind dessa tabela do SIVEP considerando. BR, UF e MU também. Fazer o mesmo para essa.
-```{r}
-if(envNN){
-  pop_strat <- read.csv("/BRA_AGE_SEX_MUNICIP_2010.csv")
-}else{pop_strat <- fread("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/BRA_AGE_SEX_MUNICIP_2010.csv", stringsAsFactors = F, encoding = 'Latin-1')
-}
-
-head(pop_strat)
-
-#Filtrar o group 0 ano, mudar as categorias da variável group para deixar igual do SIVEP, mudar o nome da variaǘel tb. Cortar BR, UF e deixar só município. E ver se o código de município bate com do SIVEP.
-
-pop_strat1 <- pop_strat %>%
-                  filter(Group != "0 ano") %>%
-                  filter(Level == "MU") %>%
-                  mutate(Group = factor(Group, label=c("0-4","5-9","10-14","15-19","20-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64","65-69","70-74","75-79","80+"), levels= c("0-4","5-9","10-14","15-19","20-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64","65-69","70-74","75-79","80+")))
-
-
-teste <- pop_strat %>%
-              filter(Level == "BR" & Group == "5 anos" | Group == "6 anos" | Group == "7 anos" | Group == "8 anos" | Group == "9 anos" | Group == "5 a 9 anos")
-     
-
-# BR
-# 2933764 + 2891614 + 2958801 + 2985271 + 3198318 = 14967768
-# BR total
-# 14967767
-# 
-# testesub <- pop_strat %>% filter(pop_strat$Code == "2304202") %>% filter(Group == "5 anos" | Group == "6 anos" | Group == "7 anos" | Group == "8 anos" | Group == "9 anos")
-# 139444
-# 
-# pop_strat %>% filter(pop_strat$Code == "2304202") %>% filter(Group == "5 a 9 anos") #139443
-# 
-# testesub <- pop_strat %>% filter(pop_strat$Code == "12") %>% filter(Group == "5 anos" | Group == "6 anos" | Group == "7 anos" | Group == "8 anos" | Group == "9 anos")
-# 82159
-# 
-# pop_strat %>% filter(pop_strat$Code == "12") %>% filter(Group == "5 a 9 anos") #82158
-# 
-# 
-# 2304202
-
-```
-
-
-```{r}
-
-```
 
 
 
-- abrir o shape de assentamentos e ver se tem de grandes empreendimentos e suas infos.
+
+
+

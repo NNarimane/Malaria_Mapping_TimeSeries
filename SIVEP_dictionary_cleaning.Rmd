@@ -168,6 +168,7 @@ df <- df %>%
 ```
 
 - Age range
+
 ```{r}
 df$AGE_CAT <- NA 
 df[which(df$AGE_CONT <= 4),]$AGE_CAT <- "0-4"
@@ -260,3 +261,6 @@ Saving RData.
 save.image(file = "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/SIVEP_clean.RData")
 
 ```
+
+
+
