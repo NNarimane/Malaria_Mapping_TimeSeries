@@ -516,6 +516,11 @@ dev.off()
 ############################# STATE-LEVEL #############################
 #######################################################################
 
+# Set file path
+if(envNN){
+  FilePath=paste0(getwd(),"/SIVEP_clean.RData")
+}else{}
+
 # Get SIVEP raw notification data
 load(FilePath)
 
@@ -534,9 +539,9 @@ SIVEP_UF_RES_VIVAX = df %>%
   group_by(YEAR, UF_NOTIF, UF_RESID) %>%
   count(RES_EXAM) %>%
   spread(RES_EXAM, n, fill = 0) %>%
-  rename(FALCI = "F") %>%
-  rename(FV = "F+V") %>%
-  rename(VIVAX = "V") %>%
+  rename(FALCI = "Falciparum") %>%
+  rename(FV = "V+F") %>%
+  rename(VIVAX = "Vivax") %>%
   mutate(Falciparum = FALCI + FV) %>%
   mutate(Vivax = VIVAX + FV) %>%
   select(YEAR, UF_NOTIF, UF_RESID, Vivax) %>%
@@ -599,11 +604,11 @@ for(i in 1:length(Years)){
     circos.text(mean(xlim), 0, sector.name, facing = "clockwise", niceFacing = T, cex = 0.7, adj = c(0, 0.5))
   }, bg.border = NA)
   title(paste("State of residence of reported P. vivax cases, Brazil",as.character(2002+i)), line = -1, cex = 2, outer = F)
-  # Save
-  dev.copy(png, paste0(Plot_Folder,"State of residence of reported P. vivax cases, Brazil ",as.character(2002+i),".png"),
-           width = 1000, height = 1000, units = "px", pointsize = 12,
-           res = 100)
-  dev.off()
+  # # Save
+  # dev.copy(png, paste0(Plot_Folder,"State of residence of reported P. vivax cases, Brazil ",as.character(2002+i),".png"),
+  #          width = 1000, height = 1000, units = "px", pointsize = 12,
+  #          res = 100)
+  # dev.off()
 }
 
 
@@ -619,9 +624,9 @@ SIVEP_UF_INF_VIVAX = df %>%
   group_by(YEAR, UF_NOTIF, UF_INFEC) %>%
   count(RES_EXAM) %>%
   spread(RES_EXAM, n, fill = 0) %>%
-  rename(FALCI = "F") %>%
-  rename(FV = "F+V") %>%
-  rename(VIVAX = "V") %>%
+  rename(FALCI = "Falciparum") %>%
+  rename(FV = "V+F") %>%
+  rename(VIVAX = "Vivax") %>%
   mutate(Falciparum = FALCI + FV) %>%
   mutate(Vivax = VIVAX + FV) %>%
   select(YEAR, UF_NOTIF, UF_INFEC, Vivax) %>%
@@ -795,11 +800,11 @@ for(i in 1:length(Years)){
     circos.text(mean(xlim), 0, sector.name, facing = "clockwise", niceFacing = T, cex = 0.7, adj = c(0, 0.5))
   }, bg.border = NA)
   title(paste("Municipality of residence of Acre reported P. vivax cases, Brazil",as.character(2002+i)), line = -1, cex = 2, outer = F)
-  # Save
-  dev.copy(png, paste0(Plot_Folder,"Municipality of residence of Acre reported P. vivax cases, Brazil ",as.character(2002+i),".png"),
-           width = 1000, height = 1000, units = "px", pointsize = 12,
-           res = 100)
-  dev.off()
+  # # Save
+  # dev.copy(png, paste0(Plot_Folder,"Municipality of residence of Acre reported P. vivax cases, Brazil ",as.character(2002+i),".png"),
+  #          width = 1000, height = 1000, units = "px", pointsize = 12,
+  #          res = 100)
+  # dev.off()
 }
 
 ##################
@@ -815,9 +820,9 @@ SIVEP_MU_INF_VIVAX_AC = df %>%
   group_by(YEAR, MUN_NOTI, MUN_INFE) %>%
   count(RES_EXAM) %>%
   spread(RES_EXAM, n, fill = 0) %>%
-  rename(FALCI = "F") %>%
-  rename(FV = "F+V") %>%
-  rename(VIVAX = "V") %>%
+  rename(FALCI = "Falciparum") %>%
+  rename(FV = "V+F") %>%
+  rename(VIVAX = "Vivax") %>%
   mutate(Falciparum = FALCI + FV) %>%
   mutate(Vivax = VIVAX + FV) %>%
   select(YEAR, MUN_NOTI, MUN_INFE, Vivax) %>%
@@ -883,10 +888,10 @@ for(i in 1:length(Years)){
   }, bg.border = NA)
   title(paste("Municipality of probable infection of Acre reported P. vivax cases, Brazil",as.character(2002+i)), line = -1, cex = 2, outer = F)
   # Save
-  dev.copy(png, paste0(Plot_Folder,"Municipality of probable infection of Acre reported P. vivax cases, Brazil ",as.character(2002+i),".png"),
-           width = 1000, height = 1000, units = "px", pointsize = 12,
-           res = 100)
-  dev.off()
+  # dev.copy(png, paste0(Plot_Folder,"Municipality of probable infection of Acre reported P. vivax cases, Brazil ",as.character(2002+i),".png"),
+  #          width = 1000, height = 1000, units = "px", pointsize = 12,
+  #          res = 100)
+  # dev.off()
 }
 
 #################################################################
@@ -931,9 +936,9 @@ SIVEP_VENEZ_UF_INF_VIVAX = df %>%
   group_by(YEAR, UF_NOTIF) %>%
   count(RES_EXAM) %>%
   spread(RES_EXAM, n, fill = 0) %>%
-  rename(FALCI = "F") %>%
-  rename(FV = "F+V") %>%
-  rename(VIVAX = "V") %>%
+  rename(FALCI = "Falciparum") %>%
+  rename(FV = "V+F") %>%
+  rename(VIVAX = "Vivax") %>%
   mutate(Falciparum = FALCI + FV) %>%
   mutate(Vivax = VIVAX + FV) %>%
   select(YEAR, UF_NOTIF, Vivax) %>%
@@ -947,9 +952,9 @@ SIVEP_VENEZ_MU_INF_VIVAX = df %>%
   group_by(YEAR, MUN_NOTI) %>%
   count(RES_EXAM) %>%
   spread(RES_EXAM, n, fill = 0) %>%
-  rename(FALCI = "F") %>%
-  rename(FV = "F+V") %>%
-  rename(VIVAX = "V") %>%
+  rename(FALCI = "Falciparum") %>%
+  rename(FV = "V+F") %>%
+  rename(VIVAX = "Vivax") %>%
   mutate(Falciparum = FALCI + FV) %>%
   mutate(Vivax = VIVAX + FV) %>%
   select(YEAR, MUN_NOTI, Vivax) %>%
@@ -1046,9 +1051,9 @@ SIVEP_VENEZ_UF_RES_VIVAX = df %>%
   group_by(YEAR, UF_NOTIF) %>%
   count(RES_EXAM) %>%
   spread(RES_EXAM, n, fill = 0) %>%
-  rename(FALCI = "F") %>%
-  rename(FV = "F+V") %>%
-  rename(VIVAX = "V") %>%
+  rename(FALCI = "Falciparum") %>%
+  rename(FV = "V+F") %>%
+  rename(VIVAX = "Vivax") %>%
   mutate(Falciparum = FALCI + FV) %>%
   mutate(Vivax = VIVAX + FV) %>%
   select(YEAR, UF_NOTIF, Vivax) %>%
@@ -1062,9 +1067,9 @@ SIVEP_VENEZ_MU_RES_VIVAX = df %>%
   group_by(YEAR, MUN_NOTI) %>%
   count(RES_EXAM) %>%
   spread(RES_EXAM, n, fill = 0) %>%
-  rename(FALCI = "F") %>%
-  rename(FV = "F+V") %>%
-  rename(VIVAX = "V") %>%
+  rename(FALCI = "Falciparum") %>%
+  rename(FV = "V+F") %>%
+  rename(VIVAX = "Vivax") %>%
   mutate(Falciparum = FALCI + FV) %>%
   mutate(Vivax = VIVAX + FV) %>%
   select(YEAR, MUN_NOTI, Vivax) %>%
@@ -1159,6 +1164,9 @@ dev.off()
 
 # Border states
 Border_UF = c("AC","AM","AP","RO","RR","PA","MT")
+Border_UF_Code = ADMIN_NAMES[which(ADMIN_NAMES$Level == "UF" &
+                                   ADMIN_NAMES$UF %in% Border_UF),]
+
 
 # Border municipalities
 Border_MU_AC = c("Acrelandia","Assis Brasil","Brasileia","Capixaba","Cruzeiro do Sul","Epitaciolandia",
@@ -1176,10 +1184,10 @@ Border_MU_MT=c("Vila Bela da Santissima Trindade","Porto Esperidiao","Caceres","
 Border_MU_All=c(Border_MU_AC,Border_MU_AM,Border_MU_AP,Border_MU_RO,Border_MU_RR,Border_MU_PA,Border_MU_MT)
 
 # Merge UF and MU border names
-Border_Names_UF_MU = c(Border_UF, Border_MU_All)
-Border_Codes_UF_MU=data.frame(cbind(NAME = Border_Names_UF_MU,
-                         CODE = ADMIN_NAMES[which(as.character(ADMIN_NAMES$Name) %in% Border_Names_UF_MU),"Code"],
-                         BORDER = "Yes"))
+# Border_Names_UF_MU = c(Border_UF, Border_MU_All)
+Border_Codes_UF_MU=data.frame(ADMIN_NAMES[which(as.character(ADMIN_NAMES$Name) %in% Border_MU_All &
+                                                  as.character(ADMIN_NAMES$UF) %in% Border_UF),c("Name","Code")],
+                              BORDER = "Yes")
 
 
 #################
@@ -1207,8 +1215,9 @@ PAIS_CODE$PAIS_CODE=as.character(PAIS_CODE$PAIS_CODE)
 
 # Get SIVEP by
 SIVEP_BORDER_MU = df %>%
-  select(DT_NOTIF, PAIS_RES, PAIS_INF, MUN_NOTI, RES_EXAM) %>%
-  mutate(BORDER = ifelse(MUN_NOTI %in% Border_Codes_UF_MU$CODE,"Yes",NA)) %>%
+  select(DT_NOTIF, PAIS_RES, PAIS_INF, MUN_NOTI, UF_NOTIF, RES_EXAM) %>%
+  mutate(BORDER = ifelse(MUN_NOTI %in% Border_Codes_UF_MU$Code &
+                           UF_NOTIF %in% Border_UF_Code$Code,"Yes",NA)) %>%
   mutate(BRASIL_RES = ifelse(PAIS_RES == "1","Yes","No")) %>%
   mutate(BRASIL_INF = ifelse(PAIS_INF == "1","Yes","No")) %>%
   mutate(YEAR = year(DT_NOTIF)) %>%
@@ -1279,8 +1288,9 @@ ggplot(data=SIVEP_BORDER_MU[which(SIVEP_BORDER_MU$BRASIL_INF == "No"),],
 
 # Get SIVEP by
 SIVEP_BORDER_MU_MAP_VIVAX = df %>%
-  select(DT_NOTIF, PAIS_RES, PAIS_INF, MUN_NOTI, UF_NOTIF, RES_EXAM) %>% 
-  mutate(BORDER = ifelse(MUN_NOTI %in% Border_Codes_UF_MU$CODE,"Yes",NA)) %>% 
+  select(DT_NOTIF, PAIS_RES, PAIS_INF, MUN_NOTI, UF_NOTIF, RES_EXAM) %>%
+  mutate(BORDER = ifelse(MUN_NOTI %in% Border_Codes_UF_MU$Code &
+                           UF_NOTIF %in% Border_UF_Code$Code,"Yes",NA)) %>%
   mutate(BRASIL_RES = ifelse(PAIS_RES == "1","Yes","No")) %>% 
   mutate(BRASIL_INF = ifelse(PAIS_INF == "1","Yes","No")) %>%
   mutate(YEAR = year(DT_NOTIF)) %>% 
@@ -1333,16 +1343,16 @@ Venezuela_RES=Venezuela_RES[,-2]
 BRA_SHP_MU=getShp(country = "Brazil", admin_level = "admin2", format = "df")
 
 # Add border variable
+BRA_SHP_MU$name_1=as.character(BRA_SHP_MU$name_1)
 BRA_SHP_MU$name_2=as.character(BRA_SHP_MU$name_2)
-BRA_SHP_MU$BORDER = ifelse((BRA_SHP_MU$name_2 %in% Border_Codes_UF_MU$NAME),"Yes","No")
+BRA_SHP_MU$BORDER = ifelse((BRA_SHP_MU$name_2 %in% Border_Codes_UF_MU$Name &
+                              BRA_SHP_MU$name_1 %in% Border_UF_Code$Name),"Yes","No") 
 
 # Make TS data wide by year and by type
 wVenezuela_RES=reshape(Venezuela_RES, idvar = c("MUN_NOTI","UF_NOTIF"), 
                timevar = "YEAR", direction = "wide")
 
 # Step 1: make names into character temporarily
-BRA_SHP_MU$name_1=as.character(BRA_SHP_MU$name_1)
-BRA_SHP_MU$name_2=as.character(BRA_SHP_MU$name_2)
 Venezuela_RES$MUN_NOTI=as.character(Venezuela_RES$MUN_NOTI)
 Venezuela_RES$UF_NOTIF=as.character(Venezuela_RES$UF_NOTIF)
 
@@ -1389,7 +1399,7 @@ if(Measure == "Vivax"){
 PLOT=ggplot(data=mBRA_SHP_MU_SIVEP) +
   geom_polygon(aes(long, lat, group=group, fill=CAT, color = BORDER)) +
   scale_fill_manual(values = Colors) +
-  scale_color_manual(values = c("gray95","black")) +
+  scale_color_manual(values = c("gray95","red")) +
   coord_equal() +
   theme_minimal() + 
   labs(title = title, fill = fill_label) +  
