@@ -216,9 +216,6 @@ API_strat <- API_strat %>%
                         mutate(AGE_CAT1 = factor(AGE_CAT, levels = cat_order)) 
 
 ```
-=======
-
->>>>>>> f0ab53497a243b73314201b90ee8c36641d789d7
 
 ### API stratified by age and gender per malaria type and adm levels. 
 - Brazil
@@ -309,7 +306,34 @@ summary(df$COD_OCUP1)
 
 ```
 
+Plot
 ```{r}
+Occup_gender <- df %>%
+                  group_by(ANO, SEXO, RES_EXAM) %>%
+                  count(COD_OCUP1) %>%
+                  spread(RES_EXAM, n, fill = 0) %>%
+                  rename(FALCI = "Falciparum") %>%
+                  rename(VF = "V+F") %>%
+                  rename(VIVAX = "Vivax") %>%
+                  mutate(Falciparum = FALCI + VF) %>%
+                  mutate(Vivax = VIVAX + VF) %>%
+                  select(ANO, SEXO, COD_OCUP1, Falciparum, Vivax) %>%
+                  gather(key = 'MALARIA_TYPE', value = 'CASES', -c(ANO, SEXO, COD_OCUP1)) 
+            
+
+Occup_gender1 <- Occup_gender %>% filter(MALARIA_TYPE == "Vivax") %>% filter(SEXO == "F" | SEXO == "M")
+
+
+dev.copy(png, "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Plots_results/Occup_Gender_vivax_Brazil", width = 1000, height = 900, units = "px", pointsize = 12, res = 110)
+
+OG <- ggplot(aes(y = CASES, x = SEXO, fill = COD_OCUP1), data =  Occup_gender1) +
+            geom_bar(stat = "identity", position = "dodge") +
+            facet_wrap(~ANO) +
+            labs(x = "Gender", y = "Vivax malaria cases") +
+            scale_x_discrete(breaks = c("F", "M"), labels = c("Female", "Male")) +
+            guides(fill = guide_legend(title = "Occupation")) 
+
+dev.off()
 
 
 ```
