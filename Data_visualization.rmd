@@ -204,9 +204,74 @@ pms <- ggplot(aes(y = n, x = GESTANTE_), data = preg) +
 ```
 
 
+### API by gender and age categories
+- I have to reorder the categories for AGE_CAT again.
+```{r}
+API_strat <- read.csv("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/API_admlevels_year_STRAT.csv") #pc path
+head(API_strat)
+
+cat_order <- c("0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80+")
+
+API_strat <- API_strat %>% 
+                        mutate(AGE_CAT1 = factor(AGE_CAT, levels = cat_order)) 
+
+```
+
+### API stratified by age and gender per malaria type and adm levels. 
+- Brazil
+```{r}
+APIfb <- API_strat %>% filter(TYPE == "Falciparum" & CODE == 1)
+
+dev.copy(png, "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Plots_results/API_Brazil_vivax", width = 900, height = 800, units = "px", pointsize = 12, res = 100)
+
+bf <- ggplot(aes(y = API, x = AGE_CAT1, fill = GENDER), data = APIfb) +
+            geom_bar(stat = "identity", position = "dodge") +
+            facet_wrap(~YEAR) +
+            labs(x = "Age categories", y = "Malaria falciparum API in Brazil") + 
+            theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+            guides(fill = guide_legend(title = "Gender")) 
+#dev.off()
+
+APIvb <- API_strat %>% filter(TYPE == "Vivax" & CODE == 1)
+
+bv <- ggplot(aes(y = API, x = AGE_CAT1, fill = GENDER), data = APIvb) +
+            geom_bar(stat = "identity", position = "dodge") +
+            facet_wrap(~YEAR) +
+            labs(x = "Age categories", y = "Malaria vivax API in Brazil") + 
+            theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+            guides(fill = guide_legend(title = "Gender")) 
+
+dev.off()
+
+```
+
+- State  
+Codes: 11     12     13     14     15     16     17     21     51
+```{r}
+state <- 12
+APIfs <- API_strat %>% filter(TYPE == "Falciparum" & CODE == state)
+
+dev.copy(png, "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Plots_results/API/API_AC_vivax", width = 900, height = 800, units = "px", pointsize = 12, res = 100)
+
+sf <- ggplot(aes(y = API, x = AGE_CAT1, fill = GENDER), data = APIfs) +
+            geom_bar(stat = "identity", position = "dodge") +
+            facet_wrap(~YEAR) +
+            labs(x = "Age categories", y = "Malaria falciparum API", title = "Acre") + 
+            theme(axis.text.x = element_text(angle = 90, hjust = 1), plot.title = element_text(hjust = 0.5)) +
+            guides(fill = guide_legend(title = "Gender")) 
+
+dev.off()
+
+APIvs <- API_strat %>% filter(TYPE == "Vivax" & CODE == state)
+
+sv <- ggplot(aes(y = API, x = AGE_CAT1, fill = GENDER), data = APIvs) +
+            geom_bar(stat = "identity", position = "dodge") +
+            facet_wrap(~YEAR) +
+            labs(x = "Age categories", y = "Malaria vivax API", title = "Acre") + 
+            theme(axis.text.x = element_text(angle = 90, hjust = 1), plot.title = element_text(hjust = 0.5)) +
+            guides(fill = guide_legend(title = "Gender")) 
 
 
-
-
+```
 
 
