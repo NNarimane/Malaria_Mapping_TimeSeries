@@ -409,7 +409,10 @@ pop_strat <- pop_strat %>%
                   gather(key = 'GENDER', value = 'POP_SIZE', -c(LEVEL, CODE, NAME, AGE_CAT)) %>%
                   mutate(CODE = str_sub(CODE, 1, 6))
 
+<<<<<<< HEAD
 #Check
+=======
+>>>>>>> f0ab53497a243b73314201b90ee8c36641d789d7
 pop_strat %>% filter(CODE == "310010")
 pop_strat[which(pop_strat$CODE == "310010" & is.na(pop_strat$AGE_CAT)),]
 
@@ -452,6 +455,10 @@ head(pop_ym)
 ```
 
 ### Population size per Level, Code, Name and Year: Municipality
+<<<<<<< HEAD
+=======
+- Obs.: I didn't remane NAME1 to NAME because the difference between the pattern in the other tables.
+>>>>>>> f0ab53497a243b73314201b90ee8c36641d789d7
 ```{r}
 pop_Municipality <- pop_ym %>%
                 mutate(LEVEL = "MU") %>%
@@ -547,12 +554,21 @@ write.csv(pop_size_strat, file = "/home/claudia/Documentos/PosDoc_PROCC/malaria/
 
 ### Join pop size by adm levels, year and strat. with SIVEP.
 - I saved the tables, clear the environment and imported again not to be so slow.
+<<<<<<< HEAD
 - I created the variable year in sivep table, to link with pop table. Faster that run again the tables including year and week of the original database.
 - Problem: GENDER in SIVEP has NA's - I removed these lines from the database such as YEAR == 2018. 
 - Some municipalities don't have all AGE_CAT, but I couldn't get to visualize it.
 ```{r}
 pop_strat <- read.csv("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/pop_size_admlevels_year_STRAT.csv")
 
+=======
+- I have to create the variable year in sivep table, to link with pop table. Faster that run again the tables including year and week of the original database.
+- Problem: GENDER in SIVEP has NA's - I removed these lines from the database such as YEAR == 2018. 
+- Some municipalities don't have all AGE_CAT, but I couldn't get to visualize it.
+- The ideal table is a table with all AGE_CAT and GENDER in all weeks and year, but I still couldn't get to create it. 
+```{r}
+pop_strat <- read.csv("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/pop_size_admlevels_year_STRAT.csv")
+>>>>>>> f0ab53497a243b73314201b90ee8c36641d789d7
 sivep_strat <- read.csv("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/sivep_admlevels_dtnotif_STRAT.csv")
 
 length(unique(sivep_strat$CODE[sivep_strat$LEVEL == "MU"]))
@@ -579,7 +595,10 @@ sivep_strat1 <- sivep_strat %>%
 
 
 sivep_pop_strat <- left_join(x = sivep_strat1, y = pop_strat)
+<<<<<<< HEAD
 
+=======
+>>>>>>> f0ab53497a243b73314201b90ee8c36641d789d7
 sivep_pop_strat <- sivep_pop_strat %>%
                                   mutate(API = CASES/POP.EST.Y * 1000)
                                   
@@ -611,11 +630,21 @@ sivep_pop_strat1 <- sivep_pop_strat %>%
 
 write.csv(sivep_pop_strat1, file = "/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/API_admlevels_year_STRAT.csv", row.names = F)
 
+<<<<<<< HEAD
+=======
+AG <- ggplot(aes(y = API, x = AGE_CAT, fill = GENDER), data = sivep_pop_strat1[sivep_pop_strat1$CODE == 1,]) +
+            geom_bar(stat = "identity", position = "dodge") +
+            facet_wrap(~YEAR) +
+            theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+>>>>>>> f0ab53497a243b73314201b90ee8c36641d789d7
 
 ```
 
 
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> f0ab53497a243b73314201b90ee8c36641d789d7
 
 - abrir o shape de assentamentos e ver se tem de grandes empreendimentos e suas infos.

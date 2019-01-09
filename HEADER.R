@@ -277,6 +277,6 @@ if(API){
 ########################
 
 if(SavePlots){
-  Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots",Detection_Level,"_",Plot_Level,Admin_Level,"/",Variable_Level,"/")
+  Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/",Detection_Level,"_",Plot_Level,Admin_Level,"/",Variable_Level,"/")
 }
 

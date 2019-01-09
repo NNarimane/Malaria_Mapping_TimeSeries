@@ -204,6 +204,7 @@ pms <- ggplot(aes(y = n, x = GESTANTE_), data = preg) +
 ```
 
 
+<<<<<<< HEAD
 ### API by gender and age categories
 - I have to reorder the categories for AGE_CAT again.
 ```{r}
@@ -216,12 +217,16 @@ API_strat <- API_strat %>%
                         mutate(AGE_CAT1 = factor(AGE_CAT, levels = cat_order)) 
 
 ```
+=======
+
+>>>>>>> f0ab53497a243b73314201b90ee8c36641d789d7
 
 ### API stratified by age and gender per malaria type and adm levels. 
 - Brazil
 ```{r}
 APIfb <- API_strat %>% filter(TYPE == "Falciparum" & CODE == 1)
 
+<<<<<<< HEAD
 dev.copy(png, "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Plots_results/API_Brazil_vivax", width = 900, height = 800, units = "px", pointsize = 12, res = 100)
 
 bf <- ggplot(aes(y = API, x = AGE_CAT1, fill = GENDER), data = APIfb) +
@@ -273,6 +278,8 @@ sv <- ggplot(aes(y = API, x = AGE_CAT1, fill = GENDER), data = APIvs) +
 
 
 ```
+=======
+>>>>>>> f0ab53497a243b73314201b90ee8c36641d789d7
 
 
 ### Occupation and Gender
