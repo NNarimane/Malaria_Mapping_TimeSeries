@@ -325,6 +325,146 @@ getDAILY_SIVEP_MALARIA_AGE=function(FilePath, StartYear, EndYear, Melted){
   }
 }
 
+# Get SIVEP data cleaned up and by species and treatment
+getSIVEP_MALARIA_TYPE_TREATMENT=function(FilePath){
+  
+  # Get SIVEP raw notification data
+  load(FilePath)
+  
+  # Choose time period
+  # df=df[which(df[,"DT_NOTIF"] >= paste0(StartYear,"-01-01") & df[,"DT_NOTIF"] <= paste0(EndYear, "-12-31")),]
+  
+  cat("Aggregate by type, gender, age, treatment\n")
+  SIVEP_TREAT = df %>%
+    select(DT_NOTIF, RES_EXAM, SEXO, GESTANTE_,AGE_CAT, ESQUEMA) %>% 
+    mutate(YEAR = year(DT_NOTIF)) %>% 
+    select(-DT_NOTIF) %>%
+    mutate(ESQUEMA = replace(ESQUEMA, ESQUEMA == "N/A", NA)) %>%
+    mutate(GESTANTE = as.character(GESTANTE_)) %>%
+    mutate(GESTANTE = replace(GESTANTE, is.na(GESTANTE), "NA")) %>%
+    mutate(GESTANTE = replace(GESTANTE, which(GESTANTE=="NO"), "NA")) %>%
+    mutate(GESTANTE = replace(GESTANTE, which(GESTANTE=="Ignored"), "NA")) %>%
+    mutate(GESTANTE = as.factor(GESTANTE)) %>%
+    mutate(PREGNANT = as.character(GESTANTE_)) %>%
+    mutate(PREGNANT = replace(PREGNANT, which(GESTANTE_=="1qtr"), "Yes")) %>%
+    mutate(PREGNANT = replace(PREGNANT, which(GESTANTE_=="2qtr"), "Yes")) %>%
+    mutate(PREGNANT = replace(PREGNANT, which(GESTANTE_=="3qtr"), "Yes")) %>%
+    mutate(PREGNANT = replace(PREGNANT, which(GESTANTE_=="Ignored" & SEXO=="F"), "Yes")) %>%
+    mutate(PREGNANT = replace(PREGNANT, which(GESTANTE_=="Ignored" & SEXO=="I"), "No")) %>%
+    mutate(PREGNANT = replace(PREGNANT, which(GESTANTE_=="Ignored" & SEXO=="M"), "No")) %>%
+    mutate(PREGNANT = replace(PREGNANT, is.na(GESTANTE_), "No")) %>%
+    mutate(PREGNANT = replace(PREGNANT, which(GESTANTE_=="NO"), "No")) %>%
+    mutate(PREGNANT = replace(PREGNANT, which(GESTANTE_=="NA"), "No")) %>%
+    select(YEAR, RES_EXAM, SEXO, GESTANTE, PREGNANT, AGE_CAT, ESQUEMA) %>%
+    group_by(YEAR, RES_EXAM, SEXO, GESTANTE, PREGNANT, AGE_CAT, ESQUEMA) %>%
+    count(RES_EXAM) %>%
+    spread(RES_EXAM, n, fill = 0) %>%
+    rename(FALCI = "Falciparum") %>%
+    rename(FV = "V+F") %>%
+    rename(VIVAX = "Vivax") %>%
+    mutate(Falciparum = FALCI + FV) %>%
+    mutate(Vivax = VIVAX + FV) %>%
+    select(YEAR, SEXO, GESTANTE, PREGNANT, AGE_CAT, ESQUEMA, Falciparum, Vivax) %>%
+    gather(key = 'TYPE', value = 'CASES', -c(YEAR, SEXO, GESTANTE, PREGNANT, AGE_CAT, ESQUEMA))
+  
+  # Recode ESQUEMA
+  SIVEP_TREAT$ESQUEMA=as.character(SIVEP_TREAT$ESQUEMA)
+  SIVEP_TREAT$ESQUEMA=recode(SIVEP_TREAT$ESQUEMA,
+                             "1" = "Pv/Po:CQ-3d + PQ-7d",
+                             "2" = "Pv/Po:CQ-3d + PQ-14d",
+                             "3" = "Pv/Po preg & <6mo & Pm all ages: CQ-3d",
+                             "4" = "Pv/Po: CQ-12weeks",
+                             "5" = "Pf:AM+LF-3d",
+                             "6" = "Pf:AS+MQ-3d",
+                             "7" = "Pf:QQ-1dose + DC-1dose + PQ-1dose",
+                             "8" = "Pf/Po/Pv: AM+LF or AS+MF-3d + PQ-7d",
+                             "9" = "Pf 1st trimester & age<6mo:QQ-3d & CM-5d",
+                             "10" = "Severe Pf",
+                             "11" = "Pf:AM+LF-3d + PQ-1dose",
+                             "12" = "Pf:AS+MQ-3d + PQ-1dose",
+                             "83" = "*Pv/Pf:MQ-1dose + PQ-7d",
+                             "85" = "*Pv children:AS-capsule-4d + PQ-7d",
+                             "86" = "*Pf:MQ-1dose + PQ-1dose",
+                             "87" = "*Pf:QQ-1dose",
+                             "88" = "*Pf children:AS-capsule-4d + MQ-3d + PQ-1dose",
+                             "89" = "*Pv/Pf:QQ-1dose + DC-1dose + PQ-1dose",
+                             "99" = "Other scheme")
+  SIVEP_TREAT$ESQUEMA[which(SIVEP_TREAT$ESQUEMA == "123")] = NA
+  SIVEP_TREAT$ESQUEMA=as.factor(SIVEP_TREAT$ESQUEMA)
+  SIVEP_TREAT$TYPE=as.factor(SIVEP_TREAT$TYPE)
+  
+  # Reorder
+  SIVEP_TREAT$ESQUEMA=factor(SIVEP_TREAT$ESQUEMA, 
+                             levels=c("Pv/Po:CQ-3d + PQ-7d",
+                                      "Pv/Po:CQ-3d + PQ-14d",
+                                      "Pv/Po: CQ-12weeks",
+                                      "*Pv children:AS-capsule-4d + PQ-7d",
+                                      "Pv/Po preg & <6mo & Pm all ages: CQ-3d",
+                                      "Pv/Po/Pf: AM+LF or AS+MF-3d + PQ-7d",
+                                      "*Pv/Pf:MQ-1dose + PQ-7d",
+                                      "*Pv/Pf:QQ-1dose + DC-1dose + PQ-1dose",
+                                      "Pf:QQ-1dose + DC-1dose + PQ-1dose",
+                                      "Pf:AM+LF-3d + PQ-1dose",
+                                      "Pf:AS+MQ-3d + PQ-1dose", 
+                                      "*Pf:MQ-1dose + PQ-1dose",
+                                      "Pf:AM+LF-3d",
+                                      "Pf:AS+MQ-3d",
+                                      "*Pf:QQ-1dose",
+                                      "Pf 1st trimester & age<6mo:QQ-3d & CM-5d",
+                                      "*Pf children:AS-capsule-4d + MQ-3d + PQ-1dose",
+                                      "Severe Pf",
+                                      "Other scheme"))
+  
+  # Primaquine
+  SIVEP_TREAT$PQ=SIVEP_TREAT$ESQUEMA
+  SIVEP_TREAT$PQ=recode_factor(SIVEP_TREAT$PQ, 
+                               `Pv/Po:CQ-3d + PQ-7d` = "Yes",
+                               `Pv/Po:CQ-3d + PQ-14d` = "Yes",
+                               `Pv/Po: CQ-12weeks` = "No",
+                               `*Pv children:AS-capsule-4d + PQ-7d` = "Yes",
+                               `Pv/Po preg & <6mo & Pm all ages: CQ-3d` = "No",
+                               `Pv/Po/Pf: AM+LF or AS+MF-3d + PQ-7d` = "Yes",
+                               `*Pv/Pf:MQ-1dose + PQ-7d` = "Yes",
+                               `*Pv/Pf:QQ-1dose + DC-1dose + PQ-1dose` = "Yes",
+                               `Pf:QQ-1dose + DC-1dose + PQ-1dose` = "Yes",
+                               `Pf:AM+LF-3d + PQ-1dose` = "Yes",
+                               `Pf:AS+MQ-3d + PQ-1dose` = "Yes", 
+                               `*Pf:MQ-1dose + PQ-1dose` = "Yes",
+                               `Pf:AM+LF-3d` = "No",
+                               `Pf:AS+MQ-3d` = "No",
+                               `*Pf:QQ-1dose` = "No",
+                               `Pf 1st trimester & age<6mo:QQ-3d & CM-5d` = "No",
+                               `*Pf children:AS-capsule-4d + MQ-3d + PQ-1dose` = "Yes",
+                               `Severe Pf` = "Unknown",
+                               `Other scheme` = "Unknown")
+  
+  # Dose of PQ
+  SIVEP_TREAT$PQ_Amount=SIVEP_TREAT$ESQUEMA
+  SIVEP_TREAT$PQ_Amount=recode_factor(SIVEP_TREAT$PQ_Amount, 
+                                      `Pv/Po:CQ-3d + PQ-7d` = "7-day",
+                                      `Pv/Po:CQ-3d + PQ-14d` = "14-day",
+                                      `Pv/Po: CQ-12weeks` = "None",
+                                      `*Pv children:AS-capsule-4d + PQ-7d` = "7-day",
+                                      `Pv/Po preg & <6mo & Pm all ages: CQ-3d` = "None",
+                                      `Pv/Po/Pf: AM+LF or AS+MF-3d + PQ-7d` = "7-day",
+                                      `*Pv/Pf:MQ-1dose + PQ-7d` = "7-day",
+                                      `*Pv/Pf:QQ-1dose + DC-1dose + PQ-1dose` = "1-dose",
+                                      `Pf:QQ-1dose + DC-1dose + PQ-1dose` = "1-dose",
+                                      `Pf:AM+LF-3d + PQ-1dose` = "1-dose",
+                                      `Pf:AS+MQ-3d + PQ-1dose` = "1-dose", 
+                                      `*Pf:MQ-1dose + PQ-1dose` = "1-dose",
+                                      `Pf:AM+LF-3d` = "None",
+                                      `Pf:AS+MQ-3d` = "None",
+                                      `*Pf:QQ-1dose` = "None",
+                                      `Pf 1st trimester & age<6mo:QQ-3d & CM-5d` = "None",
+                                      `*Pf children:AS-capsule-4d + MQ-3d + PQ-1dose` = "1-dose",
+                                      `Severe Pf` = "Unknown",
+                                      `Other scheme` = "Unknown")
+  
+  return(SIVEP_TREAT)
+  
+}
+
 # Get importation tables at country level
 getSIVEP_MALARIA_TYPE_COUNTRY=function(RES_OR_INF, TYPE){
   
@@ -336,9 +476,9 @@ getSIVEP_MALARIA_TYPE_COUNTRY=function(RES_OR_INF, TYPE){
     group_by_("YEAR", RES_OR_INF) %>%
     count(RES_EXAM) %>%
     spread(RES_EXAM, n, fill = 0) %>%
-    rename(FALCI = "F") %>%
-    rename(FV = "F+V") %>%
-    rename(VIVAX = "V") %>%
+    rename(FALCI = "Falciparum") %>%
+    rename(FV = "V+F") %>%
+    rename(VIVAX = "Vivax") %>%
     mutate(Falciparum = FALCI + FV) %>%
     mutate(Vivax = VIVAX + FV) %>%
     select_("YEAR", RES_OR_INF, TYPE) %>%
@@ -357,10 +497,10 @@ getSIVEP_MALARIA_TYPE_COUNTRY=function(RES_OR_INF, TYPE){
       SIVEP_PAIS$PAIS_RES = PAIS_CODE[match(SIVEP_PAIS$PAIS_RES, PAIS_CODE$PAIS_CODE),"PAIS"]
       SIVEP_PAIS=SIVEP_PAIS[complete.cases(SIVEP_PAIS$PAIS_RES),]
       
-      # Combine France and French Guyana
-      SIVEP_PAIS[which(SIVEP_PAIS$PAIS_RES == "GUIANA FRANCESA"),]=c("GUIANA FRANCESA",(SIVEP_PAIS[which(SIVEP_PAIS$PAIS_RES == "FRANCA"),2:ncol(SIVEP_PAIS)] +
-                                                                                          SIVEP_PAIS[which(SIVEP_PAIS$PAIS_RES == "GUIANA FRANCESA"),2:ncol(SIVEP_PAIS)]))
-      SIVEP_PAIS=SIVEP_PAIS[-which(SIVEP_PAIS$PAIS_RES == "FRANCA"),]
+      # # Combine France and French Guyana
+      # SIVEP_PAIS[which(SIVEP_PAIS$PAIS_RES == "GUIANA FRANCESA"),]=c("GUIANA FRANCESA",(SIVEP_PAIS[which(SIVEP_PAIS$PAIS_RES == "FRANCA"),2:ncol(SIVEP_PAIS)] +
+      #                                                                                     SIVEP_PAIS[which(SIVEP_PAIS$PAIS_RES == "GUIANA FRANCESA"),2:ncol(SIVEP_PAIS)]))
+      # SIVEP_PAIS=SIVEP_PAIS[-which(SIVEP_PAIS$PAIS_RES == "FRANCA"),]
       
       # Get other category
       OTHER=t(as.data.frame(c(OTHER="OTHER", colSums(SIVEP_PAIS[!(SIVEP_PAIS$PAIS_RES %in% Top_Countries_BR),2:ncol(SIVEP_PAIS)]))))
@@ -388,10 +528,10 @@ getSIVEP_MALARIA_TYPE_COUNTRY=function(RES_OR_INF, TYPE){
       SIVEP_PAIS$PAIS_RES = PAIS_CODE[match(SIVEP_PAIS$PAIS_RES, PAIS_CODE$PAIS_CODE),"PAIS"]
       SIVEP_PAIS=SIVEP_PAIS[complete.cases(SIVEP_PAIS$PAIS_RES),]
       
-      # Combine France and French Guyana
-      SIVEP_PAIS[which(SIVEP_PAIS$PAIS_RES == "GUIANA FRANCESA"),]=c("GUIANA FRANCESA",(SIVEP_PAIS[which(SIVEP_PAIS$PAIS_RES == "FRANCA"),2:ncol(SIVEP_PAIS)] +
-                                                                                          SIVEP_PAIS[which(SIVEP_PAIS$PAIS_RES == "GUIANA FRANCESA"),2:ncol(SIVEP_PAIS)]))
-      SIVEP_PAIS=SIVEP_PAIS[-which(SIVEP_PAIS$PAIS_RES == "FRANCA"),]
+      # # Combine France and French Guyana
+      # SIVEP_PAIS[which(SIVEP_PAIS$PAIS_RES == "GUIANA FRANCESA"),]=c("GUIANA FRANCESA",(SIVEP_PAIS[which(SIVEP_PAIS$PAIS_RES == "FRANCA"),2:ncol(SIVEP_PAIS)] +
+      #                                                                                     SIVEP_PAIS[which(SIVEP_PAIS$PAIS_RES == "GUIANA FRANCESA"),2:ncol(SIVEP_PAIS)]))
+      # SIVEP_PAIS=SIVEP_PAIS[-which(SIVEP_PAIS$PAIS_RES == "FRANCA"),]
       
       # Get prop table with Brazil
       pSIVEP_PAIS=as.data.frame(prop.table(as.matrix(SIVEP_PAIS[,-1]), 2))
@@ -415,10 +555,10 @@ getSIVEP_MALARIA_TYPE_COUNTRY=function(RES_OR_INF, TYPE){
       SIVEP_PAIS$PAIS_INF = PAIS_CODE[match(SIVEP_PAIS$PAIS_INF, PAIS_CODE$PAIS_CODE),"PAIS"]
       SIVEP_PAIS=SIVEP_PAIS[complete.cases(SIVEP_PAIS$PAIS_INF),]
       
-      # Combine France and French Guyana
-      SIVEP_PAIS[which(SIVEP_PAIS$PAIS_INF == "GUIANA FRANCESA"),]=c("GUIANA FRANCESA",(SIVEP_PAIS[which(SIVEP_PAIS$PAIS_INF == "FRANCA"),2:ncol(SIVEP_PAIS)] +
-                                                                       SIVEP_PAIS[which(SIVEP_PAIS$PAIS_INF == "GUIANA FRANCESA"),2:ncol(SIVEP_PAIS)]))
-      SIVEP_PAIS=SIVEP_PAIS[-which(SIVEP_PAIS$PAIS_INF == "FRANCA"),]
+      # # Combine France and French Guyana
+      # SIVEP_PAIS[which(SIVEP_PAIS$PAIS_INF == "GUIANA FRANCESA"),]=c("GUIANA FRANCESA",(SIVEP_PAIS[which(SIVEP_PAIS$PAIS_INF == "FRANCA"),2:ncol(SIVEP_PAIS)] +
+      #                                                                  SIVEP_PAIS[which(SIVEP_PAIS$PAIS_INF == "GUIANA FRANCESA"),2:ncol(SIVEP_PAIS)]))
+      # SIVEP_PAIS=SIVEP_PAIS[-which(SIVEP_PAIS$PAIS_INF == "FRANCA"),]
       
       # Get other category
       OTHER=t(as.data.frame(c(OTHER="OTHER", colSums(SIVEP_PAIS[!(SIVEP_PAIS$PAIS_INF %in% Top_Countries_BR),2:ncol(SIVEP_PAIS)]))))
@@ -446,10 +586,10 @@ getSIVEP_MALARIA_TYPE_COUNTRY=function(RES_OR_INF, TYPE){
       SIVEP_PAIS$PAIS_INF = PAIS_CODE[match(SIVEP_PAIS$PAIS_INF, PAIS_CODE$PAIS_CODE),"PAIS"]
       SIVEP_PAIS=SIVEP_PAIS[complete.cases(SIVEP_PAIS$PAIS_INF),]
       
-      # Combine France and French Guyana
-      SIVEP_PAIS[which(SIVEP_PAIS$PAIS_INF == "GUIANA FRANCESA"),]=c("GUIANA FRANCESA",(SIVEP_PAIS[which(SIVEP_PAIS$PAIS_INF == "FRANCA"),2:ncol(SIVEP_PAIS)] +
-                                                                                          SIVEP_PAIS[which(SIVEP_PAIS$PAIS_INF == "GUIANA FRANCESA"),2:ncol(SIVEP_PAIS)]))
-      SIVEP_PAIS=SIVEP_PAIS[-which(SIVEP_PAIS$PAIS_INF == "FRANCA"),]
+      # # Combine France and French Guyana
+      # SIVEP_PAIS[which(SIVEP_PAIS$PAIS_INF == "GUIANA FRANCESA"),]=c("GUIANA FRANCESA",(SIVEP_PAIS[which(SIVEP_PAIS$PAIS_INF == "FRANCA"),2:ncol(SIVEP_PAIS)] +
+      #                                                                                     SIVEP_PAIS[which(SIVEP_PAIS$PAIS_INF == "GUIANA FRANCESA"),2:ncol(SIVEP_PAIS)]))
+      # SIVEP_PAIS=SIVEP_PAIS[-which(SIVEP_PAIS$PAIS_INF == "FRANCA"),]
       
       # Get prop table with Brazil
       pSIVEP_PAIS=as.data.frame(prop.table(as.matrix(SIVEP_PAIS[,-1]), 2))
@@ -463,7 +603,7 @@ getSIVEP_MALARIA_TYPE_COUNTRY=function(RES_OR_INF, TYPE){
   return(list(SIVEP_PAIS, pSIVEP_PAIS, pwbSIVEP_PAIS))
 }
 
-####
+########################## Fix
 getSIVEP_MALARIA_TYPE_STATE=function(RES_OR_INF, TYPE){
   
   if(RES_OR_INF == "PAIS_RES"){
@@ -583,25 +723,52 @@ getSIVEP_MALARIA_TYPE_STATE=function(RES_OR_INF, TYPE){
 
 
 # Get stacked box plots - country level
-getSTACKED_BOX_PLOT=function(DATA, RES_OR_INF){
+getSTACKED_BOX_PLOT=function(DATA, RES_OR_INF, y, title, legend_title){
   
   # melt the data frame for plotting
   mDATA <- melt(DATA, id.vars=RES_OR_INF)
-  levels(mDATA[,RES_OR_INF]) = levels(DATA[,RES_OR_INF]) 
-  mDATA$value=mDATA$value*100
+  # levels(mDATA[,RES_OR_INF]) = levels(DATA[,RES_OR_INF]) 
+  # mDATA$value=mDATA$value*100
   
-  # Stacked
-  mDATA_Plot=ggplot(mDATA, aes(y=value, x=variable, fill = PAIS_RES)) +   
-    geom_bar(stat = "identity") +
-    scale_fill_manual(values=Colors,
-                      labels=names(Colors)) +
-    theme_minimal() +
-    labs(title=title, y="Proportion (%)", x="") +
-    theme(axis.text.x = element_text(size = 12, angle = 90, hjust = 1),
-          axis.title.y=element_text(size=12),
-          legend.position="right",
-          legend.title=element_text(size=12, face = "bold"))  +
-    guides(fill=guide_legend(title=legend_title))
+  if(RES_OR_INF == "PAIS_RES"){
+    if(byTOP_COUNTRIES){
+      mDATA$PAIS_RES=as.character(mDATA$PAIS_RES)
+      mDATA=mDATA[which(mDATA$PAIS_RES %in% Top_Countries),]
+      mDATA$PAIS_RES=factor(mDATA$PAIS_RES)
+      mDATA=setDT(mDATA)[ , PAIS_RES := factor(PAIS_RES, levels = Top_Countries)]
+    }
+    # Stacked
+    mDATA_Plot=ggplot(mDATA, aes(y=value, x=variable, fill = PAIS_RES)) +   
+      geom_bar(stat = "identity") +
+      scale_fill_manual(values=Colors,
+                        labels=names(Colors)) +
+      theme_minimal() +
+      labs(title=title, y=y, x="") +
+      theme(axis.text.x = element_text(size = 12, angle = 90, hjust = 1),
+            axis.title.y=element_text(size=12),
+            legend.position="right",
+            legend.title=element_text(size=12))  +
+      guides(fill=guide_legend(title=legend_title))
+  }else{
+    if(byTOP_COUNTRIES){
+      mDATA$PAIS_INF=as.character(mDATA$PAIS_INF)
+      mDATA=mDATA[which(mDATA$PAIS_INF %in% Top_Countries),]
+      mDATA$PAIS_INF=factor(mDATA$PAIS_INF)
+      mDATA=setDT(mDATA)[ , PAIS_INF := factor(PAIS_INF, levels = Top_Countries)]
+    }
+    # Stacked
+    mDATA_Plot=ggplot(mDATA, aes(y=value, x=variable, fill = PAIS_INF)) +   
+      geom_bar(stat = "identity") +
+      scale_fill_manual(values=Colors,
+                        labels=names(Colors)) +
+      theme_minimal() +
+      labs(title=title, y=y, x="") +
+      theme(axis.text.x = element_text(size = 12, angle = 90, hjust = 1),
+            axis.title.y=element_text(size=12),
+            legend.position="right",
+            legend.title=element_text(size=12))  +
+      guides(fill=guide_legend(title=legend_title))
+  }
   
   return(mDATA_Plot)
 }

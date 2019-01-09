@@ -275,3 +275,33 @@ sv <- ggplot(aes(y = API, x = AGE_CAT1, fill = GENDER), data = APIvs) +
 ```
 
 
+### Occupation and Gender
+- **COD_OCUP**: code of the main activity performed by the patient in the last 15 days.   
+1 Agriculture  
+2 Livestock  
+3 Domestic  
+4 Turism  
+5 Artisanal and small mining  
+6 Exploration plant  
+7 Hunting and fishing  
+8 Construction of Roads and Dams  
+9 Mining  
+10 Traveler  
+11 Others  
+99 Ignored  
+NA's  
+
+```{r}
+summary(df$COD_OCUP)
+
+(672912 + 581937)/nrow(df) * 100 #21.8% missings
+
+ocup <- c("Agriculture", "Livestock", "Domestic", "Turism", "Artisanal and small mining", "Exploration plant",  "Hunting and fishing", "Construction of Roads and Dams", "Mining", "Traveler", "Others")
+
+df$COD_OCUP1 <- factor(df$COD_OCUP, c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"), c("Agriculture", "Livestock", "Domestic", "Turism", "Artisanal and small mining", "Exploration plant",  "Hunting and fishing", "Construction of Roads and Dams", "Mining", "Traveler", "Others"))
+
+summary(df$COD_OCUP1)
+
+
+```
+
