@@ -375,12 +375,15 @@ summary(Date_diff$DIF.SYM.EXAM)
 summary(Date_diff$DIF.EXAM.TREAT)
 summary(Date_diff$DIF.SYM.TREAT)
 
-Date_diff %>% filter(DIF.EXAM.TREAT == -1) %>% head(5)
+Date_diff %>% filter(DIF.SYM.EXAM > 3) %>% head(5)
+Date_diff %>% filter(DIF.SYM.EXAM > 3) %>% count() # > 3rdQ: 1329176
+Date_diff %>% filter(DIF.SYM.EXAM > 100) %>% count() # 17773
 
 ```
 
 Plot
 ```{r}
+s1 <- Date_diff %>% filter(DIF.SYM.EXAM >= 0) 
 
 
 
