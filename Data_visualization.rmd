@@ -360,7 +360,7 @@ dev.off()
 - DT_TRATA: 274199 NA's: 4.76%  
 
 Obs.: Ask if treatment can begin before the examination has been done. Ask if there are any criteria to do it if it is positive.
-The examination was done before the first symptoms is not a problem, it may be related to active detection. Check this out. See also symptomatic when this happens.
+The examination was done before the first symptoms is not a problem, it may be related to active detection. Check this out. See also symptomatic when this happens. What would be the reasonable amount of difference days to exclude from the analysis? Something that could refer to error of completion.
 ```{r}
 summary(df$DT_SINTO)
 summary(df$DT_EXAME)
@@ -375,18 +375,26 @@ summary(Date_diff$DIF.SYM.EXAM)
 summary(Date_diff$DIF.EXAM.TREAT)
 summary(Date_diff$DIF.SYM.TREAT)
 
-Date_diff %>% filter(DIF.SYM.EXAM > 3) %>% head(5)
+Date_diff %>% filter(DIF.SYM.EXAM < 0) %>% count() # 14515
 Date_diff %>% filter(DIF.SYM.EXAM > 3) %>% count() # > 3rdQ: 1329176
 Date_diff %>% filter(DIF.SYM.EXAM > 100) %>% count() # 17773
+Date_diff %>% filter(DIF.SYM.EXAM > 500) %>% count() # 5249
+
+Date_diff %>% filter(DIF.EXAM.TREAT < 0) %>% count() # 35056
+Date_diff %>% filter(DIF.EXAM.TREAT > 0) %>% count() # 121571
+Date_diff %>% filter(DIF.EXAM.TREAT > 100) %>% count() # 6185
+Date_diff %>% filter(DIF.EXAM.TREAT > 500) %>% count() # 3846
+
+Date_diff %>% filter(DIF.SYM.TREAT < 0) %>% count() # 348
+Date_diff %>% filter(DIF.SYM.TREAT > 0) %>% count() # 4149692
+Date_diff %>% filter(DIF.SYM.TREAT > 100) %>% count() # 18132
+Date_diff %>% filter(DIF.SYM.TREAT > 500) %>% count() # 7542
 
 ```
 
-Plot
+Plot: to do
 ```{r}
 s1 <- Date_diff %>% filter(DIF.SYM.EXAM >= 0) 
-
-
-
 
 diff1 <- ggplot(aes(y = DIF.SYM.EXAM, x = ANO), data = Date_diff) + #, fill = GENDER
             geom_histogram(stat = "identity") + #stat = "identity", position = "dodge"
