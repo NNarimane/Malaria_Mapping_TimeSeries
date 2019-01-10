@@ -65,202 +65,13 @@ library("tidyverse")
 source(paste0(getwd(),"/Malaria_Mapping_TimeSeries/Malaria_Mapping_TimeSeries_Functions.R"))
 
 
-#################
-## Analysis Level
-#################
+##########################################
+## Load header file: set-up analysis level
+##########################################
 
-# Which administrative level ?
-byNotification=TRUE
-byResidence=FALSE
-byInfection=FALSE
+# Source header file
+source(paste0(getwd(),"/Malaria_Mapping_TimeSeries/HEADER.R"))
 
-# Which variable(s) ?
-byType=TRUE
-byGender=FALSE
-byAge=FALSE
-byImportation=FALSE
-bySetting=FALSE
-
-# Choose time period
-StartYear="2003"
-EndYear="2017"
-
-# Load state abbreviations
-ADMIN_NAMES=read.csv(file = paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/BRA_ADMIN_NAMES.csv"), sep = "")
-ADMIN_NAMES$Code=as.character(ADMIN_NAMES$Code)
-
-# Melted data
-Melted=TRUE
-
-
-##################
-## BY CASES OR API
-##################
-
-API=T
-loadCleanData=T
-
-if(!API){
-  
-  # Clean data or load already clean data
-  if(loadCleanData){
-    if(byNotification){
-      if(byType){load(file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/TS_byType_byNotification.RData"))}
-      if(byGender){load()}
-    }
-    
-    if(byResidence){
-      if(byType){load()}
-      if(byGender){load()}
-    }
-    
-    if(byInfection){
-      if(byType){load()}
-      if(byGender){load()}
-    }
-    
-  }else{
-    ##############
-    ## Data Upload
-    ##############
-    
-    # Set file path
-    if(envNN){
-      FilePath=paste0(getwd(),"/SIVEP_clean.RData")
-    }else{
-      
-    }
-    
-    # Get time series data by administrative level and by variable of interest
-    if(byNotification){
-      if(byType){
-        TS=getDAILY_SIVEP_MALARIA_TYPE(FilePath, StartYear, EndYear, Melted)
-        save(TS, file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/TS_byType_byNotification.RData"))
-        }
-      if(byGender){
-        TS=getDAILY_SIVEP_MALARIA_GENDER(FilePath, StartYear, EndYear, Melted)
-        save(TS, file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/TS_byGender_byNotification.RData"))
-      }
-      if(byAge){
-        TS=getDAILY_SIVEP_MALARIA_TYPE(FilePath, StartYear, EndYear, Melted)
-        save(TS, file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/TS_byAge_byNotification.RData"))
-      }
-    }
-    
-    if(byResidence){
-      if(byType){
-        TS=getDAILY_SIVEP_MALARIA_TYPE(FilePath, StartYear, EndYear, Melted)
-        save(TS, file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/TS_byType_byResidence.RData"))
-      }
-      if(byGender){TS=getDAILY_SIVEP_MALARIA_GENDER(FilePath, StartYear, EndYear, Melted)}
-    }
-    
-    if(byInfection){
-      if(byType){
-        TS=getDAILY_SIVEP_MALARIA_TYPE(FilePath, StartYear, EndYear, Melted)
-        save(TS, file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/TS_byType_byInfection.RData"))
-        }
-      if(byGender){TS=getDAILY_SIVEP_MALARIA_GENDER(FilePath, StartYear, EndYear, Melted)}
-    }
-  }
-  
-  
-}else{
-  
-  ##############
-  ## Data Upload
-  ##############
-  
-  if(byNotification){
-    TS_MU_API=read.csv(file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_API_MU_byNotification.csv"), stringsAsFactors = F, row.names = NULL, check.names = F)
-    TS_UF_API=read.csv(file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_API_UF_byNotification.csv"), stringsAsFactors = F, row.names = NULL, check.names = F)
-    TS=rbind(TS_UF_API, TS_MU_API)
-    TS$DATE=as.Date(TS$DATE)
-  }
-  
-  if(byResidence){
-    TS_MU_API=read.csv(file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_API_MU_byResidence.csv"), stringsAsFactors = F, row.names = NULL, check.names = F)
-    TS_UF_API=read.csv(file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_API_UF_byNotification.csv"), stringsAsFactors = F, row.names = NULL, check.names = F)
-    TS=rbind(TS_UF_API, TS_MU_API)
-  }
-  
-  if(byResidence){
-    TS_MU_API=read.csv(file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_API_MU_byResidence.csv"), stringsAsFactors = F, row.names = NULL, check.names = F)
-    TS_UF_API=read.csv(file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_API_UF_byNotification.csv"), stringsAsFactors = F, row.names = NULL, check.names = F)
-    TS=rbind(TS_UF_API, TS_MU_API)
-  }
-}
-
-
-#############
-## Save Plots
-#############
-
-# Save plots
-SavePlots=TRUE
-
-# Set folder for saving plots
-if(SavePlots){
-  if(envNN){
-    if(byNotification){
-      if(byType){
-        if(!API){
-          Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byCases/byNotification/byType/")
-        }else{
-          Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byAPI/byNotification/byType/")
-          }
-      }
-      if(byGender){
-        if(!API){
-          Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byCases/byNotification/byGender/")
-        }else{
-          Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byAPI/byNotification/byGender/")
-        }
-      }
-      if(byAge){
-        if(!API){
-          Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byCases/byNotification/byAge/")
-        }else{
-          Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byAPI/byNotification/byAge/")
-        }
-      }
-  }
-    if(byResidence){
-      if(byType){
-        if(!API){
-          Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byCases/byResidence/byType/")
-        }else{
-          Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byAPI/byResidence/byType/")
-        }
-        if(byGender){
-          if(!API){
-            Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byCases/byResidence/byGender/")
-          }else{
-            Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byAPI/byResidence/byGender/")
-          }
-        }
-      }
-    }
-    
-    if(byInfection){
-      if(byType){
-        if(!API){
-          Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byCases/byInfection/byType/")
-        }else{
-          Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byAPI/byInfection/byType/")
-        }
-        if(byGender){
-          if(!API){
-            Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byCases/byInfection/byGender/")
-          }else{
-            Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byAPI/byInfection/byGender/")
-          }
-        }
-      }
-    }
-  }
-}else{}
-options(scipen=999)
 
 ################
 ## General Plots
@@ -463,7 +274,7 @@ if(byType){
     stat_summary(fun.y = sum, geom = "line") +
     scale_x_date(breaks = "year", 
                  date_labels = "%Y") +
-    facet_wrap(.~NAME, ncol = 4) +
+    facet_wrap(.~NAME, ncol = 3) +
     scale_color_manual(values = c("#31a354","#3182bd")) +
     labs(title = paste0("P. vivax and P. falciparum cases by state, Brazil ", 
                         StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
@@ -544,6 +355,11 @@ if(SavePlots){
 
 # Count number of municipalities per state
 aggregate(Name~UF, ADMIN_NAMES, FUN = length)
+
+# Get highest incidence municipalities by state
+# For AC: Cruzero do Sul, Mancio Lima, Placido de Castro, Porto Walter, Rodriques Alves, Tarauaca
+# For AM: all except Amatura, Anama, Anori, Barreirinha, Boa Vista do Ramos, Careiro da Varzea, Codajas, Envira, Fonte Boa, Maues, Nhamunda, Nova Olinda do Norte, Parintins, Tonantins, Urucara, Urucurituba
+# For 
 
 if(!byGender){
   # Get highest incidence municiaplity plots only
