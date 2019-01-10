@@ -27,7 +27,8 @@ envNN = F
 
 if(envNN){
   load("/SIVEP_clean.RData")
-}else{load("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/SIVEP_clean.RData")
+#}else{load("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/SIVEP_clean.RData") #my pc
+}else{load("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/SIVEP_clean.RData") #desktop Fiocruz  
 }
 
 ```
@@ -208,6 +209,10 @@ pms <- ggplot(aes(y = n, x = GESTANTE_), data = preg) +
 - I have to reorder the categories for AGE_CAT again.
 ```{r}
 API_strat <- read.csv("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/API_admlevels_year_STRAT.csv") #pc path
+
+API_strat <- read.csv("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/API_admlevels_year_STRAT.csv") # Fiocruz desktop
+
+
 head(API_strat)
 
 cat_order <- c("0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80+")
@@ -222,8 +227,9 @@ API_strat <- API_strat %>%
 ```{r}
 APIfb <- API_strat %>% filter(TYPE == "Falciparum" & CODE == 1)
 
-<<<<<<< HEAD
-dev.copy(png, "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Plots_results/API_Brazil_vivax", width = 900, height = 800, units = "px", pointsize = 12, res = 100)
+dev.copy(png, "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Plots_results/API_Brazil_falciparum.png", width = 900, height = 800, units = "px", pointsize = 12, res = 100)
+
+dev.copy(png, "/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Plots_results/API_Brazil_falciparum.png", width = 900, height = 800, units = "px", pointsize = 12, res = 100)
 
 bf <- ggplot(aes(y = API, x = AGE_CAT1, fill = GENDER), data = APIfb) +
             geom_bar(stat = "identity", position = "dodge") +
@@ -231,9 +237,11 @@ bf <- ggplot(aes(y = API, x = AGE_CAT1, fill = GENDER), data = APIfb) +
             labs(x = "Age categories", y = "Malaria falciparum API in Brazil") + 
             theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
             guides(fill = guide_legend(title = "Gender")) 
-#dev.off()
+dev.off()
 
 APIvb <- API_strat %>% filter(TYPE == "Vivax" & CODE == 1)
+
+dev.copy(png, "/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Plots_results/API_Brazil_vivax.png", width = 900, height = 800, units = "px", pointsize = 12, res = 100)
 
 bv <- ggplot(aes(y = API, x = AGE_CAT1, fill = GENDER), data = APIvb) +
             geom_bar(stat = "identity", position = "dodge") +
@@ -247,17 +255,19 @@ dev.off()
 ```
 
 - State  
-Codes: 11     12     13     14     15     16     17     21     51
+Codes: -feito: 11     12     13-     14     15     16     17     21     51
 ```{r}
-state <- 12
+state <- 13
 APIfs <- API_strat %>% filter(TYPE == "Falciparum" & CODE == state)
 
-dev.copy(png, "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Plots_results/API/API_AC_vivax", width = 900, height = 800, units = "px", pointsize = 12, res = 100)
+#dev.copy(png, "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Plots_results/API/API_AC_vivax", width = 900, height = 800, units = "px", pointsize = 12, res = 100)
+
+dev.copy(png, "/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Plots_results/API/API_AM_falciparum.png", width = 900, height = 800, units = "px", pointsize = 12, res = 100)
 
 sf <- ggplot(aes(y = API, x = AGE_CAT1, fill = GENDER), data = APIfs) +
             geom_bar(stat = "identity", position = "dodge") +
             facet_wrap(~YEAR) +
-            labs(x = "Age categories", y = "Malaria falciparum API", title = "Acre") + 
+            labs(x = "Age categories", y = "Malaria falciparum API", title = "Amazonas") + 
             theme(axis.text.x = element_text(angle = 90, hjust = 1), plot.title = element_text(hjust = 0.5)) +
             guides(fill = guide_legend(title = "Gender")) 
 
@@ -265,13 +275,16 @@ dev.off()
 
 APIvs <- API_strat %>% filter(TYPE == "Vivax" & CODE == state)
 
+dev.copy(png, "/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Plots_results/API/API_AM_vivax.png", width = 900, height = 800, units = "px", pointsize = 12, res = 100)
+
 sv <- ggplot(aes(y = API, x = AGE_CAT1, fill = GENDER), data = APIvs) +
             geom_bar(stat = "identity", position = "dodge") +
             facet_wrap(~YEAR) +
-            labs(x = "Age categories", y = "Malaria vivax API", title = "Acre") + 
+            labs(x = "Age categories", y = "Malaria vivax API", title = "Amazonas") + 
             theme(axis.text.x = element_text(angle = 90, hjust = 1), plot.title = element_text(hjust = 0.5)) +
             guides(fill = guide_legend(title = "Gender")) 
 
+dev.off()
 
 ```
 
@@ -321,15 +334,17 @@ Occup_gender <- df %>%
                   gather(key = 'MALARIA_TYPE', value = 'CASES', -c(ANO, SEXO, COD_OCUP1)) 
             
 
-Occup_gender1 <- Occup_gender %>% filter(MALARIA_TYPE == "Vivax") %>% filter(SEXO == "F" | SEXO == "M")
+Occup_gender1 <- Occup_gender %>% filter(MALARIA_TYPE == "Falciparum") %>% filter(SEXO == "F" | SEXO == "M")
 
 
-dev.copy(png, "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Plots_results/Occup_Gender_vivax_Brazil", width = 1000, height = 900, units = "px", pointsize = 12, res = 110)
+#dev.copy(png, "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Plots_results/Occup_Gender_vivax_Brazil.png", width = 1000, height = 900, units = "px", pointsize = 12, res = 110)
+
+dev.copy(png, "/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Plots_results/Occup_Gender_falciparum_Brazil", width = 900, height = 800, units = "px", pointsize = 12, res = 100)
 
 OG <- ggplot(aes(y = CASES, x = SEXO, fill = COD_OCUP1), data =  Occup_gender1) +
             geom_bar(stat = "identity", position = "dodge") +
             facet_wrap(~ANO) +
-            labs(x = "Gender", y = "Vivax malaria cases") +
+            labs(x = "Gender", y = "Falciparum malaria cases") +
             scale_x_discrete(breaks = c("F", "M"), labels = c("Female", "Male")) +
             guides(fill = guide_legend(title = "Occupation")) 
 
@@ -337,5 +352,35 @@ dev.off()
 
 
 ```
+
+
+### Date of 1st symptoms relationed to date of exam and start of treatment
+- DT_SINTO: 337504 NA's: 5.86%
+- DT_EXAME: 225 NA's: 0.0039%
+- DT_TRATA: 274199 NA's: 4.76%  
+```{r}
+summary(df$DT_SINTO)
+summary(df$DT_EXAME)
+summary(df$DT_TRATA)
+
+Date_diff <- df %>%
+              mutate(DIF.SYM.EXAM = DT_EXAME - DT_SINTO,
+                     DIF.EXAM.TREAT = DT_TRATA - DT_EXAME,
+                     DIF.SYM.TREAT = DT_TRATA - DT_SINTO)
+            
+
+```
+
+Plot
+```{r}
+diff1 <- ggplot(aes(y = M.SYM.EXAM, x = ANO), data = Date_diff) + #, fill = GENDER
+            geom_histogram(stat = "identity") + #stat = "identity", position = "dodge"
+          #  facet_wrap(~ANO) +
+            labs(x = "Age categories", y = "Malaria vivax API", title = "Amazonas") + 
+            theme(axis.text.x = element_text(angle = 90, hjust = 1), plot.title = element_text(hjust = 0.5)) +
+            guides(fill = guide_legend(title = "Gender")) 
+
+```
+
 
 
