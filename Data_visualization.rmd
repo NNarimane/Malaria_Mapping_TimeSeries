@@ -27,8 +27,8 @@ envNN = F
 
 if(envNN){
   load("/SIVEP_clean.RData")
-#}else{load("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/SIVEP_clean.RData") #my pc
-}else{load("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/SIVEP_clean.RData") #desktop Fiocruz  
+}else{load("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/SIVEP_clean.RData") #my pc
+#}else{load("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/SIVEP_clean.RData") #desktop Fiocruz  
 }
 
 ```
@@ -392,16 +392,39 @@ Date_diff %>% filter(DIF.SYM.TREAT > 500) %>% count() # 7542
 
 ```
 
-Plot: to do
+### Symptomatic: if have symptoms before the exam  
+- If the difference between date of exam and 1st symptoms is < 0 and have or not symptoms.
+- Check symptoms by missings in date of symptoms, exame and treatment.
 ```{r}
-s1 <- Date_diff %>% filter(DIF.SYM.EXAM >= 0) 
+Date_diff %>%
+        filter(is.na(DT_SINTO)) %>%
+        count(SINTOMAS)
 
-diff1 <- ggplot(aes(y = DIF.SYM.EXAM, x = ANO), data = Date_diff) + #, fill = GENDER
-            geom_histogram(stat = "identity") + #stat = "identity", position = "dodge"
-          #  facet_wrap(~ANO) +
-            labs(x = "Age categories", y = "Malaria vivax API", title = "Amazonas") + 
-            theme(axis.text.x = element_text(angle = 90, hjust = 1), plot.title = element_text(hjust = 0.5)) +
-            guides(fill = guide_legend(title = "Gender")) 
+Date_diff %>%
+        filter(is.na(DT_EXAME)) %>%
+        count(SINTOMAS)
+
+Date_diff %>%
+        filter(is.na(DT_TRATA)) %>%
+        count(SINTOMAS)
+
+
+sym_exam <- Date_diff %>%
+                      mutate(DIF.SYM.EXAM.CAT = cut(DIF.SYM.EXAM, 
+                                                    breaks = c(-Inf, 0, Inf), 
+                                                    labels = c("<=0", ">0")),
+                             DIF.EXAM.TREAT.CAT = cut(DIF.EXAM.TREAT, 
+                                                    breaks = c(-Inf, 0, Inf), 
+                                                    labels = c("<=0", ">0")),
+                             DIF.SYM.TREAT.CAT = cut(DIF.SYM.TREAT, 
+                                                    breaks = c(-Inf, 0, Inf), 
+                                                    labels = c("<=0", ">0")),
+                           ) %>%
+                        group_by(SINTOMAS) %>%
+                        count(DIF.SYM.EXAM.CAT)
+#                        count(DIF.EXAM.TREAT.CAT)
+#                        count(DIF.SYM.TREAT.CAT)
+
 
 ```
 

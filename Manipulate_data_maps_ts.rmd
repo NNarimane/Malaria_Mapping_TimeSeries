@@ -17,6 +17,9 @@ library(tidyverse)
 library('data.table')
 library('forcats')
 library(lubridate)
+require(maptools, quietly = TRUE, warn.conflicts = FALSE)
+library('maptools')
+library(rgdal)
 
 ```
 
@@ -622,3 +625,13 @@ AG <- ggplot(aes(y = API, x = AGE_CAT, fill = GENDER), data = sivep_pop_strat1[s
 
 
 - abrir o shape de assentamentos e ver se tem de grandes empreendimentos e suas infos.
+```{r}
+mapa <- readOGR("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Dados/Assentamento Brasil_AC/", layer="Assentamento Brasil_AC")
+plot(mapa)
+mapa@data
+head(mapa@data)
+
+
+
+```
+
