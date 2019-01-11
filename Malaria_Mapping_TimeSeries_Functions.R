@@ -34,7 +34,7 @@ getDAILY_SIVEP_MALARIA_TYPE=function(FilePath, StartYear, EndYear, Melted){
     mutate(LEVEL = "MU") %>%
     select(DT_NOTIF, LEVEL, MUN_NOTI, MUN_RESI, MUN_INFE, RES_EXAM, n) %>%
     spread(RES_EXAM, n, fill = 0) %>%
-    rename(CODE_NOTIF = MUN_NOTI, CODE_RESID = MUN_RESI, CODE_INFEC = MUN_INFE, FALCI = "F", FV = "F+V", VIVAX = "V") %>%
+    rename(CODE_NOTIF = MUN_NOTI, CODE_RESID = MUN_RESI, CODE_INFEC = MUN_INFE, FALCI = "Falciparum", FV = "V+F", VIVAX = "Vivax") %>%
     mutate(Falciparum = FALCI + FV) %>%
     mutate(Vivax = VIVAX + FV) %>%
     select(DT_NOTIF, LEVEL, CODE_NOTIF, CODE_RESID, CODE_INFEC, Falciparum, Vivax) %>%
@@ -47,7 +47,7 @@ getDAILY_SIVEP_MALARIA_TYPE=function(FilePath, StartYear, EndYear, Melted){
     mutate(LEVEL = "UF") %>%
     select(DT_NOTIF, LEVEL, UF_NOTIF, UF_RESID, UF_INFEC, RES_EXAM, n) %>%
     spread(RES_EXAM, n, fill = 0) %>%
-    rename(CODE_NOTIF = UF_NOTIF, CODE_RESID = UF_RESID, CODE_INFEC = UF_INFEC, FALCI = "F", FV = "F+V", VIVAX = "V") %>%
+    rename(CODE_NOTIF = UF_NOTIF, CODE_RESID = UF_RESID, CODE_INFEC = UF_INFEC, FALCI = "Falciparum", FV = "V+F", VIVAX = "Vivax") %>%
     mutate(Falciparum = FALCI + FV) %>%
     mutate(Vivax = VIVAX + FV) %>%
     select(DT_NOTIF, LEVEL, CODE_NOTIF, CODE_RESID, CODE_INFEC, Falciparum, Vivax) %>%
@@ -61,9 +61,9 @@ getDAILY_SIVEP_MALARIA_TYPE=function(FilePath, StartYear, EndYear, Melted){
            CODE = "1") %>%
     select(DT_NOTIF, LEVEL, CODE, RES_EXAM, n) %>%
     spread(RES_EXAM, n, fill = 0) %>%
-    rename(FALCI = "F") %>%
-    rename(FV = "F+V") %>%
-    rename(VIVAX = "V") %>%
+    rename(FALCI = "Falciparum") %>%
+    rename(FV = "V+F") %>%
+    rename(VIVAX = "Vivax") %>%
     mutate(Falciparum = FALCI + FV) %>%
     mutate(Vivax = VIVAX + FV) %>%
     select(DT_NOTIF, LEVEL, CODE, Falciparum, Vivax) %>%
@@ -136,7 +136,7 @@ getDAILY_SIVEP_MALARIA_GENDER=function(FilePath, StartYear, EndYear, Melted){
     mutate(LEVEL = "MU") %>%
     select(DT_NOTIF, LEVEL, MUN_NOTI, RES_EXAM, SEXO, n) %>%
     spread(RES_EXAM, n, fill = 0) %>%
-    rename(CODE = MUN_NOTI, FALCI = "F", FV = "F+V", VIVAX = "V", GENDER = SEXO) %>%
+    rename(CODE = MUN_NOTI, FALCI = "Falciparum", FV = "V+F", VIVAX = "Vivax", GENDER = SEXO) %>%
     mutate(Falciparum = FALCI + FV) %>%
     mutate(Vivax = VIVAX + FV) %>%
     select(DT_NOTIF, LEVEL, CODE, GENDER, Falciparum, Vivax) %>%
@@ -149,7 +149,7 @@ getDAILY_SIVEP_MALARIA_GENDER=function(FilePath, StartYear, EndYear, Melted){
     mutate(LEVEL = "UF") %>%
     select(DT_NOTIF, LEVEL, UF_NOTIF, RES_EXAM, SEXO, n) %>%
     spread(RES_EXAM, n, fill = 0) %>%
-    rename(CODE = UF_NOTIF, FALCI = "F", FV = "F+V", VIVAX = "V", GENDER = SEXO) %>%
+    rename(CODE = UF_NOTIF, FALCI = "Falciparum", FV = "V+F", VIVAX = "Vivax", GENDER = SEXO) %>%
     mutate(Falciparum = FALCI + FV) %>%
     mutate(Vivax = VIVAX + FV) %>%
     select(DT_NOTIF, LEVEL, CODE, GENDER, Falciparum, Vivax) %>%
@@ -163,7 +163,7 @@ getDAILY_SIVEP_MALARIA_GENDER=function(FilePath, StartYear, EndYear, Melted){
            CODE = "0") %>%
     select(DT_NOTIF, LEVEL, CODE, RES_EXAM, SEXO, n) %>%
     spread(RES_EXAM, n, fill = 0) %>%
-    rename(FALCI = "F", FV = "F+V", VIVAX = "V", GENDER = SEXO) %>%
+    rename(FALCI = "Falciparum", FV = "V+F", VIVAX = "Vivax", GENDER = SEXO) %>%
     mutate(Falciparum = FALCI + FV) %>%
     mutate(Vivax = VIVAX + FV) %>%
     select(DT_NOTIF, LEVEL, CODE, GENDER, Falciparum, Vivax) %>%
@@ -255,7 +255,7 @@ getDAILY_SIVEP_MALARIA_AGE=function(FilePath, StartYear, EndYear, Melted){
     mutate(LEVEL = "MU") %>%
     select(DT_NOTIF, LEVEL, MUN_NOTI, RES_EXAM, AGE_RANGE, n) %>%
     spread(RES_EXAM, n, fill = 0) %>%
-    rename(CODE = MUN_NOTI, FALCI = "F", FV = "F+V", VIVAX = "V", AGE_CAT = AGE_RANGE) %>%
+    rename(CODE = MUN_NOTI, FALCI = "Falciparum", FV = "V+F", VIVAX = "Vivax", AGE_CAT = AGE_RANGE) %>%
     mutate(Falciparum = FALCI + FV) %>%
     mutate(Vivax = VIVAX + FV) %>%
     select(DT_NOTIF, LEVEL, CODE, AGE_CAT, Falciparum, Vivax) %>%
@@ -268,7 +268,7 @@ getDAILY_SIVEP_MALARIA_AGE=function(FilePath, StartYear, EndYear, Melted){
     mutate(LEVEL = "UF") %>%
     select(DT_NOTIF, LEVEL, UF_NOTIF, RES_EXAM, AGE_RANGE, n) %>%
     spread(RES_EXAM, n, fill = 0) %>%
-    rename(CODE = UF_NOTIF, FALCI = "F", FV = "F+V", VIVAX = "V", AGE_CAT = AGE_RANGE) %>%
+    rename(CODE = UF_NOTIF, FALCI = "Falciparum", FV = "V+F", VIVAX = "Vivax", AGE_CAT = AGE_RANGE) %>%
     mutate(Falciparum = FALCI + FV) %>%
     mutate(Vivax = VIVAX + FV) %>%
     select(DT_NOTIF, LEVEL, CODE, AGE_CAT, Falciparum, Vivax) %>%
@@ -282,7 +282,7 @@ getDAILY_SIVEP_MALARIA_AGE=function(FilePath, StartYear, EndYear, Melted){
            CODE = "1") %>%
     select(DT_NOTIF, LEVEL, CODE, RES_EXAM, AGE_RANGE, n) %>%
     spread(RES_EXAM, n, fill = 0) %>%
-    rename(FALCI = "F", FV = "F+V", VIVAX = "V", AGE_CAT = AGE_RANGE) %>%
+    rename(FALCI = "Falciparum", FV = "V+F", VIVAX = "Vivax", AGE_CAT = AGE_RANGE) %>%
     mutate(Falciparum = FALCI + FV) %>%
     mutate(Vivax = VIVAX + FV) %>%
     select(DT_NOTIF, LEVEL, CODE, AGE_CAT, Falciparum, Vivax) %>%
@@ -349,7 +349,7 @@ getSIVEP_MALARIA_TYPE_TREATMENT=function(FilePath){
     mutate(PREGNANT = replace(PREGNANT, which(GESTANTE_=="1qtr"), "Yes")) %>%
     mutate(PREGNANT = replace(PREGNANT, which(GESTANTE_=="2qtr"), "Yes")) %>%
     mutate(PREGNANT = replace(PREGNANT, which(GESTANTE_=="3qtr"), "Yes")) %>%
-    mutate(PREGNANT = replace(PREGNANT, which(GESTANTE_=="Ignored" & SEXO=="F"), "Yes")) %>%
+    mutate(PREGNANT = replace(PREGNANT, which(GESTANTE_=="Ignored" & SEXO=="Falciparum"), "Yes")) %>%
     mutate(PREGNANT = replace(PREGNANT, which(GESTANTE_=="Ignored" & SEXO=="I"), "No")) %>%
     mutate(PREGNANT = replace(PREGNANT, which(GESTANTE_=="Ignored" & SEXO=="M"), "No")) %>%
     mutate(PREGNANT = replace(PREGNANT, is.na(GESTANTE_), "No")) %>%
@@ -648,9 +648,9 @@ getSIVEP_MALARIA_TYPE_STATE=function(RES_OR_INF, TYPE){
         group_by(YEAR, UF_NOTIF, UF_RESID) %>%
         count(RES_EXAM) %>%
         spread(RES_EXAM, n, fill = 0) %>%
-        rename(FALCI = "F") %>%
-        rename(FV = "F+V") %>%
-        rename(VIVAX = "V") %>%
+        rename(FALCI = "Falciparum") %>%
+        rename(FV = "V+F") %>%
+        rename(VIVAX = "Vivax") %>%
         mutate(Falciparum = FALCI + FV) %>%
         mutate(Vivax = VIVAX + FV) %>%
         select(YEAR, UF_NOTIF, UF_RESID, Vivax) %>%

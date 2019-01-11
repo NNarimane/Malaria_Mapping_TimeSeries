@@ -73,6 +73,42 @@ source(paste0(getwd(),"/Malaria_Mapping_TimeSeries/Malaria_Mapping_TimeSeries_Fu
 source(paste0(getwd(),"/Malaria_Mapping_TimeSeries/HEADER.R"))
 
 
+###################################################
+## Get data by date type and top incidence by level
+###################################################
+
+if(!API){
+  # Keep only weekly date type for plotting
+  TS=TS[which(TS$DATE_TYPE == "Monthly"),]
+  TS=TS[,-"DATE_TYPE"]
+}
+
+# Assign names
+TS$STATE = ADMIN_NAMES[match(TS$CODE, ADMIN_NAMES$Code),"UF"] 
+TS$NAME = ADMIN_NAMES[match(TS$CODE, ADMIN_NAMES$Code),"Name"]
+
+# Top states
+HighIncidenceStates=c("AC","AM","AP","MA","MT","PA","RO","RR","TO")
+
+# Count number of municipalities per state
+aggregate(Name~UF, ADMIN_NAMES, FUN = length)
+
+# Get highest incidence municipalities by state: get total cases for all years for each municipality
+TS_MU=TS[which(TS$LEVEL == "MU"),]
+TS_MU=TS_MU[,c("LEVEL","CODE","TYPE","CASES","STATE","NAME")]
+TS_MU_AGGREGATE=aggregate(CASES~., TS_MU, FUN = sum)
+# Keep only municipalities with at least 1500 vivax cases (100 cases per year * 15 years)
+HighestIncidenceMU=as.character(TS_MU_AGGREGATE[which(TS_MU_AGGREGATE$TYPE == "Vivax" &
+                                                        TS_MU_AGGREGATE$CASES > 1500),"NAME"])
+
+# MCMC fitting
+Candidate_MU=c("Candeias do Jamari","Itapua do Oeste",
+               "Mancio Lima",
+               "Alvaraes","Guajara","Uarini",
+               "Caracarai",
+               "Calcoene")
+
+
 ################
 ## General Plots
 ################
@@ -236,27 +272,12 @@ if(!Melted){
 
 
 ###############################
-## Get WEEKLY DATA
+## Plots by State 
 ###############################
-
-# Keep only weekly date type for plotting
-TS_WEEKLY=TS[which(TS$DATE_TYPE == "Weekly"),]
-TS_WEEKLY=TS_WEEKLY[,-"DATE_TYPE"]
-
-# Assign names
-TS_WEEKLY$STATE = ADMIN_NAMES[match(TS_WEEKLY$CODE, ADMIN_NAMES$Code),"UF"] 
-TS_WEEKLY$NAME = ADMIN_NAMES[match(TS_WEEKLY$CODE, ADMIN_NAMES$Code),"Name"] 
-
-###############################
-## Plots by State (WEEKLY DATA)
-###############################
-
-# Plot together (avoid double counting with level)
-HighIncidenceStates=c("AC","AM","AP","MA","MT","PA","RO","RR","TO")
 
 if(byType){
   # All
-  TS_CombinedPlot_UF=ggplot(data = subset(TS_WEEKLY, LEVEL == "UF"), aes(DATE, CASES, color = TYPE)) +
+  TS_CombinedPlot_UF=ggplot(data = subset(TS, LEVEL == "UF"), aes(DATE, CASES, color = TYPE)) +
     stat_summary(fun.y = sum, geom = "line") +
     scale_x_date(breaks = "year", 
                  date_labels = "%Y") +
@@ -269,7 +290,7 @@ if(byType){
           axis.text.x = element_text(angle = 90, hjust = 1))
   
   # Highest incidence
-  TS_CombinedPlot_HighestIncidence_UF=ggplot(data = subset(TS_WEEKLY, LEVEL == "UF" & STATE %in% HighIncidenceStates), 
+  TS_CombinedPlot_HighestIncidence_UF=ggplot(data = subset(TS, LEVEL == "UF" & STATE %in% HighIncidenceStates), 
                                              aes(DATE, CASES, color = TYPE)) +
     stat_summary(fun.y = sum, geom = "line") +
     scale_x_date(breaks = "year", 
@@ -285,7 +306,7 @@ if(byType){
 
 
 if(byGender){
-  TS_CombinedPlot_UF=ggplot(data = subset(TS_WEEKLY, LEVEL == "UF" & !is.na(GENDER)), 
+  TS_CombinedPlot_UF=ggplot(data = subset(TS, LEVEL == "UF" & !is.na(GENDER)), 
                             aes(DATE, CASES, color = GENDER)) +
     stat_summary(fun.y = sum, geom = "line") +
     scale_x_date(breaks = "year", 
@@ -299,7 +320,7 @@ if(byGender){
           axis.text.x = element_text(angle = 90, hjust = 1))
   
   # Highest incidence
-  TS_CombinedPlot_HighestIncidence_UF=ggplot(data = subset(TS_WEEKLY, LEVEL == "UF" & STATE %in% HighIncidenceStates & !is.na(GENDER)), 
+  TS_CombinedPlot_HighestIncidence_UF=ggplot(data = subset(TS, LEVEL == "UF" & STATE %in% HighIncidenceStates & !is.na(GENDER)), 
                                              aes(DATE, CASES, color = TYPE)) +
     stat_summary(fun.y = sum, geom = "line") +
     scale_x_date(breaks = "year", 
@@ -350,28 +371,24 @@ if(SavePlots){
 
 
 ######################################
-## Plots by Municipality (WEEKLY DATA)
+## Plots by Municipality 
 ######################################
 
-# Count number of municipalities per state
-aggregate(Name~UF, ADMIN_NAMES, FUN = length)
-
-# Get highest incidence municipalities by state
-# For AC: Cruzero do Sul, Mancio Lima, Placido de Castro, Porto Walter, Rodriques Alves, Tarauaca
-# For AM: all except Amatura, Anama, Anori, Barreirinha, Boa Vista do Ramos, Careiro da Varzea, Codajas, Envira, Fonte Boa, Maues, Nhamunda, Nova Olinda do Norte, Parintins, Tonantins, Urucara, Urucurituba
-# For 
-
+# Get plots
 if(!byGender){
-  # Get highest incidence municiaplity plots only
+  # Get highest incidence municipality plots only
   HighestIncidence_MUN_Plots=foreach(i=1:length(HighIncidenceStates)) %do% {
     Plot_Name=paste0("TS_Plot_",HighIncidenceStates[i])
-    assign(Plot_Name, ggplot(data = subset(TS_WEEKLY, LEVEL == "MU" & STATE == HighIncidenceStates[i]), aes(DATE, CASES, color = TYPE)) +
+    assign(Plot_Name, ggplot(data = subset(TS, LEVEL == "MU" & 
+                                             STATE == HighIncidenceStates[i] &
+                                             NAME %in% HighestIncidenceMU), 
+                             aes(DATE, CASES, color = TYPE)) +
              stat_summary(fun.y = sum, geom = "line") +
              scale_x_date(breaks = "year", 
                           date_labels = "%Y") +
              scale_color_manual(values = c("#31a354","#3182bd")) +
              facet_wrap(~NAME) +
-             labs(title = paste0("P. vivax and P. falciparum API in ",HighIncidenceStates[i]," state by municipality, ", 
+             labs(title = paste0("P. vivax and P. falciparum cases in ",HighIncidenceStates[i]," state by municipality, ", 
                                  StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
              guides(color=guide_legend(title="Plasmodium species")) +
              theme(panel.grid.minor.x = element_blank(),
@@ -379,7 +396,7 @@ if(!byGender){
   }
 }else{
   ### AC ####
-  TS_Plot_AC=ggplot(data = subset(TS_WEEKLY, LEVEL == "MU" & STATE == "AC" & !is.na(GENDER)), aes(DATE, CASES, color = GENDER)) +
+  TS_Plot_AC=ggplot(data = subset(TS, LEVEL == "MU" & STATE == "AC" & !is.na(GENDER)), aes(DATE, CASES, color = GENDER)) +
     stat_summary(fun.y = sum, geom = "line") +
     scale_x_date(breaks = "year", 
                  date_labels = "%Y") +
@@ -391,7 +408,7 @@ if(!byGender){
           axis.text.x = element_text(angle = 90, hjust = 1))
   
   ### AM ####
-  TS_Plot_AM=ggplot(data = subset(TS_WEEKLY, LEVEL == "MU" & STATE == "AM" & !is.na(GENDER)), aes(DATE, CASES, color = GENDER)) +
+  TS_Plot_AM=ggplot(data = subset(TS, LEVEL == "MU" & STATE == "AM" & !is.na(GENDER)), aes(DATE, CASES, color = GENDER)) +
     stat_summary(fun.y = sum, geom = "line") +
     scale_x_date(breaks = "year", 
                  date_labels = "%Y") +
@@ -403,7 +420,7 @@ if(!byGender){
           axis.text.x = element_text(angle = 90, hjust = 1))
   
   ### PA ####
-  TS_Plot_PA=ggplot(data = subset(TS_WEEKLY, LEVEL == "MU" & STATE == "PA" & !is.na(GENDER)), aes(DATE, CASES, color = GENDER)) +
+  TS_Plot_PA=ggplot(data = subset(TS, LEVEL == "MU" & STATE == "PA" & !is.na(GENDER)), aes(DATE, CASES, color = GENDER)) +
     stat_summary(fun.y = sum, geom = "line") +
     scale_x_date(breaks = "year", 
                  date_labels = "%Y") +
@@ -415,7 +432,7 @@ if(!byGender){
           axis.text.x = element_text(angle = 90, hjust = 1))
   
   ### RO ####
-  TS_Plot_RO=ggplot(data = subset(TS_WEEKLY, LEVEL == "MU" & STATE == "RO" & !is.na(GENDER)), aes(DATE, CASES, color = GENDER)) +
+  TS_Plot_RO=ggplot(data = subset(TS, LEVEL == "MU" & STATE == "RO" & !is.na(GENDER)), aes(DATE, CASES, color = GENDER)) +
     stat_summary(fun.y = sum, geom = "line") +
     scale_x_date(breaks = "year", 
                  date_labels = "%Y") +
@@ -427,7 +444,7 @@ if(!byGender){
           axis.text.x = element_text(angle = 90, hjust = 1))
   
   ### RR ####
-  TS_Plot_RR=ggplot(data = subset(TS_WEEKLY, LEVEL == "MU" & STATE == "RR" & !is.na(GENDER)), aes(DATE, CASES, color = GENDER)) +
+  TS_Plot_RR=ggplot(data = subset(TS, LEVEL == "MU" & STATE == "RR" & !is.na(GENDER)), aes(DATE, CASES, color = GENDER)) +
     stat_summary(fun.y = sum, geom = "line") +
     scale_x_date(breaks = "year", 
                  date_labels = "%Y") +
@@ -439,7 +456,194 @@ if(!byGender){
           axis.text.x = element_text(angle = 90, hjust = 1))
 }
 
+############################################
+## Get MCMC fitting candidate municipalities
 
+# Get data
+CAND_DATA=subset(TS, LEVEL == "MU" & NAME %in% Candidate_MU & TYPE == "Vivax")
+mCAND_DATA=melt(CAND_DATA, id.vars = c("CODE","DATE","TYPE","LEVEL","YEAR","POP","RATIO","STATE","NAME"))
+
+# Plot
+P1=ggplot(data = subset(mCAND_DATA,variable == "CASES"),aes(DATE, value, color = variable)) +
+  stat_summary(fun.y = sum, geom = "line", size = 1.005) +
+  # scale_color_manual(values = c("#3182bd","#a621ce")) +
+  scale_x_date(breaks = "year", 
+               date_labels = "%Y") +
+  facet_wrap(~NAME) +
+  labs(title = "P. vivax monthly cases and API in candidate municipalities for MCMC fitting", 
+       x = "Year", y = "Cases") + 
+  guides(color=guide_legend(title="Data")) +
+  theme(panel.grid.minor.x = element_blank(),
+        axis.text.x = element_text(angle = 90, hjust = 1))
+P1
+
+P1 + geom_line(data = subset(mCAND_DATA,variable == "API"), aes(y = value*10, color = variable), size = 1.005) + 
+  scale_y_continuous(sec.axis = sec_axis(~. /10, name = "API per 1000")) +
+  scale_color_manual(values = c("#a621ce","#3182bd"))
+  
+  
+# Save
+dev.copy(png, "C:/Users/nnekkab/Desktop/MCMC_Fitting/P. vivax monthly cases and API in candidate municipalities for MCMC fitting.png",
+         width = 1800, height = 800, units = "px", pointsize = 12,
+         res = 100)
+dev.off()
+
+# Export data for these MUs
+MU_MCMC_VIVAX_DATA=subset(TS, LEVEL == "MU" & NAME %in% Candidate_MU & TYPE == "Vivax")
+# Save csv
+write.table(MU_MCMC_VIVAX_DATA,"C:/Users/nnekkab/Desktop/MCMC_Fitting/MU_MCMC_VIVAX_DATA.csv",sep = ",",
+            row.names = F)
+
+#######
+## Save
+#######
+
+
+if(SavePlots){
+  if(!byGender){
+
+    # Acre
+    TS_Plot_AC
+    # Save
+    dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum cases in Acre state by municipality ", StartYear, "-", EndYear, ".png"),
+             width = 1800, height = 800, units = "px", pointsize = 12,
+             res = 100)
+    dev.off()
+    
+    # Amazonas
+    TS_Plot_AM
+    # Save
+    dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum cases in Amazonas state by municipality ", StartYear, "-", EndYear, ".png"),
+             width = 1800, height = 800, units = "px", pointsize = 12,
+             res = 100)
+    dev.off()
+    
+    # Amapa
+    TS_Plot_AP
+    # Save
+    dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum cases in Amapa state by municipality ", StartYear, "-", EndYear, ".png"),
+             width = 1800, height = 800, units = "px", pointsize = 12,
+             res = 100)
+    dev.off()
+    
+    # Maranhão
+    TS_Plot_MA
+    # Save
+    dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum cases in Maranhão state by municipality ", StartYear, "-", EndYear, ".png"),
+             width = 1800, height = 800, units = "px", pointsize = 12,
+             res = 100)
+    dev.off()
+    
+    # Mato Grosso
+    TS_Plot_MT
+    # Save
+    dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum cases in Mato Grosso state by municipality ", StartYear, "-", EndYear, ".png"),
+             width = 1800, height = 800, units = "px", pointsize = 12,
+             res = 100)
+    dev.off()
+    
+    # Para
+    TS_Plot_PA
+    # Save
+    dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum cases in Para state by municipality ", StartYear, "-", EndYear, ".png"),
+             width = 1800, height = 800, units = "px", pointsize = 12,
+             res = 100)
+    dev.off()
+    
+    # Rondonia
+    TS_Plot_RO
+    # Save
+    dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum cases in Rondonia state by municipality ", StartYear, "-", EndYear, ".png"),
+             width = 1800, height = 800, units = "px", pointsize = 12,
+             res = 72)
+    dev.off()
+    
+    # Roraima
+    TS_Plot_RR
+    # Save
+    dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum cases in Roraima state by municipality ", StartYear, "-", EndYear, ".png"),
+             width = 1800, height = 800, units = "px", pointsize = 12,
+             res = 72)
+    dev.off()
+    
+    # Tocantins
+    TS_Plot_TO
+    # Save
+    dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum cases in Tocantins state by municipality ", StartYear, "-", EndYear, ".png"),
+             width = 1800, height = 800, units = "px", pointsize = 12,
+             res = 72)
+    dev.off()
+    
+  }else{
+    # Highest incidence states
+    HighIncidenceStates
+    # Acre
+    TS_Plot_AC
+    # Save
+    dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum API by gender in Acre state by municipality ", StartYear, "-", EndYear, "by MU.png"),
+             width = 1800, height = 800, units = "px", pointsize = 12,
+             res = 100)
+    dev.off()
+    
+    # Amazonas
+    TS_Plot_AM
+    # Save
+    dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum API by gender in Amazonas state by municipality ", StartYear, "-", EndYear, "by MU.png"),
+             width = 1800, height = 800, units = "px", pointsize = 12,
+             res = 100)
+    dev.off()
+    
+    # Amapa
+    TS_Plot_AP
+    # Save
+    dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum API by gender in Amapa state by municipality ", StartYear, "-", EndYear, "by MU.png"),
+             width = 1800, height = 800, units = "px", pointsize = 12,
+             res = 100)
+    dev.off()
+    
+    
+    # Mato Grosso
+    TS_Plot_MA
+    # Save
+    dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum API by gender in Maranhão state by municipality ", StartYear, "-", EndYear, "by MU.png"),
+             width = 1800, height = 800, units = "px", pointsize = 12,
+             res = 100)
+    dev.off()
+    
+    # Mato Grosso
+    TS_Plot_MT
+    # Save
+    dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum cases by gender in Mato Grosso state by municipality ", StartYear, "-", EndYear, "by MU.png"),
+             width = 1800, height = 800, units = "px", pointsize = 12,
+             res = 100)
+    dev.off()
+    
+    # Para
+    TS_Plot_PA
+    # Save
+    dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum cases by gender in Para state by municipality ", StartYear, "-", EndYear, "by MU.png"),
+             width = 1800, height = 800, units = "px", pointsize = 12,
+             res = 100)
+    dev.off()
+    
+    # Rondonia
+    TS_Plot_RO
+    # Save
+    dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum cases by gender in Rondonia state by municipality ", StartYear, "-", EndYear, "by MU.png"),
+             width = 1800, height = 800, units = "px", pointsize = 12,
+             res = 72)
+    dev.off()
+    
+    # Roraima
+    TS_Plot_RR
+    # Save
+    dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum cases by gender in Roraima state by municipality ", StartYear, "-", EndYear, "by MU.png"),
+             width = 1800, height = 800, units = "px", pointsize = 12,
+             res = 72)
+    dev.off()
+  }
+  
+}
 
 ############################
 ### Time series plots of API
