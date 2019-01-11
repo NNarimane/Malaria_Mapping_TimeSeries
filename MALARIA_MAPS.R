@@ -60,114 +60,23 @@ library("tools")
 source(paste0(getwd(),"/Malaria_Mapping_TimeSeries/Malaria_Mapping_TimeSeries_Functions.R"))
 
 
-#################
-## Analysis Level
-#################
+##########################################
+## Load header file: set-up analysis level
+##########################################
 
-# Which administrative level ?
-byNotification=FALSE
-byResidence=TRUE
-byInfection=FALSE
+# Source header file
+source(paste0(getwd(),"/Malaria_Mapping_TimeSeries/HEADER.R"))
 
-# Which variable(s) ?
-byType=TRUE
-byGender=FALSE
-byAge=FALSE
-byImportation=FALSE
-bySetting=FALSE
-
-# Choose time period
-StartYear="2003"
-EndYear="2017"
-
-
-#################
-## Load Data
-#################
-
-if(byNotification){
-  TS_MU_API=read.csv(file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_API_MU_byNotification.csv"), stringsAsFactors = F, row.names = NULL, check.names = F)
-  TS_UF_API=read.csv(file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_API_UF_byNotification.csv"), stringsAsFactors = F, row.names = NULL, check.names = F)
-  TS=rbind(TS_UF_API, TS_MU_API)
-  TS$DATE=as.Date(TS$DATE)
-  rm(TS_MU_API,TS_UF_API)
+# Select data
+if(!API){
+  # Keep only weekly date type for plotting
+  TS=TS[which(TS$DATE_TYPE == "Monthly"),]
+  TS=TS[,-"DATE_TYPE"]
 }
 
-if(byResidence){
-  TS_MU_API=read.csv(file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_API_MU_byResidence.csv"), stringsAsFactors = F, row.names = NULL, check.names = F)
-  TS_UF_API=read.csv(file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_API_UF_byNotification.csv"), stringsAsFactors = F, row.names = NULL, check.names = F)
-  TS=rbind(TS_UF_API, TS_MU_API)
-}
-
-if(byInfection){
-  TS_MU_API=read.csv(file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_API_MU_byResidence.csv"), stringsAsFactors = F, row.names = NULL, check.names = F)
-  TS_UF_API=read.csv(file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_API_UF_byNotification.csv"), stringsAsFactors = F, row.names = NULL, check.names = F)
-  TS=rbind(TS_UF_API, TS_MU_API)
-}
-
-#############
-## Save Plots
-#############
-
-# Save plots
-SavePlots=TRUE
-options(scipen=999)
-
-# Set folder for saving plots
-API=F
-if(SavePlots){
-  if(envNN){
-    if(byNotification){
-      if(byType){
-        if(!API){
-          Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byCases/byNotification/byType/")
-        }else{
-          Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byAPI/byNotification/byType/")
-        }
-        if(byGender){
-          if(!API){
-            Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byCases/byNotification/byGender/")
-          }else{
-            Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byAPI/byNotification/byGender/")
-          }
-        }
-      }
-    }
-    if(byResidence){
-      if(byType){
-        if(!API){
-          Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byCases/byResidence/byType/")
-        }else{
-          Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byAPI/byResidence/byType/")
-        }
-        if(byGender){
-          if(!API){
-            Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byCases/byResidence/byGender/")
-          }else{
-            Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byAPI/byResidence/byGender/")
-          }
-        }
-      }
-    }
-    
-    if(byInfection){
-      if(byType){
-        if(!API){
-          Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byCases/byInfection/byType/")
-        }else{
-          Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byAPI/byInfection/byType/")
-        }
-        if(byGender){
-          if(!API){
-            Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byCases/byInfection/byGender/")
-          }else{
-            Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/byAPI/byInfection/byGender/")
-          }
-        }
-      }
-    }
-  }
-}else{}
+# Assign names
+TS$STATE = ADMIN_NAMES[match(TS$CODE, ADMIN_NAMES$Code),"UF"] 
+TS$NAME = ADMIN_NAMES[match(TS$CODE, ADMIN_NAMES$Code),"Name"]
 
 ###################
 ### Map Shape Files
@@ -184,11 +93,12 @@ getSTATE_MAPS=function(Level, Type, Measure, title, breaks, labels, Colors, fill
   # Select data to plot
   TS_UF=TS[which(TS$LEVEL == Level & TS$TYPE == Type),]
   if(Measure == "CASES"){
-    TS_UF=subset(TS_UF, select = -c(API,POP,DATE))
+    TS_UF$YEAR=year(TS_UF$DATE)
+    TS_UF=subset(TS_UF, select = -c(DATE))
   }else{
+    TS_UF$YEAR=year(TS_UF$DATE)
     TS_UF=subset(TS_UF, select = -c(CASES,POP,DATE))
   }
-  
   
   # Make TS data wide by year and by type
   wTS_UF=reshape(TS_UF, idvar = c("LEVEL","CODE","TYPE","STATE","NAME"), 
@@ -357,19 +267,24 @@ dev.off()
 BRA_SHP_MU=getShp(country = "Brazil", admin_level = "admin2", format = "df")
 
 Level="MU"
-Type="Vivax"
-Measure="CASES"
+Type="Falciparum"
+Measure="API"
 
 # Get function
 getMUNI_MAPS=function(Level, Type, Measure, Year, title, breaks, labels, Colors, fill_label){
   # Select data to plot
   TS_MU=TS[which(TS$LEVEL == Level & TS$TYPE == Type),]
   if(Measure == "CASES"){
-    TS_MU=subset(TS_MU, select = -c(API,POP,DATE))
+    TS_MU$YEAR=year(TS_MU$DATE)
+    TS_MU=subset(TS_MU, select = -c(DATE))
+    # Aggregate data
+    TS_MU = aggregate(CASES~., TS_MU, FUN = sum)
   }else{
-    TS_MU=subset(TS_MU, select = -c(CASES,POP,DATE))
+    TS_MU$YEAR=year(TS_MU$DATE)
+    TS_MU=subset(TS_MU, select = -c(CASES,POP,DATE,RATIO))
+    # Aggregate data
+    TS_MU = aggregate(API~., TS_MU, FUN = sum)
   }
-  
   
   # Make TS data wide by year and by type
   wTS_MU=reshape(TS_MU, idvar = c("LEVEL","CODE","TYPE","STATE","NAME"), 
@@ -707,19 +622,34 @@ labels=c("0", paste("<", breaks[3:length(breaks)]))
 getColors=colorRampPalette(brewer.pal(9,"Greens"))
 Colors=c("gray85", getColors(length(labels)-1))
 
-# Title
-title="Plasmodium faciparum notified cases, Brazil 2003-2017"
 fill_label="Cases"
 
-# Plot CASES
-FALCI_CASES_MAP=getSTATE_MAPS("MU", "Falciparum", "CASES", title, breaks, labels, Colors, fill_label)
-FALCI_CASES_MAP                                                                                     
+# Plot per  year
+Years=as.character(seq(StartYear, EndYear,1))
+FALCI_API_MAPS=foreach(i=1:length(Years)) %do% {
+  # Save
+  Year=Years[i]
+  title = paste("Plasmodium falciparum notified cases by municipality, Brazil", Year)
+  FALCI_CASES_MAP=getMUNI_MAPS("MU", "Falciparum", "CASES", Year, title, breaks, labels, Colors, fill_label)
+  FALCI_CASES_MAP
+  dev.copy(png, paste0(Plot_Folder,title, ".png"),
+           width = 1000, height = 1000, units = "px", pointsize = 12,
+           res = 100)
+  dev.off()
+  rm(FALCI_CASES_MAP)
+}
 
 # Save
+Year="2017"
+title = paste("Plasmodium falciparum notified cases by municipality, Brazil", Year)
+FALCI_CASES_MAP=getMUNI_MAPS("MU", "Falciparum", "CASES", Year, title, breaks, labels, Colors, fill_label)
+FALCI_CASES_MAP
 dev.copy(png, paste0(Plot_Folder,title, ".png"),
          width = 1000, height = 1000, units = "px", pointsize = 12,
          res = 100)
 dev.off()
+rm(FALCI_CASES_MAP)
+
 
 ####################
 ## FALCIPARUM API ##
@@ -733,16 +663,26 @@ getColors=colorRampPalette(brewer.pal(6,"Greens"))
 Colors=c("gray85", getColors(length(labels)-1))
 
 # Title
-title="Plasmodium falciparum Annual Parasite Index (API), Brazil 2003-2017"
+# title="Plasmodium falciparum Annual Parasite Index (API), Brazil 2003-2017"
 fill_label="API"
 
-# Plot CASES
-FALCI_API_MAP=getSTATE_MAPS("MU", "Falciparum", "API", title, breaks, labels, Colors, fill_label)
-FALCI_API_MAP                                                                                     
+# # Plot CASES
+# FALCI_API_MAP=getSTATE_MAPS("MU", "Falciparum", "API", title, breaks, labels, Colors, fill_label)
+# FALCI_API_MAP                                                                                     
+# 
+# # Save
+# dev.copy(png, paste0(Plot_Folder,title, ".png"),
+#          width = 1000, height = 1000, units = "px", pointsize = 12,
+#          res = 100)
+# dev.off()
 
 # Save
+Year="2017"
+title = paste("Plasmodium falciparum API by municipality, Brazil", Year)
+FALCI_API_MAP=getMUNI_MAPS("MU", "Falciparum", "API", Year, title, breaks, labels, Colors, fill_label)
+FALCI_API_MAP
 dev.copy(png, paste0(Plot_Folder,title, ".png"),
          width = 1000, height = 1000, units = "px", pointsize = 12,
          res = 100)
 dev.off()
-
+rm(FALCI_API_MAP)
