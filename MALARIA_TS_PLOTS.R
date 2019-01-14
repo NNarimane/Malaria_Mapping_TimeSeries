@@ -838,3 +838,49 @@ if(SavePlots){
   }
   
 }
+
+
+#####################################################################################
+
+
+######################
+## CUMULATIVE CASES ##
+######################
+
+library(plyr)
+data(iris)
+
+## Ecdf over all species
+iris.all <- summarize(iris, Sepal.Length = unique(Sepal.Length), 
+                      ecdf = ecdf(Sepal.Length)(unique(Sepal.Length)) * length(Sepal.Length))
+
+iris.species <- ddply(iris, .(Species), summarize,
+                      Sepal.Length = unique(Sepal.Length),
+                      ecdf = ecdf(Sepal.Length)(unique(Sepal.Length))*length(Sepal.Length))
+
+ggplot(iris.all, aes(Sepal.Length, ecdf)) + geom_step()
+
+#Ecdf within species
+
+# Upload cases and API data
+TS_UF_CUM = subset(TS, LEVEL == "UF")
+TS_UF_CUM_CASES = TS_UF_CUM[,c("TYPE","CASES","YEAR","NAME")]
+
+ggplot(data = TS_UF_CUM_CASES, aes(x = YEAR, color = NAME)) +
+  # geom_line() +
+  stat_ecdf() +
+  # stat_summary(fun.y = sum, geom = "line", size = 1.1) +
+  # scale_x_date(breaks = "year", 
+  #              date_labels = "%Y") +
+  facet_wrap(.~TYPE, ncol = 3) +
+  # scale_color_manual(values = c("#31a354","#3182bd")) +
+  labs(title = paste0("P. vivax and P. falciparum cumulative cases by state, Brazil ", 
+                      StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
+  guides(color=guide_legend(title="State")) +
+  theme(panel.grid.minor.x = element_blank(),
+        axis.text.x = element_text(angle = 90, hjust = 1))
+
+
+
+
+
