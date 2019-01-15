@@ -970,7 +970,7 @@ getPV_TS_Trend=function(TS, Trend, Subset, Group){
     TS_Trend=TS_decomposed$time.series[,Trend]
     
     # Subset by number of years
-    TS_Subset=subset(TS_Trend, start = ((as.numeric(EndYear)-as.numeric(StartYear)+1)*52)-52*Subset, end=(as.numeric(EndYear)-as.numeric(StartYear)+1)*52)
+    TS_Subset=subset(TS_Trend, start = ((as.numeric(EndYear)-as.numeric(StartYear)+1)*Frequency)-Frequency*Subset, end=(as.numeric(EndYear)-as.numeric(StartYear)+1)*Frequency)
     
     # Format data and dates
     TS_Subset_DF=as.numeric(TS_Subset)
@@ -996,7 +996,7 @@ getPV_TS_Trend=function(TS, Trend, Subset, Group){
       TS_Trend=TS_decomposed$time.series[,Trend]
       
       # Subset by number of years
-      TS_Subset=subset(TS_Trend, start = ((as.numeric(EndYear)-as.numeric(StartYear)+1)*52)-52*Subset, end=(as.numeric(EndYear)-as.numeric(StartYear)+1)*52)
+      TS_Subset=subset(TS_Trend, start = ((as.numeric(EndYear)-as.numeric(StartYear)+1)*Frequency)-Frequency*Subset, end=(as.numeric(EndYear)-as.numeric(StartYear)+1)*Frequency)
       
     }
     names(TS_Subset)=names(TS)

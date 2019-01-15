@@ -686,3 +686,45 @@ dev.copy(png, paste0(Plot_Folder,title, ".png"),
          res = 100)
 dev.off()
 rm(FALCI_API_MAP)
+
+#########################################################
+
+# Mapping proportion of total cases
+TS_MU_AGGREGATE_V=read.csv("C:/Users/nnekkab/Desktop/MCMC_Fitting/TOTAL_VIVAX_CASES_PROP.csv",sep = ",")
+TS_MU_AGGREGATE_F=read.csv("C:/Users/nnekkab/Desktop/MCMC_Fitting/TOTAL_FALCI_CASES_PROP.csv",sep = ",")
+
+#  VIVAX
+TS_MU_AGGREGATE_V = TS_MU_AGGREGATE_V[,c("NAME","CASES","PROP")]
+# Step 1: make names into character temporarily
+BRA_SHP_MU$name_2=as.character(BRA_SHP_MU$name_2)
+
+# Step 2: merge (left_join will help keep in order)
+BRA_SHP_MU_SIVEP=left_join(BRA_SHP_MU, TS_MU_AGGREGATE_V, by = c("name_2" = "NAME"))
+BRA_SHP_MU_SIVEP$name_2=factor(BRA_SHP_MU_SIVEP$name_2)
+
+# Plot
+ggplot(data=BRA_SHP_MU_SIVEP) +
+  geom_polygon(color=NA, aes(long, lat, group=group, fill=CASES)) +
+  scale_fill_continuous(high = "#132B43", low = "#56B1F7") +
+  coord_equal() +
+  theme_minimal() + 
+  labs(title = "Total Plasmodium vivax cases in Brazil from 2003-2017", fill = "Cases") +
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())
+
+ggplot(data=BRA_SHP_MU_SIVEP) +
+  geom_polygon(color=NA, aes(long, lat, group=group, fill=PROP)) +
+  scale_fill_continuous(high = "#132B43", low = "#56B1F7") +
+  coord_equal() +
+  theme_minimal() + 
+  labs(title = "Proportion of Plasmodium vivax cases in Brazil from 2003-2017", fill = "%") +
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())
