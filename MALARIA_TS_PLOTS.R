@@ -79,7 +79,11 @@ source(paste0(getwd(),"/Malaria_Mapping_TimeSeries/HEADER.R"))
 
 if(!API){
   # Keep only weekly date type for plotting
+<<<<<<< HEAD
   TS=TS[which(TS$DATE_TYPE == "Monthly"),]
+=======
+  TS=TS[which(TS$DATE_TYPE == Date_Type),]
+>>>>>>> 11925e7350843a592658f8e5c5787d56c55d638a
   TS=TS[,-"DATE_TYPE"]
 }
 
@@ -493,6 +497,7 @@ MU_MCMC_VIVAX_DATA=subset(TS, LEVEL == "MU" & NAME %in% Candidate_MU & TYPE == "
 # Save csv
 write.table(MU_MCMC_VIVAX_DATA,"C:/Users/nnekkab/Desktop/MCMC_Fitting/MU_MCMC_VIVAX_DATA.csv",sep = ",",
             row.names = F)
+<<<<<<< HEAD
 
 #######
 ## Save
@@ -502,6 +507,17 @@ write.table(MU_MCMC_VIVAX_DATA,"C:/Users/nnekkab/Desktop/MCMC_Fitting/MU_MCMC_VI
 if(SavePlots){
   if(!byGender){
 
+=======
+
+#######
+## Save
+#######
+
+
+if(SavePlots){
+  if(!byGender){
+
+>>>>>>> 11925e7350843a592658f8e5c5787d56c55d638a
     # Acre
     TS_Plot_AC
     # Save
@@ -838,3 +854,310 @@ if(SavePlots){
   }
   
 }
+
+
+#####################################################################################
+
+
+######################
+## CUMULATIVE CASES ##
+######################
+# 
+# library(plyr)
+# data(iris)
+# 
+# ## Ecdf over all species
+# iris.all <- summarize(iris, Sepal.Length = unique(Sepal.Length), 
+#                       ecdf = ecdf(Sepal.Length)(unique(Sepal.Length)) * length(Sepal.Length))
+# 
+# iris.species <- ddply(iris, .(Species), summarize,
+#                       Sepal.Length = unique(Sepal.Length),
+#                       ecdf = ecdf(Sepal.Length)(unique(Sepal.Length))*length(Sepal.Length))
+# 
+# ggplot(iris.all, aes(Sepal.Length, ecdf)) + geom_step()
+
+###########
+## CASES ##
+
+# State
+TS_UF=subset(TS, LEVEL ==  "UF")
+
+# TS_AM=subset(TS_UF, STATE == "AM")
+# TS_AM$csum <- ave(TS_AM$CASES, TS_AM$TYPE, FUN=cumsum)
+# TS_AM$sum <- ave(TS_AM$CASES, TS_AM$TYPE, FUN=sum)
+# TS_AM$csum_prop = (TS_AM$csum/TS_AM$sum)*100
+
+# Cummulative sum (daily)
+TS_UF$csum <- ave(TS_UF$CASES, TS_UF$NAME, TS_UF$TYPE, FUN=cumsum)
+TS_UF$sum <- ave(TS_UF$CASES, TS_UF$TYPE, FUN=sum)
+TS_UF$csum_prop = (TS_UF$csum/TS_UF$sum)*100
+ggplot(data = TS_UF, aes(x = DATE, y = csum, color = NAME)) +
+  geom_line(size = 1.1) +
+  scale_x_date(breaks = "year",
+               date_labels = "%Y") +
+  facet_wrap(.~TYPE, ncol = 3) +
+  labs(title = paste0("P. vivax and P. falciparum cumulative cases by state, Brazil ", 
+                      StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
+  guides(color=guide_legend(title="State")) +
+  theme(panel.grid.minor.x = element_blank(),
+        axis.text.x = element_text(angle = 90, hjust = 1))
+
+# Cummulative sum (monthly data) as % of total of all states per day
+ggplot(data = TS_UF, aes(x = DATE, y = csum_prop, color = NAME)) +
+  geom_line(size = 1.1) +
+  scale_x_date(breaks = "year",
+               date_labels = "%Y") +
+  facet_wrap(.~TYPE, ncol = 3) +
+  labs(title = paste0("P. vivax and P. falciparum cumulative cases by state, Brazil ", 
+                      StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
+  guides(color=guide_legend(title="State")) +
+  theme(panel.grid.minor.x = element_blank(),
+        axis.text.x = element_text(angle = 90, hjust = 1))
+
+
+####### MU
+
+TS_MU=TS[which(TS$LEVEL == "MU"),]
+TS_MU=TS_MU[,c("LEVEL","DATE","CODE","TYPE","CASES","STATE","NAME")]
+TS_MU_AGGREGATE=aggregate(CASES~., TS_MU, FUN = sum)
+
+# Cummulative sum (daily)
+TS_MU$csum <- ave(TS_MU$CASES, TS_MU$NAME, TS_MU$TYPE, FUN=cumsum)
+TS_MU$sum <- ave(TS_MU$CASES, TS_MU$TYPE, FUN=sum)
+TS_MU$csum_prop = (TS_MU$csum/TS_MU$sum)*100
+TS_MU = TS_MU[rev(order(TS_MU$csum)),]
+Top5_MU = as.character(unique(TS_MU$NAME)[1:5])
+  
+ggplot(data = TS_MU, aes(x = DATE, y = csum, color = NAME)) +
+  geom_line(size = 1.1) +
+  scale_x_date(breaks = "year",
+               date_labels = "%Y") +
+  facet_wrap(.~TYPE, ncol = 3) +
+  labs(title = paste0("P. vivax and P. falciparum cumulative cases by municipality, Brazil ", 
+                      StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
+  guides(color = F) +
+  geom_text(data = subset(TS_MU, NAME %in% Top5_MU & DATE == "2017-12-01"), 
+            aes(label = NAME, color = NAME, x = DATE, y = csum), 
+            hjust = "top", vjust = -1, size = 3,
+            check_overlap = T) +
+  # guides(color=guide_legend(title="State")) +
+  theme(panel.grid.minor.x = element_blank(),
+        axis.text.x = element_text(angle = 90, hjust = 1))
+
+# Cummulative sum (monthly data) as % of total of all states per day
+ggplot(data = TS_MU, aes(x = DATE, y = csum_prop, color = NAME)) +
+  geom_line(size = 1.1) +
+  scale_x_date(breaks = "year",
+               date_labels = "%Y") +
+  facet_wrap(.~TYPE, ncol = 3) +
+  labs(title = paste0("P. vivax and P. falciparum cumulative cases by state, Brazil ", 
+                      StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
+  guides(color=F) +
+  theme(panel.grid.minor.x = element_blank(),
+        axis.text.x = element_text(angle = 90, hjust = 1))
+
+
+# All years combined
+TS_MU_All=TS_MU[,c("LEVEL","CODE","TYPE","CASES","STATE","NAME")]
+TS_MU_AGGREGATE=aggregate(CASES~., TS_MU_All, FUN = sum)
+TS_MU_AGGREGATE_V=subset(TS_MU_AGGREGATE, TYPE == "Vivax" & CASES !=0)
+TS_MU_AGGREGATE_V$PROP = (TS_MU_AGGREGATE_V$CASES / sum(TS_MU_AGGREGATE_V$CASES))*100
+TS_MU_AGGREGATE_V=TS_MU_AGGREGATE_V[rev(order(TS_MU_AGGREGATE_V$PROP)),]
+sum(TS_MU_AGGREGATE_V[1:5,"PROP"]) # 5 MU account for 28% of total Pv cases
+sum(TS_MU_AGGREGATE_V[1:10,"PROP"]) # 10 MU account for 36% of total Pv cases
+sum(TS_MU_AGGREGATE_V[1:50,"PROP"]) # 50 MU account for 70% of total Pv cases
+sum(TS_MU_AGGREGATE_V[1:75,"PROP"]) # 75 MU account for 81% of total Pv cases
+sum(TS_MU_AGGREGATE_V[1:100,"PROP"]) # 100 MU account for 88% of total Pv cases
+
+TS_MU_AGGREGATE_F=subset(TS_MU_AGGREGATE, TYPE == "Falciparum" & CASES !=0)
+TS_MU_AGGREGATE_F$PROP = (TS_MU_AGGREGATE_F$CASES / sum(TS_MU_AGGREGATE_F$CASES))*100
+TS_MU_AGGREGATE_F=TS_MU_AGGREGATE_F[rev(order(TS_MU_AGGREGATE_F$PROP)),]
+sum(TS_MU_AGGREGATE_F[1:5,"PROP"]) # 5 MU account for 31% of total Pv cases
+sum(TS_MU_AGGREGATE_F[1:10,"PROP"]) # 10 MU account for 41% of total Pv cases
+sum(TS_MU_AGGREGATE_F[1:50,"PROP"]) # 50 MU account for 75% of total Pv cases
+sum(TS_MU_AGGREGATE_F[1:75,"PROP"]) # 75 MU account for 84% of total Pv cases
+sum(TS_MU_AGGREGATE_F[1:100,"PROP"]) # 100 MU account for 90% of total Pv cases
+
+# Export data
+write.table(TS_MU_AGGREGATE_V,"C:/Users/nnekkab/Desktop/MCMC_Fitting/TOTAL_VIVAX_CASES_PROP.csv",sep = ",",
+            row.names = F)
+write.table(TS_MU_AGGREGATE_F,"C:/Users/nnekkab/Desktop/MCMC_Fitting/TOTAL_FALCI_CASES_PROP.csv",sep = ",",
+            row.names = F)
+
+###########
+## API ##
+
+# State
+TS_UF=subset(TS, LEVEL ==  "UF")
+
+# Cummulative sum (daily)
+TS_UF$csum <- ave(TS_UF$API, TS_UF$NAME, TS_UF$TYPE, FUN=cumsum)
+TS_UF$sum <- ave(TS_UF$API, TS_UF$TYPE, FUN=sum)
+TS_UF$csum_prop = (TS_UF$csum/TS_UF$sum)*100
+ggplot(data = TS_UF, aes(x = DATE, y = csum, color = NAME)) +
+  geom_line(size = 1.1) +
+  scale_x_date(breaks = "year",
+               date_labels = "%Y") +
+  facet_wrap(.~TYPE, ncol = 3) +
+  labs(title = paste0("P. vivax and P. falciparum 15-year cumulative API by state, Brazil ", 
+                      StartYear, "-", EndYear), x = "Year", y = "Cummulative API") + 
+  guides(color=guide_legend(title="State")) +
+  theme(panel.grid.minor.x = element_blank(),
+        axis.text.x = element_text(angle = 90, hjust = 1))
+
+# Cummulative sum (monthly data) as % of total of all states per day
+ggplot(data = TS_UF, aes(x = DATE, y = csum_prop, color = NAME)) +
+  geom_line(size = 1.1) +
+  scale_x_date(breaks = "year",
+               date_labels = "%Y") +
+  facet_wrap(.~TYPE, ncol = 3) +
+  labs(title = paste0("P. vivax and P. falciparum cumulative API by state, Brazil ", 
+                      StartYear, "-", EndYear), x = "Year", y = "Number of API") + 
+  guides(color=guide_legend(title="State")) +
+  theme(panel.grid.minor.x = element_blank(),
+        axis.text.x = element_text(angle = 90, hjust = 1))
+
+
+####### MU
+
+TS_MU=TS[which(TS$LEVEL == "MU"),]
+TS_MU=TS_MU[,c("LEVEL","DATE","CODE","TYPE","API","STATE","NAME")]
+TS_MU_AGGREGATE=aggregate(API~., TS_MU, FUN = sum)
+
+# Cummulative sum (daily)
+TS_MU$csum <- ave(TS_MU$API, TS_MU$NAME, TS_MU$TYPE, FUN=cumsum)
+TS_MU$sum <- ave(TS_MU$API, TS_MU$TYPE, FUN=sum)
+TS_MU$csum_prop = (TS_MU$csum/TS_MU$sum)*100
+TS_MU = TS_MU[rev(order(TS_MU$csum)),]
+Top5_MU = as.character(unique(TS_MU$NAME)[1:5])
+
+ggplot(data = TS_MU, aes(x = DATE, y = csum, color = NAME)) +
+  geom_line(size = 1.1) +
+  scale_x_date(breaks = "year",
+               date_labels = "%Y") +
+  facet_wrap(.~TYPE, ncol = 3) +
+  labs(title = paste0("P. vivax and P. falciparum cumulative API by municipality, Brazil ", 
+                      StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
+  guides(color = F) +
+  geom_text(data = subset(TS_MU, NAME %in% Top5_MU & DATE == "2017-12-01"), 
+            aes(label = NAME, color = NAME, x = DATE, y = csum), 
+            hjust = "top", vjust = -1, size = 3,
+            check_overlap = T) +
+  # guides(color=guide_legend(title="State")) +
+  theme(panel.grid.minor.x = element_blank(),
+        axis.text.x = element_text(angle = 90, hjust = 1))
+
+# Cummulative sum (monthly data) as % of total of all states per day
+ggplot(data = TS_MU, aes(x = DATE, y = csum_prop, color = NAME)) +
+  geom_line(size = 1.1) +
+  scale_x_date(breaks = "year",
+               date_labels = "%Y") +
+  facet_wrap(.~TYPE, ncol = 3) +
+  labs(title = paste0("P. vivax and P. falciparum cumulative API by state, Brazil ", 
+                      StartYear, "-", EndYear), x = "Year", y = "Number of API") + 
+  guides(color=F) +
+  theme(panel.grid.minor.x = element_blank(),
+        axis.text.x = element_text(angle = 90, hjust = 1))
+
+
+# All years combined
+TS_MU_All=TS_MU[,c("LEVEL","CODE","TYPE","API","STATE","NAME")]
+TS_MU_AGGREGATE=aggregate(API~., TS_MU_All, FUN = sum)
+TS_MU_AGGREGATE_V=subset(TS_MU_AGGREGATE, TYPE == "Vivax" & API !=0)
+TS_MU_AGGREGATE_V$PROP = (TS_MU_AGGREGATE_V$API / sum(TS_MU_AGGREGATE_V$API))*100
+TS_MU_AGGREGATE_V=TS_MU_AGGREGATE_V[rev(order(TS_MU_AGGREGATE_V$PROP)),]
+sum(TS_MU_AGGREGATE_V[1:5,"PROP"]) # 5 MU account for 28% of total Pv API
+sum(TS_MU_AGGREGATE_V[1:10,"PROP"]) # 10 MU account for 36% of total Pv API
+sum(TS_MU_AGGREGATE_V[1:50,"PROP"]) # 50 MU account for 70% of total Pv API
+sum(TS_MU_AGGREGATE_V[1:75,"PROP"]) # 75 MU account for 81% of total Pv API
+sum(TS_MU_AGGREGATE_V[1:100,"PROP"]) # 100 MU account for 88% of total Pv API
+
+TS_MU_AGGREGATE_F=subset(TS_MU_AGGREGATE, TYPE == "Falciparum" & API !=0)
+TS_MU_AGGREGATE_F$PROP = (TS_MU_AGGREGATE_F$API / sum(TS_MU_AGGREGATE_F$API))*100
+TS_MU_AGGREGATE_F=TS_MU_AGGREGATE_F[rev(order(TS_MU_AGGREGATE_F$PROP)),]
+sum(TS_MU_AGGREGATE_F[1:5,"PROP"]) # 5 MU account for 31% of total Pv API
+sum(TS_MU_AGGREGATE_F[1:10,"PROP"]) # 10 MU account for 41% of total Pv API
+sum(TS_MU_AGGREGATE_F[1:50,"PROP"]) # 50 MU account for 75% of total Pv API
+sum(TS_MU_AGGREGATE_F[1:75,"PROP"]) # 75 MU account for 84% of total Pv API
+sum(TS_MU_AGGREGATE_F[1:100,"PROP"]) # 100 MU account for 90% of total Pv API
+
+# Export data
+write.table(TS_MU_AGGREGATE_V,"C:/Users/nnekkab/Desktop/MCMC_Fitting/TOTAL_VIVAX_API_PROP.csv",sep = ",",
+            row.names = F)
+write.table(TS_MU_AGGREGATE_F,"C:/Users/nnekkab/Desktop/MCMC_Fitting/TOTAL_FALCI_API_PROP.csv",sep = ",",
+            row.names = F)
+
+
+
+###############################################
+
+
+####################
+## % Pv / Pv + Pf ##
+
+# Get state-level data
+TS_UF = subset(TS, TS$LEVEL == "UF")
+
+# Get % Pv
+sTS=subset(TS_UF, select = c("CODE","DATE","TYPE","CASES"))
+sTS_Wide=reshape(sTS, idvar = c("CODE","DATE"), timevar = c("TYPE"), direction = "wide", v.names = "CASES")
+sTS_Wide$VIVAX_PROP_FALCI = sTS_Wide$CASES.Vivax / (sTS_Wide$CASES.Vivax+sTS_Wide$CASES.Falciparum)
+sTS_Long=reshape(sTS_Wide, idvar = c("CODE","DATE","VIVAX_PROP_FALCI"), v.names = "CASES",
+                 timevar = c("TYPE"), direction = "long")
+mTS=merge(TS, sTS_Long, by = c("CODE","DATE","TYPE","CASES"), all.x = TRUE)
+
+# Clean data
+TS_UF_PROP = mTS[which(mTS$TYPE == "Vivax"),]
+TS_UF_PROP = TS_UF_PROP[complete.cases(TS_UF_PROP),]
+
+# Plot
+ggplot(data = subset(TS_UF_PROP, STATE != "TO"), aes(DATE, VIVAX_PROP_FALCI*100, color = NAME)) +
+  geom_line(size=1) +
+  facet_wrap(~NAME, scales = "free_x", ncol = 4) +
+  scale_x_date(date_breaks = "year", date_labels =  "%Y") +
+  labs(title = "Percent of Plasmodium vivax cases to Plasmodium falciparum cases by state", subtitle = paste0("Brazil, ", StartYear, "-", EndYear),
+       x = "Year", y = "% Pv / Pv+Pf") +
+  theme_gray() +
+  guides(color=guide_legend(title="State")) +
+  theme(panel.grid.minor.x = element_blank(),
+        axis.text.x = element_text(angle = 90, hjust = 1))
+
+# Save
+dev.copy(png, paste0("C:/Users/nnekkab/Desktop/Malaria_Mapping_TimeSeries/Malaria_Mapping_TimeSeries_Plots/Proportion Pv to Pf/","Percent of Plasmodium vivax cases to Plasmodium falciparum cases by state ", StartYear, "-", EndYear, "by MU.png"),
+         width = 1800, height = 800, units = "px", pointsize = 12,
+         res = 100)
+dev.off()
+
+##################
+# Get MU-level data
+TS_MU = subset(TS, TS$LEVEL == "MU")
+
+# Get % Pv
+sTS=subset(TS_MU, select = c("CODE","DATE","TYPE","CASES"))
+sTS_Wide=reshape(sTS, idvar = c("CODE","DATE"), timevar = c("TYPE"), direction = "wide", v.names = "CASES")
+sTS_Wide$VIVAX_PROP_FALCI = sTS_Wide$CASES.Vivax / (sTS_Wide$CASES.Vivax+sTS_Wide$CASES.Falciparum)
+sTS_Long=reshape(sTS_Wide, idvar = c("CODE","DATE","VIVAX_PROP_FALCI"), v.names = "CASES",
+                 timevar = c("TYPE"), direction = "long")
+mTS=merge(TS, sTS_Long, by = c("CODE","DATE","TYPE","CASES"), all.x = TRUE)
+
+# Clean data
+TS_MU_PROP = mTS[which(mTS$TYPE == "Vivax"),]
+TS_MU_PROP = TS_MU_PROP[complete.cases(TS_MU_PROP),]
+
+# Plot
+ggplot(data = subset(TS_MU_PROP, STATE != "TO"), aes(DATE, VIVAX_PROP_FALCI*100, color = NAME)) +
+  geom_line(size=1) +
+  facet_wrap(~STATE, scales = "free_x", ncol = 4) +
+  scale_x_date(date_breaks = "year", date_labels =  "%Y") +
+  labs(title = "Percent of Plasmodium vivax cases to Plasmodium falciparum cases by state", subtitle = paste0("Brazil, ", StartYear, "-", EndYear),
+       x = "Year", y = "% Pv / Pv+Pf") +
+  theme_gray() +
+  guides(color=F) +
+  theme(panel.grid.minor.x = element_blank(),
+        axis.text.x = element_text(angle = 90, hjust = 1))
+
+# Save
+dev.copy(png, paste0("C:/Users/nnekkab/Desktop/Malaria_Mapping_TimeSeries/Malaria_Mapping_TimeSeries_Plots/Proportion Pv to Pf/","Percent of Plasmodium vivax cases to Plasmodium falciparum cases by state ", StartYear, "-", EndYear, "by MU.png"),
+         width = 1800, height = 800, units = "px", pointsize = 12,
+         res = 100)
+dev.off()
