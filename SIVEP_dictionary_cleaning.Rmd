@@ -51,7 +51,7 @@ SIVEP provides the **treatment schema for reported cases**. Completeness is > 85
 - **MUN_INFE**: informs the probable municipality of infection according to the code provided by IBGE.
 - **LOC_INFE**: informs the probable locality of infection according to the complementary database.  
 - **DT_EXAME**: date the exam was performed.  
-- **RES_EXAM**: result of the exame stratified by Negativa (negative exam), Falciparum, F+FG, Vivax, F+V, V+FG, FG, Malariae, F+M, Ovale, Não F.  
+- **RES_EXAM**: result of the exame stratified by Negativa (negative exam), Falciparum, F+FG, Vivax, F+V, V+FG, FG, Malariae, F+M, Ovale, Não F.
 - **QTD_PARA**: reports the number of parasites per mm3.  
 - **QTD_CRUZ**: it reports the amount of parasitemia in crosses, according to the following table: "< +/2" (minor than 1/2 cross), "+/2" (1/2 cross), "+" (one cross), "++" (two crosses), "+++" (three crosses), "++++" (four crosses).  
 - **DT_TRATA**: informs date of start of treatment (FORMATO).
@@ -293,4 +293,4 @@ str(l1)
 ```
 
 
-Looking fo local healthcare clinics 
+- Looking fo local healthcare clinics 
