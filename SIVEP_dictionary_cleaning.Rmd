@@ -58,7 +58,7 @@ SIVEP provides the **treatment schema for reported cases**. Completeness is > 85
 - **ID_LVC**: informs when notification is a case of LVC (Notification is a case of LVC/Notification is not a case of LVC).
 - **GESTANTE_**: informs if the patient is pregnant (1st Quarter/2nd Quarter/3rd Quarter/Ignored gestational age/No/Not applicable).  
 - **NIV_ESCO**: informs the level of education of the patient (Illiterate/1st to 4th incomplete series of Elementary School/4th complete series of Elementary School/5th to 8th grade incomplete elementary school/Complete primary school/incomplete high school/Complete high school/Incomplete higher education/Complete higher education/Not applicable).  
-
+- **ESQUEMA**: informs the code of the treatment scheme used based on a complementary database. **We obtained all the information. See below**.
 
 ### Dropped variables
 - **DT_ENVLO**: reports the date the lot of notifications was received in the national data file (yyyy-mm-dd).
@@ -70,7 +70,6 @@ SIVEP provides the **treatment schema for reported cases**. Completeness is > 85
 - **GESTANTE1**: pregnant (Yes/Not/Not applicable).  
 - **NIV_ESCO_1**: schooling in years.
 - **ESQUEMA_1**: Informs the treatment scheme used, based on old database.
-- **ESQUEMA**: informs the code of the treatment scheme used based on a complementary database we have been requested. **We obtained all the information. See below**.
 - **HEMOPARASI**: reports the results of the examination for other hemoparasites screened according to the table below (Negative/Trypanosoma sp./Microfilaria/Trypanosoma sp. + Microfilariae/Not searched).  
 - **EXAME**: informs the type of examination carried out (thick smear/RPD).  
 - **EXAMINADOR**: inform the code of the professional who took the exam.  
@@ -263,4 +262,35 @@ save.image(file = "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/Anali
 ```
 
 
+### Localities data availability in SIVEP
+**CD_LOCAL**: informs the code of the locality according to the geographical recognition of SMS.        
+**NM_LOCAL**: informs the name of the locality according to the geographical recognition of SMS.        
+**UF_IBGE**: informs the code corresponding to the UF (State) where it is located.  
+**MUN_IBGE**: inform the code of the municipality where the locality is located.   
+**NU_PREDI**: informs the number of existing buildings in the locality. **This SIVEP information is out of date for several locations.**     
+**NU_HABIT**: informs the number of inhabitants in the locality. **This SIVEP information is out of date for several locations.**        
+**DT_REG**: informs the date when the locality was registered.      
+**DT_ATUAL**: informs the date in which the number of inhabitants was updated, number of buildings, among others, of the locality.   
+**LONGITUD**: informs the coordinate referring to the longitude where the geographical center of the locality is located.   
+**LATITUDE**: informs the coordinate about the latitude where the geographical center of the locality is located. 
+**ZONA**: informs the Zone (urban / rural) where the locality is located, 1-Urban and 2-Rural.      
+**CATEGORI**: informs the category to which the locality belongs (neighborhood, site, village, settlement, etc.), according to the table of categories attached.       
+**AGLOMERA**: informs the code of the agglomerate to which the locality belongs.   
+**STATUS**: informs the status of the locality, 1-Active and 2-Extinct.   
+**CODSEI**: ?   
+**COPOBASE**: ?
+```{r}
+l1 <- read.dbf("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Dados/LOCANOT.DBF")
+head(l1)
+str(l1)
 
+```
+
+
+### Localities data availabilty in IBGE
+```{r}
+
+```
+
+
+Looking fo local healthcare clinics 
