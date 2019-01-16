@@ -624,6 +624,7 @@ AG <- ggplot(aes(y = API, x = AGE_CAT, fill = GENDER), data = sivep_pop_strat1[s
 ```
 
 
+
 ### Settlement data and developments
 
 - abrir o shape de assentamentos e ver se tem de grandes empreendimentos e suas infos.
