@@ -81,10 +81,20 @@ if(!byAll_Detection){
 ##################
 
 # If API = TRUE, data will also include case numbers
-API = FALSE
+API = T
+if(API){
+  
+  # API per X population
+  Denominator="1000"
+  
+  # Aggregation by date
+  Date_Type="Yearly"
+  
+  # Merge UF and MU
+  Merged = T
+}
 
-# Merge UF and MU
-Merged = FALSE
+
 
 
 #################
@@ -277,6 +287,6 @@ if(API){
 ########################
 
 if(SavePlots){
-  Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/",Detection_Level,"_",Plot_Level,Admin_Level,"/",Variable_Level,"/")
+  Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/",Detection_Level,"/",Plot_Level,Admin_Level,"/",Variable_Level,"/")
 }
 
