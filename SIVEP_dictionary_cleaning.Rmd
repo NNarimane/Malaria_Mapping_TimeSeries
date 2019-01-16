@@ -83,6 +83,8 @@ library(foreign)
 library('stringr')
 library("tidyverse")
 library(lubridate)
+library(data.table)
+library(bit64)
 
 load("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/RData_full.RData")
 
@@ -288,9 +290,33 @@ str(l1)
 
 
 ### Localities data availabilty in IBGE
+- Example of Acre state
 ```{r}
+l2 <- fread("/home/claudia/Documentos/Doutorado/Desenvolvimento/Dados/Shapes/IBGE/Base_informacoes_setores2010_universo_AC/Base informaçoes setores2010 universo AC/CSV/Basico_AC.csv", sep2 = ";", encoding = "Latin-1", stringsAsFactors = F, )
+head(l2)
+class(l2$Cod_setor)
+unique(l2$Cod_setor)
+
+l2$Cod_setor <- as.integer(l2$Cod_setor)
 
 ```
 
 
+_ DATA TO EXPLORE:  
+
 - Looking fo local healthcare clinics 
+
+- CHIRPS ou MSWEP: esses dois são outros dados de clima (mais recente): http://worldclim.org/version2. Ver pasta /home/claudia/Documentos/PosDoc_PROCC/Amazonia_all_LLwgs84, tem dados de tudo quanto há, baixei daqui http://www.dpi.inpe.br/Ambdata/download.php  
+
+- NASA POWER: Oswaldo tem script para baixar. Dados diários. https://power.larc.nasa.gov/
+
+- Mineração: tem nos dados de LUCC - pegar um exemplo que temos de mapa. Tem aqui tb: http://www.anm.gov.br/assuntos/ao-minerador/sigmine. baixa por estado e tem todos os tipos de processo que chegam para a DNPM. Só tem que limpar... talvez por SUBs selecionar ouro.    
+
+- Extrativismo: não tem pronto, teria que mapear
+
+- Grande empreendimentos como barragens: http://www.snisb.gov.br/portal/snisb/mapas-tematicos-e-relatorios/tema-1-1
+
+- Sobre Usinas, reservatórios: tem o site da Aneel: dá para baixar em shape e kmz: https://sigel.aneel.gov.br/Down/
+
+
+
