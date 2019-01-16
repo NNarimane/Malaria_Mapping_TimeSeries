@@ -310,6 +310,9 @@ _ DATA TO EXPLORE:
 
 - NASA POWER: Oswaldo tem script para baixar. Dados diários. https://power.larc.nasa.gov/
 
+- dado de evapotranspiração do  Modis https://modis.gsfc.nasa.gov/data/dataprod/mod16.php (dado em grade - 500m).
+
+
 - Mineração: tem nos dados de LUCC - pegar um exemplo que temos de mapa. Tem aqui tb: http://www.anm.gov.br/assuntos/ao-minerador/sigmine. baixa por estado e tem todos os tipos de processo que chegam para a DNPM. Só tem que limpar... talvez por SUBs selecionar ouro.    
 
 - Extrativismo: não tem pronto, teria que mapear
@@ -317,6 +320,5 @@ _ DATA TO EXPLORE:
 - Grande empreendimentos como barragens: http://www.snisb.gov.br/portal/snisb/mapas-tematicos-e-relatorios/tema-1-1
 
 - Sobre Usinas, reservatórios: tem o site da Aneel: dá para baixar em shape e kmz: https://sigel.aneel.gov.br/Down/
-
 
 
