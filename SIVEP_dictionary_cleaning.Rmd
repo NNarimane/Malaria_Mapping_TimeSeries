@@ -265,6 +265,7 @@ save.image(file = "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/Anali
 
 
 ### Localities data availability in SIVEP
+
 **CD_LOCAL**: informs the code of the locality according to the geographical recognition of SMS.        
 **NM_LOCAL**: informs the name of the locality according to the geographical recognition of SMS.        
 **UF_IBGE**: informs the code corresponding to the UF (State) where it is located.  
@@ -290,9 +291,10 @@ str(l1)
 
 
 ### Localities data availabilty in IBGE
-- Example of Acre state
+- Example of Acre state  
+IBGE database has information for census tract, zone (urban or rural), macro, meso and micro regions, municipality and state. The finest resolution to calculate the API is for zone. For locality we have to use population size provided by SIVEP, that can be very outdated depends on the municipality.    
 ```{r}
-l2 <- fread("/home/claudia/Documentos/Doutorado/Desenvolvimento/Dados/Shapes/IBGE/Base_informacoes_setores2010_universo_AC/Base informaçoes setores2010 universo AC/CSV/Basico_AC.csv", sep2 = ";", encoding = "Latin-1", stringsAsFactors = F, )
+l2 <- fread("/home/claudia/Documentos/Doutorado/Desenvolvimento/Dados/Shapes/IBGE/Base_informacoes_setores2010_universo_AC/Base informaçoes setores2010 universo AC/CSV/Basico_AC.csv", sep2 = ";", encoding = "Latin-1", stringsAsFactors = F)
 head(l2)
 class(l2$Cod_setor)
 unique(l2$Cod_setor)
@@ -302,7 +304,8 @@ l2$Cod_setor <- as.integer(l2$Cod_setor)
 ```
 
 
-_ DATA TO EXPLORE:  
+
+## DATA TO EXPLORE:  
 
 - Looking fo local healthcare clinics 
 
