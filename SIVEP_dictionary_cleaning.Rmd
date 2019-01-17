@@ -307,14 +307,13 @@ l2$Cod_setor <- as.integer(l2$Cod_setor)
 
 ## DATA TO EXPLORE:  
 
-- Looking fo local healthcare clinics 
+- Looking for local healthcare clinics: http://datasus.saude.gov.br/sistemas-e-aplicativos/cadastros-nacionais/cnes 
 
-- CHIRPS ou MSWEP: esses dois são outros dados de clima (mais recente): http://worldclim.org/version2. Ver pasta /home/claudia/Documentos/PosDoc_PROCC/Amazonia_all_LLwgs84, tem dados de tudo quanto há, baixei daqui http://www.dpi.inpe.br/Ambdata/download.php  
+- CHIRPS ou MSWEP: esses dois são outros dados de clima (mais recente): http://worldclim.org/version2. Ver pasta /home/claudia/Documentos/PosDoc_PROCC/Amazonia_all_LLwgs84, tem dados de tudo quanto há, baixei daqui AMBDATA: http://www.dpi.inpe.br/Ambdata/download.php  
 
 - NASA POWER: Oswaldo tem script para baixar. Dados diários. https://power.larc.nasa.gov/
 
 - dado de evapotranspiração do  Modis https://modis.gsfc.nasa.gov/data/dataprod/mod16.php (dado em grade - 500m).
-
 
 - Mineração: tem nos dados de LUCC - pegar um exemplo que temos de mapa. Tem aqui tb: http://www.anm.gov.br/assuntos/ao-minerador/sigmine. baixa por estado e tem todos os tipos de processo que chegam para a DNPM. Só tem que limpar... talvez por SUBs selecionar ouro.    
 
@@ -325,3 +324,10 @@ l2$Cod_setor <- as.integer(l2$Cod_setor)
 - Sobre Usinas, reservatórios: tem o site da Aneel: dá para baixar em shape e kmz: https://sigel.aneel.gov.br/Down/
 
 
+### Variables doubts list
+1- Severe malaria: what means? About medicines, hospitalizations?  
+2- Pregnant women using Primaquine  
+3- TIPO_LAM and LVC- why LVC is decreasing during the years? What's the criteria to fill?  
+4- How they fill date of 1st symptoms, date of exam and treatment: many problems about the difference in days.   
+5- What is CODSEI and COPOBASE from locality database? I didn't find on the locality database dictionary.  
+6- What is SMS acronym founded in some explanations in loc database?
