@@ -306,6 +306,7 @@ l2$Cod_setor <- as.integer(l2$Cod_setor)
 
 ```
 
+
 ## Settlement data, minimg, dams and developments in general
 
 ### Acre as an example
@@ -347,13 +348,22 @@ stopifnot(proj4string(mapa1) == proj4string(ibge))
 ```
 
 ### Dams
+The National Water Agency (Agência Nacional de Águas) has the National Information System on Dams Safety (Sistema Nacional de Informações sobre Segurança de Barragens) that provides information about the localtion, status, names, etc about dams in an Excell format.
 site: http://www.snisb.gov.br/portal/snisb/mapas-tematicos-e-relatorios/tema-1-1
 
 
+### Hydroeletric plant
+The National Electric Energy Agency (Agência Nacional de Energia Elétrica) has the Geographic Information System of the Electric Sector (Sistema de Informações Geográficas do Setor Elétrico) that provides shapefiles for different types of energy eletric developments and their locations, status, etc.
+site: https://sigel.aneel.gov.br/Down/
 
+```{r}
+mapa2 <- readOGR("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Dados/Barragens_Usinas/zipfolder", layer = "Usinas_Hidreletricas_UHE")
+proj4string(mapa2)
+mapa2_proj <- spTransform(mapa2, CRS("+proj=longlat +ellps=GRS80 +no_defs")) 
+plot(mapa2_proj)
+head(mapa2_proj@data)
 
-## DATA TO EXPLORE:  
-- Sobre Usinas, reservatórios: tem o site da Aneel: dá para baixar em shape e kmz: https://sigel.aneel.gov.br/Down/
+```
 
 
 ### Variables doubts list
