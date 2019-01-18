@@ -306,47 +306,53 @@ l2$Cod_setor <- as.integer(l2$Cod_setor)
 
 ```
 
+## Settlement data, minimg, dams and developments in general
 
-### Settlement data and developments
+### Acre as an example
+Municipality limity shapefile.
+```{r}
+ibge <- readOGR("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Dados/AC_IBGE", layer = "12MUE250GC_SIR")
+plot(ibge)
 
-- abrir o shape de assentamentos e ver se tem de grandes empreendimentos e suas infos.
-- Talvez ver muni que tem mais desmatamento com a var ocupação. Ver a questão do outros. Ver tb muni que tem mais garimpo...já pode indicar atividades ilegais.    
-- Talvez tenha algo sobre a abrangência dos grandes empreendimentos.  
+```
 
-- Example for Acre state: figure out about variable means.
+
+#### Settlements
+Land collection of the National Institute of Colonization and Agrarian Reform (Instituto Nacional de Colonização e Reforma Agrária). State, name of the settlement project, municipality, are, capacity, number of families, fase, date of creation, way of obtaining, date of obtaining, description.    
+site: http://acervofundiario.incra.gov.br/acervo/acv.php
 ```{r}
 #mapa <- readOGR("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Dados/Assentamento Brasil_AC/", layer="Assentamento Brasil_AC")
 mapa <- readOGR("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Dados/Assentamento Brasil_AC", layer="Assentamento Brasil_AC")
-plot(mapa)
+plot(mapa, col = "red", add = T)
 mapa@data
 head(mapa@data)
 
 ```
 
 ### Mining
-
+The site allows to download the information by state and has all kinds of process that arrive for the National Department of Mineral Production (Departamento Nacional de Produção Mineral). In this database has the number of process, year that began, area, fase, las event, name of the mining, mineral explored, use and state.          
+site: http://www.anm.gov.br/assuntos/ao-minerador/sigmine
 ```{r}
 mapa1 <- readOGR("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Dados/Mineracao_AC/AC", layer = "AC")
-plot(mapa1)
-polygons(mapa)
+plot(mapa1, col = "blue", add = T)
 head(mapa1@data)
+mapa1_proj <- spTransform(mapa1, CRS("+proj=longlat +ellps=GRS80 +no_defs")) 
+proj4string(mapa1_proj)
+plot(mapa1_proj, col = "blue", add = T)
+
+stopifnot(proj4string(mapa) == proj4string(mapa1))
+stopifnot(proj4string(mapa) == proj4string(ibge))
+stopifnot(proj4string(mapa1) == proj4string(ibge))
 
 ```
+
+### Dams
+site: http://www.snisb.gov.br/portal/snisb/mapas-tematicos-e-relatorios/tema-1-1
+
 
 
 
 ## DATA TO EXPLORE:  
-
-- Looking for local healthcare clinics: http://datasus.saude.gov.br/sistemas-e-aplicativos/cadastros-nacionais/cnes OK
-
-- NASA POWER: Oswaldo tem script para baixar. Dados diários. https://power.larc.nasa.gov/  OK
-
-- Mineração: tem nos dados de LUCC - pegar um exemplo que temos de mapa. Tem aqui tb: http://www.anm.gov.br/assuntos/ao-minerador/sigmine. baixa por estado e tem todos os tipos de processo que chegam para a DNPM. Só tem que limpar... talvez por SUBs selecionar ouro.    
-
-- Extrativismo: não tem pronto, teria que mapear
-
-- Grande empreendimentos como barragens: http://www.snisb.gov.br/portal/snisb/mapas-tematicos-e-relatorios/tema-1-1
-
 - Sobre Usinas, reservatórios: tem o site da Aneel: dá para baixar em shape e kmz: https://sigel.aneel.gov.br/Down/
 
 
