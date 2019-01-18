@@ -625,20 +625,6 @@ AG <- ggplot(aes(y = API, x = AGE_CAT, fill = GENDER), data = sivep_pop_strat1[s
 
 
 
-### Settlement data and developments
-
-- abrir o shape de assentamentos e ver se tem de grandes empreendimentos e suas infos.
-- Talvez ver muni que tem mais desmatamento com a var ocupação. Ver a questão do outros. Ver tb muni que tem mais garimpo...já pode indicar atividades ilegais.    
-- Talvez tenha algo sobre a abrangência dos grandes empreendimentos.  
-
-- Example for Acre state: figure out about variable means.
-```{r}
-mapa <- readOGR("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Dados/Assentamento Brasil_AC/", layer="Assentamento Brasil_AC")
-plot(mapa)
-mapa@data
-head(mapa@data)
-
-```
 
 
 

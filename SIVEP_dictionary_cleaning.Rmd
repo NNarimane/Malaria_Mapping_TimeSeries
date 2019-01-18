@@ -85,6 +85,9 @@ library("tidyverse")
 library(lubridate)
 library(data.table)
 library(bit64)
+require(maptools, quietly = TRUE, warn.conflicts = FALSE)
+library('maptools')
+library(rgdal)
 
 load("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/RData_full.RData")
 
@@ -304,16 +307,39 @@ l2$Cod_setor <- as.integer(l2$Cod_setor)
 ```
 
 
+### Settlement data and developments
+
+- abrir o shape de assentamentos e ver se tem de grandes empreendimentos e suas infos.
+- Talvez ver muni que tem mais desmatamento com a var ocupação. Ver a questão do outros. Ver tb muni que tem mais garimpo...já pode indicar atividades ilegais.    
+- Talvez tenha algo sobre a abrangência dos grandes empreendimentos.  
+
+- Example for Acre state: figure out about variable means.
+```{r}
+#mapa <- readOGR("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Dados/Assentamento Brasil_AC/", layer="Assentamento Brasil_AC")
+mapa <- readOGR("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Dados/Assentamento Brasil_AC", layer="Assentamento Brasil_AC")
+plot(mapa)
+mapa@data
+head(mapa@data)
+
+```
+
+### Mining
+
+```{r}
+mapa1 <- readOGR("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Dados/Mineracao_AC/AC", layer = "AC")
+plot(mapa1)
+polygons(mapa)
+head(mapa1@data)
+
+```
+
+
 
 ## DATA TO EXPLORE:  
 
-- Looking for local healthcare clinics: http://datasus.saude.gov.br/sistemas-e-aplicativos/cadastros-nacionais/cnes 
+- Looking for local healthcare clinics: http://datasus.saude.gov.br/sistemas-e-aplicativos/cadastros-nacionais/cnes OK
 
-- CHIRPS ou MSWEP: esses dois são outros dados de clima (mais recente): http://worldclim.org/version2. Ver pasta /home/claudia/Documentos/PosDoc_PROCC/Amazonia_all_LLwgs84, tem dados de tudo quanto há, baixei daqui AMBDATA: http://www.dpi.inpe.br/Ambdata/download.php  
-
-- NASA POWER: Oswaldo tem script para baixar. Dados diários. https://power.larc.nasa.gov/
-
-- dado de evapotranspiração do  Modis https://modis.gsfc.nasa.gov/data/dataprod/mod16.php (dado em grade - 500m).
+- NASA POWER: Oswaldo tem script para baixar. Dados diários. https://power.larc.nasa.gov/  OK
 
 - Mineração: tem nos dados de LUCC - pegar um exemplo que temos de mapa. Tem aqui tb: http://www.anm.gov.br/assuntos/ao-minerador/sigmine. baixa por estado e tem todos os tipos de processo que chegam para a DNPM. Só tem que limpar... talvez por SUBs selecionar ouro.    
 
@@ -331,3 +357,4 @@ l2$Cod_setor <- as.integer(l2$Cod_setor)
 4- How they fill date of 1st symptoms, date of exam and treatment: many problems about the difference in days.   
 5- What is CODSEI and COPOBASE from locality database? I didn't find on the locality database dictionary.  
 6- What is SMS acronym founded in some explanations in loc database?
+7- The variable about occupation has the category "Others" that has a expressive numbers os registry. How is this category filled in? What kind of ocupation is included in this category?
