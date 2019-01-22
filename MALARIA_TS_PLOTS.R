@@ -79,7 +79,11 @@ source(paste0(getwd(),"/Malaria_Mapping_TimeSeries/HEADER.R"))
 
 if(Melted){
   # Keep only weekly date type for plotting
+<<<<<<< HEAD
+  TS=TS[which(TS$DATE_TYPE == "Monthly"),]
+=======
   TS=TS[which(TS$DATE_TYPE == Date_Type),]
+>>>>>>> 11925e7350843a592658f8e5c5787d56c55d638a
   TS=TS[,-"DATE_TYPE"]
 }
 
@@ -754,6 +758,7 @@ MU_MCMC_VIVAX_DATA=subset(TS, LEVEL == "MU" & NAME %in% Candidate_MU & TYPE == "
 # Save csv
 write.table(MU_MCMC_VIVAX_DATA,"C:/Users/nnekkab/Desktop/MCMC_Fitting/MU_MCMC_VIVAX_DATA.csv",sep = ",",
             row.names = F)
+<<<<<<< HEAD
 
 #######
 ## Save
@@ -763,6 +768,17 @@ write.table(MU_MCMC_VIVAX_DATA,"C:/Users/nnekkab/Desktop/MCMC_Fitting/MU_MCMC_VI
 if(SavePlots){
   if(!byGender){
 
+=======
+
+#######
+## Save
+#######
+
+
+if(SavePlots){
+  if(!byGender){
+
+>>>>>>> 11925e7350843a592658f8e5c5787d56c55d638a
     # Acre
     TS_Plot_AC
     # Save

@@ -686,6 +686,8 @@ dev.copy(png, paste0(Plot_Folder,title, ".png"),
          res = 100)
 dev.off()
 rm(FALCI_API_MAP)
+<<<<<<< HEAD
+=======
 
 #########################################################
 
@@ -728,3 +730,4 @@ ggplot(data=BRA_SHP_MU_SIVEP) +
         axis.title.y=element_blank(),
         axis.text.y=element_blank(),
         axis.ticks.y=element_blank())
+>>>>>>> 11925e7350843a592658f8e5c5787d56c55d638a

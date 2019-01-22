@@ -51,14 +51,14 @@ SIVEP provides the **treatment schema for reported cases**. Completeness is > 85
 - **MUN_INFE**: informs the probable municipality of infection according to the code provided by IBGE.
 - **LOC_INFE**: informs the probable locality of infection according to the complementary database.  
 - **DT_EXAME**: date the exam was performed.  
-- **RES_EXAM**: result of the exame stratified by Negativa (negative exam), Falciparum, F+FG, Vivax, F+V, V+FG, FG, Malariae, F+M, Ovale, Não F.  
+- **RES_EXAM**: result of the exame stratified by Negativa (negative exam), Falciparum, F+FG, Vivax, F+V, V+FG, FG, Malariae, F+M, Ovale, Não F.
 - **QTD_PARA**: reports the number of parasites per mm3.  
 - **QTD_CRUZ**: it reports the amount of parasitemia in crosses, according to the following table: "< +/2" (minor than 1/2 cross), "+/2" (1/2 cross), "+" (one cross), "++" (two crosses), "+++" (three crosses), "++++" (four crosses).  
 - **DT_TRATA**: informs date of start of treatment (FORMATO).
 - **ID_LVC**: informs when notification is a case of LVC (Notification is a case of LVC/Notification is not a case of LVC).
 - **GESTANTE_**: informs if the patient is pregnant (1st Quarter/2nd Quarter/3rd Quarter/Ignored gestational age/No/Not applicable).  
 - **NIV_ESCO**: informs the level of education of the patient (Illiterate/1st to 4th incomplete series of Elementary School/4th complete series of Elementary School/5th to 8th grade incomplete elementary school/Complete primary school/incomplete high school/Complete high school/Incomplete higher education/Complete higher education/Not applicable).  
-
+- **ESQUEMA**: informs the code of the treatment scheme used based on a complementary database. **We obtained all the information. See below**.
 
 ### Dropped variables
 - **DT_ENVLO**: reports the date the lot of notifications was received in the national data file (yyyy-mm-dd).
@@ -70,7 +70,6 @@ SIVEP provides the **treatment schema for reported cases**. Completeness is > 85
 - **GESTANTE1**: pregnant (Yes/Not/Not applicable).  
 - **NIV_ESCO_1**: schooling in years.
 - **ESQUEMA_1**: Informs the treatment scheme used, based on old database.
-- **ESQUEMA**: informs the code of the treatment scheme used based on a complementary database we have been requested. **We obtained all the information. See below**.
 - **HEMOPARASI**: reports the results of the examination for other hemoparasites screened according to the table below (Negative/Trypanosoma sp./Microfilaria/Trypanosoma sp. + Microfilariae/Not searched).  
 - **EXAME**: informs the type of examination carried out (thick smear/RPD).  
 - **EXAMINADOR**: inform the code of the professional who took the exam.  
@@ -84,6 +83,11 @@ library(foreign)
 library('stringr')
 library("tidyverse")
 library(lubridate)
+library(data.table)
+library(bit64)
+require(maptools, quietly = TRUE, warn.conflicts = FALSE)
+library('maptools')
+library(rgdal)
 
 load("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/RData_full.RData")
 
@@ -263,4 +267,110 @@ save.image(file = "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/Anali
 ```
 
 
+### Localities data availability in SIVEP
 
+**CD_LOCAL**: informs the code of the locality according to the geographical recognition of SMS.        
+**NM_LOCAL**: informs the name of the locality according to the geographical recognition of SMS.        
+**UF_IBGE**: informs the code corresponding to the UF (State) where it is located.  
+**MUN_IBGE**: inform the code of the municipality where the locality is located.   
+**NU_PREDI**: informs the number of existing buildings in the locality. **This SIVEP information is out of date for several locations.**     
+**NU_HABIT**: informs the number of inhabitants in the locality. **This SIVEP information is out of date for several locations.**        
+**DT_REG**: informs the date when the locality was registered.      
+**DT_ATUAL**: informs the date in which the number of inhabitants was updated, number of buildings, among others, of the locality.   
+**LONGITUD**: informs the coordinate referring to the longitude where the geographical center of the locality is located.   
+**LATITUDE**: informs the coordinate about the latitude where the geographical center of the locality is located. 
+**ZONA**: informs the Zone (urban / rural) where the locality is located, 1-Urban and 2-Rural.      
+**CATEGORI**: informs the category to which the locality belongs (neighborhood, site, village, settlement, etc.), according to the table of categories attached.       
+**AGLOMERA**: informs the code of the agglomerate to which the locality belongs.   
+**STATUS**: informs the status of the locality, 1-Active and 2-Extinct.   
+**CODSEI**: ?   
+**COPOBASE**: ?
+```{r}
+l1 <- read.dbf("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Dados/LOCANOT.DBF")
+head(l1)
+str(l1)
+
+```
+
+
+### Localities data availabilty in IBGE
+- Example of Acre state  
+IBGE database has information for census tract, zone (urban or rural), macro, meso and micro regions, municipality and state. The finest resolution to calculate the API is for zone. For locality we have to use population size provided by SIVEP, that can be very outdated depends on the municipality.    
+```{r}
+l2 <- fread("/home/claudia/Documentos/Doutorado/Desenvolvimento/Dados/Shapes/IBGE/Base_informacoes_setores2010_universo_AC/Base informaçoes setores2010 universo AC/CSV/Basico_AC.csv", sep2 = ";", encoding = "Latin-1", stringsAsFactors = F)
+head(l2)
+class(l2$Cod_setor)
+unique(l2$Cod_setor)
+
+l2$Cod_setor <- as.integer(l2$Cod_setor)
+
+```
+
+
+## Settlement data, minimg, dams and developments in general
+
+### Acre as an example
+Municipality limity shapefile.
+```{r}
+ibge <- readOGR("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Dados/AC_IBGE", layer = "12MUE250GC_SIR")
+plot(ibge)
+
+```
+
+
+#### Settlements
+Land collection of the National Institute of Colonization and Agrarian Reform (Instituto Nacional de Colonização e Reforma Agrária). State, name of the settlement project, municipality, are, capacity, number of families, fase, date of creation, way of obtaining, date of obtaining, description.    
+site: http://acervofundiario.incra.gov.br/acervo/acv.php
+```{r}
+#mapa <- readOGR("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Dados/Assentamento Brasil_AC/", layer="Assentamento Brasil_AC")
+mapa <- readOGR("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Dados/Assentamento Brasil_AC", layer="Assentamento Brasil_AC")
+plot(mapa, col = "red", add = T)
+mapa@data
+head(mapa@data)
+
+```
+
+### Mining
+The site allows to download the information by state and has all kinds of process that arrive for the National Department of Mineral Production (Departamento Nacional de Produção Mineral). In this database has the number of process, year that began, area, fase, las event, name of the mining, mineral explored, use and state.          
+site: http://www.anm.gov.br/assuntos/ao-minerador/sigmine
+```{r}
+mapa1 <- readOGR("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Dados/Mineracao_AC/AC", layer = "AC")
+plot(mapa1, col = "blue", add = T)
+head(mapa1@data)
+mapa1_proj <- spTransform(mapa1, CRS("+proj=longlat +ellps=GRS80 +no_defs")) 
+proj4string(mapa1_proj)
+plot(mapa1_proj, col = "blue", add = T)
+
+stopifnot(proj4string(mapa) == proj4string(mapa1))
+stopifnot(proj4string(mapa) == proj4string(ibge))
+stopifnot(proj4string(mapa1) == proj4string(ibge))
+
+```
+
+### Dams
+The National Water Agency (Agência Nacional de Águas) has the National Information System on Dams Safety (Sistema Nacional de Informações sobre Segurança de Barragens) that provides information about the localtion, status, names, etc about dams in an Excell format.
+site: http://www.snisb.gov.br/portal/snisb/mapas-tematicos-e-relatorios/tema-1-1
+
+
+### Hydroeletric plant
+The National Electric Energy Agency (Agência Nacional de Energia Elétrica) has the Geographic Information System of the Electric Sector (Sistema de Informações Geográficas do Setor Elétrico) that provides shapefiles for different types of energy eletric developments and their locations, status, etc.
+site: https://sigel.aneel.gov.br/Down/
+
+```{r}
+mapa2 <- readOGR("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Dados/Barragens_Usinas/zipfolder", layer = "Usinas_Hidreletricas_UHE")
+proj4string(mapa2)
+mapa2_proj <- spTransform(mapa2, CRS("+proj=longlat +ellps=GRS80 +no_defs")) 
+plot(mapa2_proj)
+head(mapa2_proj@data)
+
+```
+
+
+### Variables doubts list
+1- Severe malaria: what means? About medicines, hospitalizations?  
+2- Pregnant women using Primaquine  
+3- TIPO_LAM and LVC- why LVC is decreasing during the years? What's the criteria to fill?  
+4- How they fill date of 1st symptoms, date of exam and treatment: many problems about the difference in days.   
+5- What is CODSEI and COPOBASE from locality database? I didn't find on the locality database dictionary.  
+6- What is SMS acronym founded in some explanations in loc database?
+7- The variable about occupation has the category "Others" that has a expressive numbers os registry. How is this category filled in? What kind of ocupation is included in this category?
