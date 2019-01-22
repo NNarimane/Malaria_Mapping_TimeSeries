@@ -79,11 +79,7 @@ source(paste0(getwd(),"/Malaria_Mapping_TimeSeries/HEADER.R"))
 
 if(Melted){
   # Keep only weekly date type for plotting
-<<<<<<< HEAD
   TS=TS[which(TS$DATE_TYPE == "Monthly"),]
-=======
-  TS=TS[which(TS$DATE_TYPE == Date_Type),]
->>>>>>> 11925e7350843a592658f8e5c5787d56c55d638a
   TS=TS[,-"DATE_TYPE"]
 }
 

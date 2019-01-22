@@ -102,13 +102,13 @@ if(!byAll_Detection){
 ####################
 
 # Stratified or non-stratified data?
-Stratified = F
+Stratified = F # upload case and API data without gender or age (done; compare)
 
 # If TRUE
 if(Stratified){
-  Strat_byGender = T
-  Strat_byAgeGroup = F
-  Strat_byGender_byAgeGroup = F
+  Strat_byGender = T # upload case and API data stratified by gender only (to do)
+  Strat_byAgeGroup = F # upload case and API data stratified by age only (to do)
+  Strat_byGender_byAgeGroup = F # upload case and API data stratified by gender and age (done)
 }
 
 
@@ -126,11 +126,11 @@ byInfection = FALSE
 ## VARIABLES ##
 ###############
 
-# Which variable(s) ?
-byType = TRUE
-byGender = FALSE
-byAge = FALSE
-byTreatment = FALSE
+# # Which variable(s) ?
+# byType = TRUE # do we still need this?
+# byGender = FALSE # might be removed
+# byAge = FALSE # night be removed
+# byTreatment = FALSE
 
 
 ################
