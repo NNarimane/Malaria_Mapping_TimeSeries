@@ -556,9 +556,13 @@ write.csv(pop_size_strat, file = "/home/claudia/Documentos/PosDoc_PROCC/malaria/
 - Problem: GENDER in SIVEP has NA's - I removed these lines from the database such as YEAR == 2018. 
 - Some municipalities don't have all AGE_CAT, but I couldn't get to visualize it.
 ```{r}
-pop_strat <- read.csv("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/pop_size_admlevels_year_STRAT.csv")
+#pop_strat <- read.csv("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/pop_size_admlevels_year_STRAT.csv")
 
-sivep_strat <- read.csv("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/sivep_admlevels_dtnotif_STRAT.csv")
+pop_strat <- read.csv("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/pop_size_admlevels_year_STRAT.csv")
+
+#sivep_strat <- read.csv("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/sivep_admlevels_dtnotif_STRAT.csv")
+
+sivep_strat <- read.csv("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/sivep_admlevels_dtnotif_STRAT.csv")
 
 length(unique(sivep_strat$CODE[sivep_strat$LEVEL == "MU"]))
 #712
@@ -570,16 +574,35 @@ sivep_strat <- sivep_strat %>%
                                  YEAR = as.integer(str_sub(DT_NOTIF, start = 1, end = 4))
                                  )
 
+
+#Using first day of the epi week to aggregate
+sivep_strat1 <- sivep_strat %>%
+                          mutate(DT_WEEK = floor_date(as.Date(DT_NOTIF, format = "%Y-%m-%d"), unit = "week"),
+                                 YEAR = as.integer(str_sub(DT_NOTIF, start = 1, end = 4))
+                                 )
+
+# sivep_strat$DT_WEEK <- as.Date(sivep_strat$DT_NOTIF, format = "%Y-%m-%d")
+# sivep_strat$DT_WEEK <- floor_date(sivep_strat$DT_WEEK, unit = "week")
+                                 
+
 length(sivep_strat$YEAR == 2018)
 length(sivep_pop_strat$YEAR == 2018)
 
-sivep_strat1 <- sivep_strat %>%
+# sivep_strat1 <- sivep_strat %>%
+#                             drop_na(GENDER) %>%
+#                             filter(YEAR <= 2017) %>%
+#                             group_by(LEVEL, CODE, AGE_CAT, GENDER, TYPE, WEEK, YEAR) %>%
+#                             summarise(CASES = sum(CASES)) %>%
+#                             arrange(CODE, AGE_CAT, WEEK, YEAR)
+
+#Using first day of the epi week to aggregate
+sivep_strat1 <- sivep_strat1 %>%
                             drop_na(GENDER) %>%
                             filter(YEAR <= 2017) %>%
-                            group_by(LEVEL, CODE, AGE_CAT, GENDER, TYPE, WEEK, YEAR) %>%
+                            group_by(DT_WEEK, LEVEL, CODE, AGE_CAT, GENDER, TYPE, YEAR) %>%
                             summarise(CASES = sum(CASES)) %>%
-                            arrange(CODE, AGE_CAT, WEEK, YEAR)
-                            
+                            arrange(CODE, AGE_CAT, DT_WEEK, YEAR)
+
 #teste <- sivep_strat1 %>% group_by(CODE) %>% count(AGE_CAT) %>% filter(CODE == 510895)
 
 
@@ -588,6 +611,9 @@ sivep_pop_strat <- left_join(x = sivep_strat1, y = pop_strat)
 sivep_pop_strat <- sivep_pop_strat %>%
                                   mutate(API = CASES/POP.EST.Y * 1000)
                                   
+                             
+write.csv(sivep_pop_strat, file = "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/sivep_admlevels_dtweek_STRAT.csv", row.names = F)     
+
 
 # sivep_strat[which(sivep_strat$AGE_CAT == "0-4" & sivep_strat$CASES == 0),]
 # sivep_strat[which(sivep_strat$AGE_CAT == "0-4" & is.na(sivep_strat$CASES)),]
