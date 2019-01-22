@@ -48,11 +48,14 @@ source(paste0(getwd(),"/Malaria_Mapping_TimeSeries/Malaria_Mapping_TimeSeries_Fu
 ####################### 1. ANALYSIS LEVEL #######################
 #################################################################
 
-# Load data or run code?
-loadCleanData = TRUE
+# Load data or run code? (if saved as RData before, set to TRUE)
+loadCleanData = F
 
-# Melted data
-Melted=TRUE
+# Melted data (if TRUE, will include all daily, weekly, monthly, yearly, and all admin level data - very big file!)
+Melted = F
+
+# Date type (by day == "Daily" , week == "Weekly", month == "Monthly", year == "Yearly")
+Date_Type="Weekly"
 
 # Choose time period
 StartYear = "2003"
@@ -68,7 +71,9 @@ ADMIN_NAMES$Code=as.character(ADMIN_NAMES$Code)
 ###############
 
 # Get all data or by detection type?
-byAll_Detection = TRUE
+byAll_Detection = TRUE # If TRUE, keep all notifications by all detection types
+
+# If FALSE, choose one detection type:
 if(!byAll_Detection){
   byPCD = TRUE
   byACD = FALSE
@@ -80,21 +85,31 @@ if(!byAll_Detection){
 ## CASES OR API ##
 ##################
 
-# If API = TRUE, data will also include case numbers
-API = T
-if(API){
-  
-  # API per X population
-  Denominator="1000"
-  
-  # Aggregation by date
-  Date_Type="Yearly"
-  
-  # Merge UF and MU
-  Merged = T
+# # If API = TRUE, data will also include case numbers
+# API = F
+# if(API){
+#   
+#   # API per X population
+#   Denominator="1000"
+#   
+#   # Merge UF and MU
+#   Merged = T
+# }
+
+
+####################
+## STRATIFICATION ##
+####################
+
+# Stratified or non-stratified data?
+Stratified = F
+
+# If TRUE
+if(Stratified){
+  Strat_byGender = T
+  Strat_byAgeGroup = F
+  Strat_byGender_byAgeGroup = F
 }
-
-
 
 
 #################
@@ -204,7 +219,13 @@ if(API){
     
     cat("Load case data\n")
     
-    load(file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_",Detection_Level,"_",Admin_Level,"_",Variable_Level, ".RData"))
+    if(Melted){
+      cat(paste("Load melted data\n"))
+      load(file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/mSIVEP_",Detection_Level,"_",Admin_Level,"_",Variable_Level, ".RData"))
+    }else{
+      cat(paste("Load data at",Date_Type,"level\n"))
+      load(file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_",Detection_Level,"_",Admin_Level,"_",Variable_Level, ".RData"))
+    }
     
   }else{
     
@@ -227,8 +248,14 @@ if(API){
       cat("Get data by malaria type\n")
       TS=getDAILY_SIVEP_MALARIA_TYPE(FilePath, StartYear, EndYear, Melted)
       
-      cat("Save\n")
-      save(TS, file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_",Detection_Level,"_",Admin_Level,"_",Variable_Level, ".RData"))
+      if(Melted){
+        cat("Save\n")
+        save(TS, file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/mSIVEP_",Detection_Level,"_",Admin_Level,"_",Variable_Level, ".RData"))
+      }else{
+        cat("Save\n")
+        save(TS, file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/SIVEP_",Detection_Level,"_",Admin_Level,"_",Variable_Level, ".RData"))
+      }
+      
       
     }
     if(byGender){
@@ -265,7 +292,7 @@ options(scipen=999)
 SavePlots=TRUE
 
 # Log-transformed
-Log = FALSE
+Log = T
 
 # Seasonality
 # Seasonality = TRUE
@@ -278,7 +305,7 @@ if(API){
     Plot_Level="/byAPI/Log/"
   }
 }else{
-  Plot_Level="/byCases/"
+  Plot_Level="byCases/"
 }
 
 

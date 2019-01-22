@@ -71,6 +71,8 @@ getDAILY_SIVEP_MALARIA_TYPE=function(FilePath, StartYear, EndYear, Melted){
   
   # Merge together
   SIVEP_MALARIA_TYPE=rbind(day_malaria_type_brazil, day_malaria_type_places_state, day_malaria_type_places_muni)
+  rm(df, day_malaria_type_brazil, day_malaria_type_places_state, day_malaria_type_places_muni)
+  
   
   # Select administrative level via code
   if(byNotification){
@@ -86,13 +88,16 @@ getDAILY_SIVEP_MALARIA_TYPE=function(FilePath, StartYear, EndYear, Melted){
     names(SIVEP_MALARIA_TYPE)[names(SIVEP_MALARIA_TYPE) == 'CODE_INFEC'] <- 'CODE'
   }
   
-  # Get week, month, and year
-  SIVEP_MALARIA_TYPE=data.frame(cbind(SIVEP_MALARIA_TYPE,
-                          DT_YEAR=floor_date(SIVEP_MALARIA_TYPE$DT_NOTIF, unit = "year"),
-                          DT_MONTH=floor_date(SIVEP_MALARIA_TYPE$DT_NOTIF, unit = "month"),
-                          DT_WEEK=floor_date(SIVEP_MALARIA_TYPE$DT_NOTIF, unit = "week")))
+  ########################
   
   if(Melted){
+    
+    # Get week, month, and year
+    SIVEP_MALARIA_TYPE=data.frame(cbind(SIVEP_MALARIA_TYPE,
+                                        DT_YEAR=floor_date(SIVEP_MALARIA_TYPE$DT_NOTIF, unit = "year"),
+                                        DT_MONTH=floor_date(SIVEP_MALARIA_TYPE$DT_NOTIF, unit = "month"),
+                                        DT_WEEK=floor_date(SIVEP_MALARIA_TYPE$DT_NOTIF, unit = "week")))
+    
     #########################
     ## General Plots (Melted)
     #########################
@@ -115,6 +120,46 @@ getDAILY_SIVEP_MALARIA_TYPE=function(FilePath, StartYear, EndYear, Melted){
     return(mSIVEP_MALARIA_TYPE)
     
   }else{
+    
+    # Aggregate by Date_Type
+    if(Date_Type == "Daily"){
+      SIVEP_MALARIA_TYPE=SIVEP_MALARIA_TYPE[,c("DT_NOTIF","LEVEL","CODE","TYPE","CASES")]
+      colnames(SIVEP_MALARIA_TYPE) = c("DATE","LEVEL","CODE","TYPE","CASES")
+    }
+    if(Date_Type == "Weekly"){
+      # Get week, month, and year
+      SIVEP_MALARIA_TYPE=data.frame(cbind(SIVEP_MALARIA_TYPE[,-1],
+                                          DT_WEEK=floor_date(SIVEP_MALARIA_TYPE$DT_NOTIF, unit = "week")))
+      # Select
+      SIVEP_MALARIA_TYPE=aggregate(CASES~., SIVEP_MALARIA_TYPE, FUN = sum)
+      
+      # Columns
+      SIVEP_MALARIA_TYPE=SIVEP_MALARIA_TYPE[,c("DT_WEEK","LEVEL","CODE","TYPE","CASES")]
+      colnames(SIVEP_MALARIA_TYPE) = c("DATE","LEVEL","CODE","TYPE","CASES")
+    }
+    if(Date_Type == "Monthly"){
+      # Get week, month, and year
+      SIVEP_MALARIA_TYPE=data.frame(cbind(SIVEP_MALARIA_TYPE[,-1],
+                                          DT_MONTH=floor_date(SIVEP_MALARIA_TYPE$DT_NOTIF, unit = "month")))
+      # Select
+      SIVEP_MALARIA_TYPE=aggregate(CASES~., SIVEP_MALARIA_TYPE, FUN = sum)
+      
+      # Columns
+      SIVEP_MALARIA_TYPE=SIVEP_MALARIA_TYPE[,c("DT_MONTH","LEVEL","CODE","TYPE","CASES")]
+      colnames(SIVEP_MALARIA_TYPE) = c("DATE","LEVEL","CODE","TYPE","CASES")
+    }
+    if(Date_Type == "Yearly"){
+      # Get week, month, and year
+      SIVEP_MALARIA_TYPE=data.frame(cbind(SIVEP_MALARIA_TYPE[,-1],
+                                          DT_YEAR=floor_date(SIVEP_MALARIA_TYPE$DT_NOTIF, unit = "year")))
+      # Select
+      SIVEP_MALARIA_TYPE=aggregate(CASES~., SIVEP_MALARIA_TYPE, FUN = sum)
+      
+      # Columns
+      SIVEP_MALARIA_TYPE=SIVEP_MALARIA_TYPE[,c("DT_YEAR","LEVEL","CODE","TYPE","CASES")]
+      colnames(SIVEP_MALARIA_TYPE) = c("DATE","LEVEL","CODE","TYPE","CASES")
+    }
+    
     
     return(SIVEP_MALARIA_TYPE)
   }
@@ -349,12 +394,12 @@ getSIVEP_MALARIA_TYPE_TREATMENT=function(FilePath){
     mutate(PREGNANT = replace(PREGNANT, which(GESTANTE_=="1qtr"), "Yes")) %>%
     mutate(PREGNANT = replace(PREGNANT, which(GESTANTE_=="2qtr"), "Yes")) %>%
     mutate(PREGNANT = replace(PREGNANT, which(GESTANTE_=="3qtr"), "Yes")) %>%
-    mutate(PREGNANT = replace(PREGNANT, which(GESTANTE_=="Ignored" & SEXO=="Falciparum"), "Yes")) %>%
-    mutate(PREGNANT = replace(PREGNANT, which(GESTANTE_=="Ignored" & SEXO=="I"), "No")) %>%
-    mutate(PREGNANT = replace(PREGNANT, which(GESTANTE_=="Ignored" & SEXO=="M"), "No")) %>%
-    mutate(PREGNANT = replace(PREGNANT, is.na(GESTANTE_), "No")) %>%
-    mutate(PREGNANT = replace(PREGNANT, which(GESTANTE_=="NO"), "No")) %>%
-    mutate(PREGNANT = replace(PREGNANT, which(GESTANTE_=="NA"), "No")) %>%
+    # mutate(PREGNANT = replace(PREGNANT, which(GESTANTE_=="Ignored" & SEXO=="Falciparum"), "Yes")) %>%
+    # mutate(PREGNANT = replace(PREGNANT, which(GESTANTE_=="Ignored" & SEXO=="I"), "No")) %>%
+    # mutate(PREGNANT = replace(PREGNANT, which(GESTANTE_=="Ignored" & SEXO=="M"), "No")) %>%
+    # mutate(PREGNANT = replace(PREGNANT, is.na(GESTANTE_), "No")) %>%
+    # mutate(PREGNANT = replace(PREGNANT, which(GESTANTE_=="NO"), "No")) %>%
+    # mutate(PREGNANT = replace(PREGNANT, which(GESTANTE_=="NA"), "No")) %>%
     select(YEAR, RES_EXAM, SEXO, GESTANTE, PREGNANT, AGE_CAT, ESQUEMA) %>%
     group_by(YEAR, RES_EXAM, SEXO, GESTANTE, PREGNANT, AGE_CAT, ESQUEMA) %>%
     count(RES_EXAM) %>%

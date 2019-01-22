@@ -77,7 +77,7 @@ source(paste0(getwd(),"/Malaria_Mapping_TimeSeries/HEADER.R"))
 ## Get data by date type and top incidence by level
 ###################################################
 
-if(!API){
+if(Melted){
   # Keep only weekly date type for plotting
   TS=TS[which(TS$DATE_TYPE == Date_Type),]
   TS=TS[,-"DATE_TYPE"]
@@ -110,164 +110,343 @@ Candidate_MU=c("Candeias do Jamari","Itapua do Oeste",
 
 
 ################
+## General Summary Tables
+################
+
+if(!API){
+  TS_UF = subset(TS, LEVEL == "UF")
+  
+  Table_Case_Counts = aggregate(CASES~YEAR, TS_UF, FUN = sum)
+  Table_Case_Counts_Type = aggregate(CASES~YEAR+TYPE, TS_UF, FUN = sum)
+  Table_Case_Counts_Type = reshape(Table_Case_Counts_Type, idvar = "YEAR", timevar = "TYPE", direction = "wide")
+  Table_Case_Counts_State = aggregate(CASES~YEAR+STATE, TS_UF, FUN = sum)
+  Table_Case_Counts_State = reshape(Table_Case_Counts_State, idvar = "YEAR", timevar = "STATE", direction = "wide")
+  
+  Table_Case_Counts = merge(Table_Case_Counts, Table_Case_Counts_Type, by = "YEAR")
+  Table_Case_Counts = merge(Table_Case_Counts, Table_Case_Counts_State, by = "YEAR")
+  
+  # Save
+  # write.csv(Table_Case_Counts, file = "Table_Case_Counts.csv", sep = ",")
+}
+
+
+################
 ## General Plots
 ################
 
-if(!Melted){
-  # Daily number of cases, bar graph
-  DailyPlot=ggplot(data = subset(TS, DATE_TYPE == "Daily" & LEVEL == "MU"), aes(DATE, CASES, color = TYPE)) +
-    stat_summary(fun.y = sum, geom = "line") +
-    scale_x_date(breaks = "year", 
-                 date_labels = "%Y") +
-    scale_color_manual(values = c("#31a354","#3182bd")) +
-    labs(title = paste0("Daily P. vivax and P. falciparum cases, Brazil ", 
-                        StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
-    guides(color=guide_legend(title="Plasmodium species"))
-  
-  
-  # Weekly number of cases, bar graph
-  WeeklyPlot=ggplot(data = subset(TS, DATE_TYPE == "Weekly" & LEVEL == "MU"), aes(DATE, CASES, color = TYPE)) +
-    stat_summary(fun.y = sum, geom = "line", size = 1.05) +
-    scale_x_date(date_breaks= "year", 
-                 date_labels = "%Y") +
-    scale_color_manual(values = c("#31a354","#3182bd")) +
-    labs(title = paste0("Weekly P. vivax and P. falciparum cases, Brazil ", 
-                        StartYear, "-", EndYear), x = "Year", y = "Number of Cases") +
-    guides(color=guide_legend(title="Plasmodium species")) + theme_light()
-  
-  # Monthly number of cases, line graph
-  MonthlyPlot=ggplot(data = subset(TS, DATE_TYPE == "Monthly" & LEVEL == "MU"), aes(DATE, CASES, color = TYPE)) +
-    stat_summary(fun.y = sum, geom = "line", size = 1.05) +
-    scale_x_date(date_breaks= "year", 
-                 date_labels = "%Y") +
-    scale_color_manual(values = c("#31a354","#3182bd")) +
-    labs(title = paste0("Weekly P. vivax and P. falciparum cases, Brazil ", 
-                        StartYear, "-", EndYear), x = "Year", y = "Number of Cases") +
-    guides(color=guide_legend(title="Plasmodium species")) + theme_light()
-  
-  # Yearly number of cases, line graph
-  YearlyPlot=ggplot(data = subset(TS, DATE_TYPE == "Yearly" & LEVEL == "MU"), aes(DATE, CASES, color = TYPE)) +
-    stat_summary(fun.y = sum, geom = "line", size = 1.05) +
-    scale_x_date(date_breaks= "year", 
-                 date_labels = "%Y") +
-    scale_color_manual(values = c("#31a354","#3182bd")) +
-    labs(title = paste0("Weekly P. vivax and P. falciparum cases, Brazil ", 
-                        StartYear, "-", EndYear), x = "Year", y = "Number of Cases") +
-    guides(color=guide_legend(title="Plasmodium species")) + theme_light()
-  
-  # Plot together
-  grid.arrange(DailyPlot, WeeklyPlot, MonthlyPlot, YearlyPlot, nrow=2)
-  
-  
-  #######
-  ## Save
-  #######
-  
-  if(SavePlots){
-    # Plot
-    grid.arrange(DailyPlot, WeeklyPlot, MonthlyPlot, YearlyPlot, nrow=2)
-    
-    # Save
-    dev.copy(png, paste0(Plot_Folder, "P. vivax and P. falciparum cases, Brazil ", StartYear, "-", EndYear, ".png"),
-             width = 1800, height = 800, units = "px", pointsize = 12,
-             res = 100)
-    dev.off()
-  }
-}else{
-  
-  if(byType){
-    # Plot together (avoid double counting with level)
-    TS_CombinedPlot=ggplot(data = subset(TS, LEVEL == "MU"), 
-                           aes(DATE, CASES, color = TYPE)) +
+if(!API){
+  if(!Melted){
+    # Daily number of cases, bar graph
+    DailyPlot=ggplot(data = subset(TS, DATE_TYPE == "Daily" & LEVEL == "MU"), aes(DATE, CASES, color = TYPE)) +
       stat_summary(fun.y = sum, geom = "line") +
       scale_x_date(breaks = "year", 
                    date_labels = "%Y") +
       scale_color_manual(values = c("#31a354","#3182bd")) +
-      facet_wrap(~DATE_TYPE, scales = "free_y") +
-      labs(title = paste0("P. vivax and P. falciparum cases, Brazil ", 
-                          StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
+      labs(title = "Daily P. vivax and P. falciparum cases", 
+           subtitle = paste0("Brazil, ", StartYear, "-", EndYear),
+           x = "Year", y = "Number of Cases") + 
       guides(color=guide_legend(title="Plasmodium species"))
-  }
-  
-  if(byGender){
-    # Gender
-    TS_CombinedPlot=ggplot(data = subset(TS, LEVEL == "MU" & !is.na(GENDER)), 
-                           aes(DATE, CASES, color = GENDER)) +
-      stat_summary(fun.y = sum, geom = "line") +
-      scale_x_date(breaks = "year", 
-                   date_labels = "%Y") +
-      scale_color_manual(values = c("#31a354","#3182bd")) +
-      facet_wrap(~DATE_TYPE, scales = "free_y") +
-      labs(title = paste0("P. vivax and P. falciparum cases in Brazil by gender, ", 
-                          StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
-      guides(color=guide_legend(title="Gender"))
-  }
-  if(byAge){
-    # Colors
-    getColors=colorRampPalette(brewer.pal(6,"Reds"))
-    Colors=getColors(length(unique(TS$AGE_CAT)))
     
-    # # Age
-    # TS_CombinedPlot=ggplot(data = subset(TS, LEVEL == "MU" & !is.na(AGE_CAT)), 
-    #                        aes(DATE, CASES, color = AGE_CAT)) +
-    #   stat_summary(fun.y = sum, geom = "line") +
-    #   scale_x_date(breaks = "year", 
-    #                date_labels = "%Y") +
-    #   scale_color_manual(values = Colors) +
-    #   facet_wrap(~DATE_TYPE, scales = "free_y") +
-    #   labs(title = paste0("P. vivax and P. falciparum cases in Brazil by age category, ", 
-    #                       StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
-    #   guides(color=guide_legend(title="Age category"))
     
-    # Age weekly
-    TS_Plot=ggplot(data = subset(TS, DATE_TYPE == "Weekly" & LEVEL == "MU" & !is.na(AGE_CAT)), 
-                   aes(DATE, CASES, color = AGE_CAT)) +
+    # Weekly number of cases, bar graph
+    WeeklyPlot=ggplot(data = subset(TS, DATE_TYPE == "Weekly" & LEVEL == "MU"), aes(DATE, CASES, color = TYPE)) +
       stat_summary(fun.y = sum, geom = "line", size = 1.05) +
       scale_x_date(date_breaks= "year", 
                    date_labels = "%Y") +
-      scale_color_manual(values = Colors) +
-      facet_wrap(.~AGE_CAT, ncol=5) +
-      labs(title = paste0("Weekly P. vivax and P. falciparum cases by age category, Brazil ", 
-                          StartYear, "-", EndYear), x = "Year", y = "Number of Cases") +
-      guides(color=guide_legend(title="Age category")) + theme_light() +
-      theme(panel.grid.minor.x = element_blank(),
-            axis.text.x = element_text(angle = 90, hjust = 1))
-  }
-  
-  
-  #######
-  ## Save
-  #######
-  
-  if(SavePlots){
-    # Plot
-    TS_CombinedPlot
+      scale_color_manual(values = c("#31a354","#3182bd")) +
+      labs(title = "Weekly P. vivax and P. falciparum cases", 
+           subtitle = paste0("Brazil, ", StartYear, "-", EndYear),
+           x = "Year", y = "Number of Cases") + 
+      guides(color=guide_legend(title="Plasmodium species")) + theme_light()
     
-    if(byType){
+    # Monthly number of cases, line graph
+    MonthlyPlot=ggplot(data = subset(TS, DATE_TYPE == "Monthly" & LEVEL == "MU"), aes(DATE, CASES, color = TYPE)) +
+      stat_summary(fun.y = sum, geom = "line", size = 1.05) +
+      scale_x_date(date_breaks= "year", 
+                   date_labels = "%Y") +
+      scale_color_manual(values = c("#31a354","#3182bd")) +
+      labs(title = "Monthly P. vivax and P. falciparum cases", 
+           subtitle = paste0("Brazil, ", StartYear, "-", EndYear),
+           x = "Year", y = "Number of Cases") + 
+      guides(color=guide_legend(title="Plasmodium species")) + theme_light()
+    
+    # Yearly number of cases, line graph
+    YearlyPlot=ggplot(data = subset(TS, DATE_TYPE == "Yearly" & LEVEL == "MU"), aes(DATE, CASES, color = TYPE)) +
+      stat_summary(fun.y = sum, geom = "line", size = 1.05) +
+      scale_x_date(date_breaks= "year", 
+                   date_labels = "%Y") +
+      scale_color_manual(values = c("#31a354","#3182bd")) +
+      labs(title = "Yearly P. vivax and P. falciparum cases", 
+           subtitle = paste0("Brazil, ", StartYear, "-", EndYear),
+           x = "Year", y = "Number of Cases") + 
+      guides(color=guide_legend(title="Plasmodium species")) + theme_light()
+    
+    # Plot together
+    grid.arrange(DailyPlot, WeeklyPlot, MonthlyPlot, YearlyPlot, nrow=2)
+    
+    
+    #######
+    ## Save
+    #######
+    
+    if(SavePlots){
+      # Plot
+      grid.arrange(DailyPlot, WeeklyPlot, MonthlyPlot, YearlyPlot, nrow=2)
+      
       # Save
-      dev.copy(png, paste0(Plot_Folder, "P. vivax and P. falciparum cases, Brazil, ", StartYear, "-", EndYear, ".png"),
+      dev.copy(png, paste0(Plot_Folder, "P. vivax and P. falciparum cases, Brazil ", StartYear, "-", EndYear, ".png"),
                width = 1800, height = 800, units = "px", pointsize = 12,
                res = 100)
       dev.off()
+    }
+  }else{
+    
+    if(byType){
+      # Plot together (avoid double counting with level)
+      TS_CombinedPlot=ggplot(data = subset(TS, LEVEL == "MU" & DATE_TYPE %in% c("Weekly","Monthly","Yearly")), 
+                             aes(DATE, CASES, color = TYPE)) +
+        stat_summary(fun.y = sum, geom = "line") +
+        scale_x_date(breaks = "year", 
+                     date_labels = "%Y") +
+        scale_color_manual(values = c("#31a354","#3182bd")) +
+        facet_wrap(~DATE_TYPE, scales = "free_y", ncol = 1) +
+        labs(title = "P. vivax and P. falciparum cases", 
+             subtitle = paste0("Brazil, ", StartYear, "-", EndYear),
+             x = "Year", y = "Number of Cases") + 
+        guides(color=guide_legend(title="Plasmodium species"))
     }
     
     if(byGender){
+      # Gender
+      TS_CombinedPlot=ggplot(data = subset(TS, LEVEL == "MU" & !is.na(GENDER)), 
+                             aes(DATE, CASES, color = GENDER)) +
+        stat_summary(fun.y = sum, geom = "line") +
+        scale_x_date(breaks = "year", 
+                     date_labels = "%Y") +
+        scale_color_manual(values = c("#31a354","#3182bd")) +
+        facet_wrap(~DATE_TYPE, scales = "free_y") +
+        labs(title = "P. vivax and P. falciparum cases in Brazil by gender",
+             subtitle = paste0("Brazil, ", StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
+        guides(color=guide_legend(title="Gender"))
+    }
+    if(byAge){
+      # Colors
+      getColors=colorRampPalette(brewer.pal(6,"Reds"))
+      Colors=getColors(length(unique(TS$AGE_CAT)))
+      
+      # # Age
+      # TS_CombinedPlot=ggplot(data = subset(TS, LEVEL == "MU" & !is.na(AGE_CAT)), 
+      #                        aes(DATE, CASES, color = AGE_CAT)) +
+      #   stat_summary(fun.y = sum, geom = "line") +
+      #   scale_x_date(breaks = "year", 
+      #                date_labels = "%Y") +
+      #   scale_color_manual(values = Colors) +
+      #   facet_wrap(~DATE_TYPE, scales = "free_y") +
+      #   labs(title = paste0("P. vivax and P. falciparum cases in Brazil by age category, ", 
+      #                       StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
+      #   guides(color=guide_legend(title="Age category"))
+      
+      # Age weekly
+      TS_Plot=ggplot(data = subset(TS, DATE_TYPE == "Weekly" & LEVEL == "MU" & !is.na(AGE_CAT)), 
+                     aes(DATE, CASES, color = AGE_CAT)) +
+        stat_summary(fun.y = sum, geom = "line", size = 1.05) +
+        scale_x_date(date_breaks= "year", 
+                     date_labels = "%Y") +
+        scale_color_manual(values = Colors) +
+        facet_wrap(.~AGE_CAT, ncol=5) +
+        labs(title = "Weekly P. vivax and P. falciparum cases by age category", 
+             subtitle = paste0("Brazil, ", StartYear, "-", EndYear)) +
+        guides(color=guide_legend(title="Age category")) + theme_light() +
+        theme(panel.grid.minor.x = element_blank(),
+              axis.text.x = element_text(angle = 90, hjust = 1))
+    }
+    
+    
+    #######
+    ## Save
+    #######
+    
+    if(SavePlots){
+      # Plot
+      TS_CombinedPlot
+      
+      if(byType){
+        # Save
+        dev.copy(png, paste0(Plot_Folder, "P. vivax and P. falciparum cases, Brazil, ", StartYear, "-", EndYear, ".png"),
+                 width = 1800, height = 800, units = "px", pointsize = 12,
+                 res = 100)
+        dev.off()
+      }
+      
+      if(byGender){
+        # Save
+        dev.copy(png, paste0(Plot_Folder, "P. vivax and P. falciparum cases, Brazil by gender, ", StartYear, "-", EndYear, ".png"),
+                 width = 1800, height = 800, units = "px", pointsize = 12,
+                 res = 100)
+        dev.off()
+      }
+      
+      if(byAge){
+        # Save
+        dev.copy(png, paste0(Plot_Folder, "P. vivax and P. falciparum cases, Brazil by age category (facets), ", StartYear, "-", EndYear, ".png"),
+                 width = 1800, height = 800, units = "px", pointsize = 12,
+                 res = 100)
+        dev.off()
+      }
+    }
+  }
+}else{
+  if(!Melted){
+    # Daily number of cases, bar graph
+    DailyPlot=ggplot(data = subset(TS, LEVEL == "MU"), aes(DATE, API, color = TYPE)) +
+      stat_summary(fun.y = sum, geom = "line") +
+      scale_x_date(breaks = "year", 
+                   date_labels = "%Y") +
+      scale_color_manual(values = c("#31a354","#3182bd")) +
+      labs(title = "Daily P. vivax and P. falciparum API", 
+           subtitle = paste0("Brazil, ", StartYear, "-", EndYear),
+           x = "Year", y = "API") + 
+      guides(color=guide_legend(title="Plasmodium species"))
+    
+    
+    # Weekly number of cases, bar graph
+    WeeklyPlot=ggplot(data = subset(TS, LEVEL == "MU"), aes(DATE, API, color = TYPE)) +
+      stat_summary(fun.y = sum, geom = "line", size = 1.05) +
+      scale_x_date(date_breaks= "year", 
+                   date_labels = "%Y") +
+      scale_color_manual(values = c("#31a354","#3182bd")) +
+      labs(title = "Weekly P. vivax and P. falciparum API", 
+           subtitle = paste0("Brazil, ", StartYear, "-", EndYear),
+           x = "Year", y = "API") + 
+      guides(color=guide_legend(title="Plasmodium species")) + theme_light()
+    
+    # Monthly number of cases, line graph
+    MonthlyPlot=ggplot(data = subset(TS, LEVEL == "MU"), aes(DATE, API, color = TYPE)) +
+      stat_summary(fun.y = sum, geom = "line", size = 1.05) +
+      scale_x_date(date_breaks= "year", 
+                   date_labels = "%Y") +
+      scale_color_manual(values = c("#31a354","#3182bd")) +
+      labs(title = "Monthly P. vivax and P. falciparum API", 
+           subtitle = paste0("Brazil, ", StartYear, "-", EndYear),
+           x = "Year", y = "API") + 
+      guides(color=guide_legend(title="Plasmodium species")) + theme_light()
+    
+    # Yearly number of cases, line graph
+    YearlyPlot=ggplot(data = subset(TS, LEVEL == "MU"), aes(DATE, API, color = TYPE)) +
+      stat_summary(fun.y = sum, geom = "line", size = 1.05) +
+      scale_x_date(date_breaks= "year", 
+                   date_labels = "%Y") +
+      scale_color_manual(values = c("#31a354","#3182bd")) +
+      labs(title = "Yearly P. vivax and P. falciparum API", 
+           subtitle = paste0("Brazil, ", StartYear, "-", EndYear),
+           x = "Year", y = "API") + 
+      guides(color=guide_legend(title="Plasmodium species")) + theme_light()
+    
+    # Plot together
+    grid.arrange(DailyPlot, WeeklyPlot, MonthlyPlot, YearlyPlot, nrow=2)
+    
+    
+    #######
+    ## Save
+    #######
+    
+    if(SavePlots){
+      # Plot
+      grid.arrange(DailyPlot, WeeklyPlot, MonthlyPlot, YearlyPlot, nrow=2)
+      
       # Save
-      dev.copy(png, paste0(Plot_Folder, "P. vivax and P. falciparum cases, Brazil by gender, ", StartYear, "-", EndYear, ".png"),
+      dev.copy(png, paste0(Plot_Folder, "P. vivax and P. falciparum API, Brazil ", StartYear, "-", EndYear, ".png"),
                width = 1800, height = 800, units = "px", pointsize = 12,
                res = 100)
       dev.off()
     }
+  }else{
     
+    if(byType){
+      # Plot together (avoid double counting with level)
+      TS_CombinedPlot=ggplot(data = subset(TS, LEVEL == "MU" & DATE_TYPE %in% c("Weekly","Monthly","Yearly")), 
+                             aes(DATE, API, color = TYPE)) +
+        stat_summary(fun.y = sum, geom = "line") +
+        scale_x_date(breaks = "year", 
+                     date_labels = "%Y") +
+        scale_color_manual(values = c("#31a354","#3182bd")) +
+        facet_wrap(~DATE_TYPE, scales = "free_y", ncol = 1) +
+        labs(title = "P. vivax and P. falciparum API", 
+             subtitle = paste0("Brazil, ", StartYear, "-", EndYear),
+             x = "Year", y = "API") + 
+        guides(color=guide_legend(title="Plasmodium species"))
+    }
+    
+    if(byGender){
+      # Gender
+      TS_CombinedPlot=ggplot(data = subset(TS, LEVEL == "MU" & !is.na(GENDER)), 
+                             aes(DATE, API, color = GENDER)) +
+        stat_summary(fun.y = sum, geom = "line") +
+        scale_x_date(breaks = "year", 
+                     date_labels = "%Y") +
+        scale_color_manual(values = c("#31a354","#3182bd")) +
+        facet_wrap(~DATE_TYPE, scales = "free_y") +
+        labs(title = "P. vivax and P. falciparum API in Brazil by gender",
+             subtitle = paste0("Brazil, ", StartYear, "-", EndYear), 
+             x = "Year", y = "API") + 
+        guides(color=guide_legend(title="Gender"))
+    }
     if(byAge){
-      # Save
-      dev.copy(png, paste0(Plot_Folder, "P. vivax and P. falciparum cases, Brazil by age category (facets), ", StartYear, "-", EndYear, ".png"),
-               width = 1800, height = 800, units = "px", pointsize = 12,
-               res = 100)
-      dev.off()
+      # Colors
+      getColors=colorRampPalette(brewer.pal(6,"Reds"))
+      Colors=getColors(length(unique(TS$AGE_CAT)))
+      
+      # Age weekly
+      TS_Plot=ggplot(data = subset(TS, LEVEL == "MU" & !is.na(AGE_CAT)), 
+                     aes(DATE, API, color = AGE_CAT)) +
+        stat_summary(fun.y = sum, geom = "line", size = 1.05) +
+        scale_x_date(date_breaks= "year", 
+                     date_labels = "%Y") +
+        scale_color_manual(values = Colors) +
+        facet_wrap(.~AGE_CAT, ncol=5) +
+        labs(title = "Weekly P. vivax and P. falciparum cases by age category", 
+             subtitle = paste0("Brazil, ", StartYear, "-", EndYear)) +
+        guides(color=guide_legend(title="Age category")) + theme_light() +
+        theme(panel.grid.minor.x = element_blank(),
+              axis.text.x = element_text(angle = 90, hjust = 1))
+    }
+    
+    
+    #######
+    ## Save
+    #######
+    
+    if(SavePlots){
+      # Plot
+      TS_CombinedPlot
+      
+      if(byType){
+        # Save
+        dev.copy(png, paste0(Plot_Folder, "P. vivax and P. falciparum API, Brazil, ", StartYear, "-", EndYear, ".png"),
+                 width = 1800, height = 800, units = "px", pointsize = 12,
+                 res = 100)
+        dev.off()
+      }
+      
+      if(byGender){
+        # Save
+        dev.copy(png, paste0(Plot_Folder, "P. vivax and P. falciparum API, Brazil by gender, ", StartYear, "-", EndYear, ".png"),
+                 width = 1800, height = 800, units = "px", pointsize = 12,
+                 res = 100)
+        dev.off()
+      }
+      
+      if(byAge){
+        # Save
+        dev.copy(png, paste0(Plot_Folder, "P. vivax and P. falciparum API, Brazil by age category (facets), ", StartYear, "-", EndYear, ".png"),
+                 width = 1800, height = 800, units = "px", pointsize = 12,
+                 res = 100)
+        dev.off()
+      }
     }
   }
 }
+
 
 
 
@@ -275,64 +454,124 @@ if(!Melted){
 ## Plots by State 
 ###############################
 
-if(byType){
-  # All
-  TS_CombinedPlot_UF=ggplot(data = subset(TS, LEVEL == "UF"), aes(DATE, CASES, color = TYPE)) +
-    stat_summary(fun.y = sum, geom = "line") +
-    scale_x_date(breaks = "year", 
-                 date_labels = "%Y") +
-    facet_wrap(.~NAME, ncol = 3) +
-    scale_color_manual(values = c("#31a354","#3182bd")) +
-    labs(title = paste0("P. vivax and P. falciparum cases by state, Brazil ", 
-                        StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
-    guides(color=guide_legend(title="Plasmodium species")) +
-    theme(panel.grid.minor.x = element_blank(),
-          axis.text.x = element_text(angle = 90, hjust = 1))
-  
-  # Highest incidence
-  TS_CombinedPlot_HighestIncidence_UF=ggplot(data = subset(TS, LEVEL == "UF" & STATE %in% HighIncidenceStates), 
-                                             aes(DATE, CASES, color = TYPE)) +
-    stat_summary(fun.y = sum, geom = "line") +
-    scale_x_date(breaks = "year", 
-                 date_labels = "%Y") +
-    facet_wrap(.~NAME, ncol = 3) +
-    scale_color_manual(values = c("#31a354","#3182bd")) +
-    labs(title = paste0("P. vivax and P. falciparum cases by state, Brazil ", 
-                        StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
-    guides(color=guide_legend(title="Plasmodium species")) +
-    theme(panel.grid.minor.x = element_blank(),
-          axis.text.x = element_text(angle = 90, hjust = 1))
+if(!API){
+  if(byType){
+    # All
+    TS_CombinedPlot_UF=ggplot(data = subset(TS, LEVEL == "UF"), aes(DATE, CASES, color = TYPE)) +
+      stat_summary(fun.y = sum, geom = "line") +
+      scale_x_date(breaks = "year", 
+                   date_labels = "%Y") +
+      facet_wrap(.~NAME, ncol = 3) +
+      scale_color_manual(values = c("#31a354","#3182bd")) +
+      labs(title = "P. vivax and P. falciparum cases by state", 
+           subtitle = paste0("Brazil, ", StartYear, "-", EndYear), 
+           x = "Year", y = "Number of Cases") + 
+      guides(color=guide_legend(title="Plasmodium species")) +
+      theme(panel.grid.minor.x = element_blank(),
+            axis.text.x = element_text(angle = 90, hjust = 1))
+    
+    # Highest incidence
+    TS_CombinedPlot_HighestIncidence_UF=ggplot(data = subset(TS, LEVEL == "UF" & STATE %in% HighIncidenceStates), 
+                                               aes(DATE, CASES, color = TYPE)) +
+      stat_summary(fun.y = sum, geom = "line") +
+      scale_x_date(breaks = "year", 
+                   date_labels = "%Y") +
+      facet_wrap(.~NAME, ncol = 3) +
+      scale_color_manual(values = c("#31a354","#3182bd")) +
+      labs(title = paste0("P. vivax and P. falciparum cases by state, Brazil ", 
+                          StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
+      guides(color=guide_legend(title="Plasmodium species")) +
+      theme(panel.grid.minor.x = element_blank(),
+            axis.text.x = element_text(angle = 90, hjust = 1))
+  }
+  if(byGender){
+    TS_CombinedPlot_UF=ggplot(data = subset(TS, LEVEL == "UF" & !is.na(GENDER)), 
+                              aes(DATE, CASES, color = GENDER)) +
+      stat_summary(fun.y = sum, geom = "line") +
+      scale_x_date(breaks = "year", 
+                   date_labels = "%Y") +
+      scale_color_manual(values = c("#31a354","#3182bd")) +
+      facet_wrap(~NAME, ncol = 5) +
+      labs(title = paste0("P. vivax and P. falciparum cases in Brazil by state and gender, ", 
+                          StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
+      guides(color=guide_legend(title="Gender")) +
+      theme(panel.grid.minor.x = element_blank(),
+            axis.text.x = element_text(angle = 90, hjust = 1))
+    
+    # Highest incidence
+    TS_CombinedPlot_HighestIncidence_UF=ggplot(data = subset(TS, LEVEL == "UF" & STATE %in% HighIncidenceStates & !is.na(GENDER)), 
+                                               aes(DATE, CASES, color = TYPE)) +
+      stat_summary(fun.y = sum, geom = "line") +
+      scale_x_date(breaks = "year", 
+                   date_labels = "%Y") +
+      scale_color_manual(values = c("#31a354","#3182bd")) +
+      facet_wrap(~NAME, ncol = 5) +
+      labs(title = paste0("P. vivax and P. falciparum cases in Brazil by state, ", 
+                          StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
+      guides(color=guide_legend(title="Plasmodium species")) +
+      theme(panel.grid.minor.x = element_blank(),
+            axis.text.x = element_text(angle = 90, hjust = 1))
+  }
+}else{
+  if(byType){
+    # All
+    TS_CombinedPlot_UF=ggplot(data = subset(TS, LEVEL == "UF"), aes(DATE, API, color = TYPE)) +
+      stat_summary(fun.y = sum, geom = "line") +
+      scale_x_date(breaks = "year", 
+                   date_labels = "%Y") +
+      facet_wrap(.~NAME, ncol = 3) +
+      scale_color_manual(values = c("#31a354","#3182bd")) +
+      labs(title = paste("P. vivax and P. falciparum",tolower(Date_Type),"API by state"), 
+           subtitle = paste0("Brazil, ", StartYear, "-", EndYear), 
+           x = "Year", y = paste0(Date_Type," API")) + 
+      guides(color=guide_legend(title="Plasmodium species")) +
+      theme(panel.grid.minor.x = element_blank(),
+            axis.text.x = element_text(angle = 90, hjust = 1))
+    
+    # Highest incidence
+    TS_CombinedPlot_HighestIncidence_UF=ggplot(data = subset(TS, LEVEL == "UF" & STATE %in% HighIncidenceStates), 
+                                               aes(DATE, CASES, color = TYPE)) +
+      stat_summary(fun.y = sum, geom = "line") +
+      scale_x_date(breaks = "year", 
+                   date_labels = "%Y") +
+      facet_wrap(.~NAME, ncol = 3) +
+      scale_color_manual(values = c("#31a354","#3182bd")) +
+      labs(title = paste0("P. vivax and P. falciparum cases by state, Brazil ", 
+                          StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
+      guides(color=guide_legend(title="Plasmodium species")) +
+      theme(panel.grid.minor.x = element_blank(),
+            axis.text.x = element_text(angle = 90, hjust = 1))
+  }
+  if(byGender){
+    TS_CombinedPlot_UF=ggplot(data = subset(TS, LEVEL == "UF" & !is.na(GENDER)), 
+                              aes(DATE, CASES, color = GENDER)) +
+      stat_summary(fun.y = sum, geom = "line") +
+      scale_x_date(breaks = "year", 
+                   date_labels = "%Y") +
+      scale_color_manual(values = c("#31a354","#3182bd")) +
+      facet_wrap(~NAME, ncol = 5) +
+      labs(title = paste0("P. vivax and P. falciparum cases in Brazil by state and gender, ", 
+                          StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
+      guides(color=guide_legend(title="Gender")) +
+      theme(panel.grid.minor.x = element_blank(),
+            axis.text.x = element_text(angle = 90, hjust = 1))
+    
+    # Highest incidence
+    TS_CombinedPlot_HighestIncidence_UF=ggplot(data = subset(TS, LEVEL == "UF" & STATE %in% HighIncidenceStates & !is.na(GENDER)), 
+                                               aes(DATE, CASES, color = TYPE)) +
+      stat_summary(fun.y = sum, geom = "line") +
+      scale_x_date(breaks = "year", 
+                   date_labels = "%Y") +
+      scale_color_manual(values = c("#31a354","#3182bd")) +
+      facet_wrap(~NAME, ncol = 5) +
+      labs(title = paste0("P. vivax and P. falciparum cases in Brazil by state, ", 
+                          StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
+      guides(color=guide_legend(title="Plasmodium species")) +
+      theme(panel.grid.minor.x = element_blank(),
+            axis.text.x = element_text(angle = 90, hjust = 1))
+  }
 }
 
-
-if(byGender){
-  TS_CombinedPlot_UF=ggplot(data = subset(TS, LEVEL == "UF" & !is.na(GENDER)), 
-                            aes(DATE, CASES, color = GENDER)) +
-    stat_summary(fun.y = sum, geom = "line") +
-    scale_x_date(breaks = "year", 
-                 date_labels = "%Y") +
-    scale_color_manual(values = c("#31a354","#3182bd")) +
-    facet_wrap(~NAME, ncol = 5) +
-    labs(title = paste0("P. vivax and P. falciparum cases in Brazil by state and gender, ", 
-                        StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
-    guides(color=guide_legend(title="Gender")) +
-    theme(panel.grid.minor.x = element_blank(),
-          axis.text.x = element_text(angle = 90, hjust = 1))
-  
-  # Highest incidence
-  TS_CombinedPlot_HighestIncidence_UF=ggplot(data = subset(TS, LEVEL == "UF" & STATE %in% HighIncidenceStates & !is.na(GENDER)), 
-                                             aes(DATE, CASES, color = TYPE)) +
-    stat_summary(fun.y = sum, geom = "line") +
-    scale_x_date(breaks = "year", 
-                 date_labels = "%Y") +
-    scale_color_manual(values = c("#31a354","#3182bd")) +
-    facet_wrap(~NAME, ncol = 5) +
-    labs(title = paste0("P. vivax and P. falciparum cases in Brazil by state, ", 
-                        StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
-    guides(color=guide_legend(title="Plasmodium species")) +
-    theme(panel.grid.minor.x = element_blank(),
-          axis.text.x = element_text(angle = 90, hjust = 1))
-}
 
 
 
@@ -376,24 +615,46 @@ if(SavePlots){
 
 # Get plots
 if(!byGender){
-  # Get highest incidence municipality plots only
-  HighestIncidence_MUN_Plots=foreach(i=1:length(HighIncidenceStates)) %do% {
-    Plot_Name=paste0("TS_Plot_",HighIncidenceStates[i])
-    assign(Plot_Name, ggplot(data = subset(TS, LEVEL == "MU" & 
-                                             STATE == HighIncidenceStates[i] &
-                                             NAME %in% HighestIncidenceMU), 
-                             aes(DATE, CASES, color = TYPE)) +
-             stat_summary(fun.y = sum, geom = "line") +
-             scale_x_date(breaks = "year", 
-                          date_labels = "%Y") +
-             scale_color_manual(values = c("#31a354","#3182bd")) +
-             facet_wrap(~NAME) +
-             labs(title = paste0("P. vivax and P. falciparum cases in ",HighIncidenceStates[i]," state by municipality, ", 
-                                 StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
-             guides(color=guide_legend(title="Plasmodium species")) +
-             theme(panel.grid.minor.x = element_blank(),
-                   axis.text.x = element_text(angle = 90, hjust = 1)))
+  if(!API){
+    # Get highest incidence municipality plots only
+    HighestIncidence_MUN_Plots=foreach(i=1:length(HighIncidenceStates)) %do% {
+      Plot_Name=paste0("TS_Plot_",HighIncidenceStates[i])
+      assign(Plot_Name, ggplot(data = subset(TS, LEVEL == "MU" & 
+                                               STATE == HighIncidenceStates[i] &
+                                               NAME %in% HighestIncidenceMU), 
+                               aes(DATE, CASES, color = TYPE)) +
+               stat_summary(fun.y = sum, geom = "line") +
+               scale_x_date(breaks = "year", 
+                            date_labels = "%Y") +
+               scale_color_manual(values = c("#31a354","#3182bd")) +
+               facet_wrap(~NAME) +
+               labs(title = paste0("P. vivax and P. falciparum cases in ",HighIncidenceStates[i]," state by municipality, ", 
+                                   StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
+               guides(color=guide_legend(title="Plasmodium species")) +
+               theme(panel.grid.minor.x = element_blank(),
+                     axis.text.x = element_text(angle = 90, hjust = 1)))
+    }
+  }else{
+    # Get highest incidence municipality plots only
+    HighestIncidence_MUN_Plots=foreach(i=1:length(HighIncidenceStates)) %do% {
+      Plot_Name=paste0("TS_Plot_",HighIncidenceStates[i])
+      assign(Plot_Name, ggplot(data = subset(TS, LEVEL == "MU" & 
+                                               STATE == HighIncidenceStates[i] &
+                                               NAME %in% HighestIncidenceMU), 
+                               aes(DATE, log(API), color = TYPE)) +
+               stat_summary(fun.y = sum, geom = "line") +
+               scale_x_date(breaks = "year", 
+                            date_labels = "%Y") +
+               scale_color_manual(values = c("#31a354","#3182bd")) +
+               facet_wrap(~NAME) +
+               labs(title = paste0("P. vivax and P. falciparum ",tolower(Date_Type)," log API in ",HighIncidenceStates[i]," state by municipality, ", 
+                                   StartYear, "-", EndYear), x = "Year", y = paste0("log(",Date_Type,"API)")) + 
+               guides(color=guide_legend(title="Plasmodium species")) +
+               theme(panel.grid.minor.x = element_blank(),
+                     axis.text.x = element_text(angle = 90, hjust = 1)))
+    }
   }
+  
 }else{
   ### AC ####
   TS_Plot_AC=ggplot(data = subset(TS, LEVEL == "MU" & STATE == "AC" & !is.na(GENDER)), aes(DATE, CASES, color = GENDER)) +
@@ -555,7 +816,7 @@ if(SavePlots){
     # Save
     dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum cases in Rondonia state by municipality ", StartYear, "-", EndYear, ".png"),
              width = 1800, height = 800, units = "px", pointsize = 12,
-             res = 72)
+             res = 100)
     dev.off()
     
     # Roraima
@@ -563,7 +824,7 @@ if(SavePlots){
     # Save
     dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum cases in Roraima state by municipality ", StartYear, "-", EndYear, ".png"),
              width = 1800, height = 800, units = "px", pointsize = 12,
-             res = 72)
+             res = 100)
     dev.off()
     
     # Tocantins
@@ -575,12 +836,84 @@ if(SavePlots){
     dev.off()
     
   }else{
+    
+    if(!API){
+      # Highest incidence states
+      HighIncidenceStates
+      # Acre
+      TS_Plot_AC
+      # Save
+      dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum cases by gender in Acre state by municipality ", StartYear, "-", EndYear, "by MU.png"),
+               width = 1800, height = 800, units = "px", pointsize = 12,
+               res = 100)
+      dev.off()
+      
+      # Amazonas
+      TS_Plot_AM
+      # Save
+      dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum cases by gender in Amazonas state by municipality ", StartYear, "-", EndYear, "by MU.png"),
+               width = 1800, height = 800, units = "px", pointsize = 12,
+               res = 100)
+      dev.off()
+      
+      # Amapa
+      TS_Plot_AP
+      # Save
+      dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum cases by gender in Amapa state by municipality ", StartYear, "-", EndYear, "by MU.png"),
+               width = 1800, height = 800, units = "px", pointsize = 12,
+               res = 100)
+      dev.off()
+      
+      
+      # Mato Grosso
+      TS_Plot_MA
+      # Save
+      dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum cases by gender in Maranhão state by municipality ", StartYear, "-", EndYear, "by MU.png"),
+               width = 1800, height = 800, units = "px", pointsize = 12,
+               res = 100)
+      dev.off()
+      
+      # Mato Grosso
+      TS_Plot_MT
+      # Save
+      dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum cases by gender in Mato Grosso state by municipality ", StartYear, "-", EndYear, "by MU.png"),
+               width = 1800, height = 800, units = "px", pointsize = 12,
+               res = 100)
+      dev.off()
+      
+      # Para
+      TS_Plot_PA
+      # Save
+      dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum cases by gender in Para state by municipality ", StartYear, "-", EndYear, "by MU.png"),
+               width = 1800, height = 800, units = "px", pointsize = 12,
+               res = 100)
+      dev.off()
+      
+      # Rondonia
+      TS_Plot_RO
+      # Save
+      dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum cases by gender in Rondonia state by municipality ", StartYear, "-", EndYear, "by MU.png"),
+               width = 1800, height = 800, units = "px", pointsize = 12,
+               res = 72)
+      dev.off()
+      
+      # Roraima
+      TS_Plot_RR
+      # Save
+      dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum cases by gender in Roraima state by municipality ", StartYear, "-", EndYear, "by MU.png"),
+               width = 1800, height = 800, units = "px", pointsize = 12,
+               res = 72)
+      dev.off()
+    
+      }else{
+    
     # Highest incidence states
     HighIncidenceStates
     # Acre
     TS_Plot_AC
     # Save
-    dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum API by gender in Acre state by municipality ", StartYear, "-", EndYear, "by MU.png"),
+    dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum ",tolower(Date_Type)," log API in Acre state by municipality, ", 
+                         StartYear, "-", EndYear,".png"),
              width = 1800, height = 800, units = "px", pointsize = 12,
              res = 100)
     dev.off()
@@ -588,7 +921,8 @@ if(SavePlots){
     # Amazonas
     TS_Plot_AM
     # Save
-    dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum API by gender in Amazonas state by municipality ", StartYear, "-", EndYear, "by MU.png"),
+    dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum ",tolower(Date_Type)," log API in Amazonas state by municipality, ", 
+                         StartYear, "-", EndYear,".png"),
              width = 1800, height = 800, units = "px", pointsize = 12,
              res = 100)
     dev.off()
@@ -596,16 +930,18 @@ if(SavePlots){
     # Amapa
     TS_Plot_AP
     # Save
-    dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum API by gender in Amapa state by municipality ", StartYear, "-", EndYear, "by MU.png"),
+    dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum ",tolower(Date_Type)," log API in Amapa state by municipality, ", 
+                         StartYear, "-", EndYear,".png"),
              width = 1800, height = 800, units = "px", pointsize = 12,
              res = 100)
     dev.off()
     
     
-    # Mato Grosso
+    # Maranhão
     TS_Plot_MA
     # Save
-    dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum API by gender in Maranhão state by municipality ", StartYear, "-", EndYear, "by MU.png"),
+    dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum ",tolower(Date_Type)," log API in Maranhão state by municipality, ", 
+                         StartYear, "-", EndYear,".png"),
              width = 1800, height = 800, units = "px", pointsize = 12,
              res = 100)
     dev.off()
@@ -613,7 +949,8 @@ if(SavePlots){
     # Mato Grosso
     TS_Plot_MT
     # Save
-    dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum cases by gender in Mato Grosso state by municipality ", StartYear, "-", EndYear, "by MU.png"),
+    dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum ",tolower(Date_Type)," log API in Mato Grosso state by municipality, ", 
+                         StartYear, "-", EndYear,".png"),
              width = 1800, height = 800, units = "px", pointsize = 12,
              res = 100)
     dev.off()
@@ -621,7 +958,8 @@ if(SavePlots){
     # Para
     TS_Plot_PA
     # Save
-    dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum cases by gender in Para state by municipality ", StartYear, "-", EndYear, "by MU.png"),
+    dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum ",tolower(Date_Type)," log API in Para state by municipality, ", 
+                         StartYear, "-", EndYear,".png"),
              width = 1800, height = 800, units = "px", pointsize = 12,
              res = 100)
     dev.off()
@@ -629,20 +967,22 @@ if(SavePlots){
     # Rondonia
     TS_Plot_RO
     # Save
-    dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum cases by gender in Rondonia state by municipality ", StartYear, "-", EndYear, "by MU.png"),
+    dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum ",tolower(Date_Type)," log API in Rondonia state by municipality, ", 
+                         StartYear, "-", EndYear,".png"),
              width = 1800, height = 800, units = "px", pointsize = 12,
-             res = 72)
+             res = 100)
     dev.off()
     
     # Roraima
     TS_Plot_RR
     # Save
-    dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum cases by gender in Roraima state by municipality ", StartYear, "-", EndYear, "by MU.png"),
+    dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum ",tolower(Date_Type)," log API in Roraima state by municipality, ", 
+                         StartYear, "-", EndYear,".png"),
              width = 1800, height = 800, units = "px", pointsize = 12,
-             res = 72)
+             res = 100)
     dev.off()
+    }
   }
-  
 }
 
 ############################
@@ -656,8 +996,8 @@ TS_Plot_State=ggplot(data = subset(TS, LEVEL == "UF"), aes(DATE, API, color = TY
                date_labels = "%Y") +
   facet_wrap(.~NAME, ncol = 3) +
   scale_color_manual(values = c("#31a354","#3182bd")) +
-  labs(title = paste0("P. vivax and P. falciparum API in Brazil by state, ", 
-                      StartYear, "-", EndYear), x = "Year", y = "API") + 
+  labs(title = paste0("P. vivax and P. falciparum ", "API in Brazil by state, ", 
+                      StartYear, "-", EndYear), x = "Year", y = paste(Date_Type,"API")) + 
   guides(color=guide_legend(title="Plasmodium species")) +
   theme(panel.grid.minor.x = element_blank(),
         axis.text.x = element_text(angle = 90, hjust = 1))
