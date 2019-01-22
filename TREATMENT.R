@@ -208,22 +208,22 @@ dev.copy(png, paste0(Plot_Folder, "Treatment received by pregnant women for P.vi
          res = 100)
 dev.off()
 
-# What treatment are pregnant women receiving? by year
-ggplot(data = subset(SIVEP_TREAT, SEXO == "F" & PREGNANT == "Yes"), 
-       aes(AGE_CAT, CASES, fill = ESQUEMA)) +
-  scale_fill_manual(values=Colors,
-                    labels=names(Colors)) +
-  stat_summary(fun.y = sum, geom = "bar") +
-  facet_wrap(~YEAR) +
-  labs(title = "Treatment received by pregnant women for malaria over time, Brazil", x = "Age Groups", y = "Cases") +
-  guides(fill=guide_legend(title="Treatment scheme (* out of use)")) + 
-  theme(panel.grid.minor.x = element_blank(),
-        axis.text.x = element_text(angle = 90, hjust = 1))
-# Save
-dev.copy(png, paste0(Plot_Folder, "Treatment received by pregnant women for malaria over time.png"),
-         width = 1600, height = 1000, units = "px", pointsize = 12,
-         res = 100)
-dev.off()
+# # What treatment are pregnant women receiving? by year
+# ggplot(data = subset(SIVEP_TREAT, SEXO == "F" & PREGNANT == "Yes"), 
+#        aes(AGE_CAT, CASES, fill = ESQUEMA)) +
+#   scale_fill_manual(values=Colors,
+#                     labels=names(Colors)) +
+#   stat_summary(fun.y = sum, geom = "bar") +
+#   facet_wrap(~YEAR) +
+#   labs(title = "Treatment received by pregnant women for malaria over time, Brazil", x = "Age Groups", y = "Cases") +
+#   guides(fill=guide_legend(title="Treatment scheme (* out of use)")) + 
+#   theme(panel.grid.minor.x = element_blank(),
+#         axis.text.x = element_text(angle = 90, hjust = 1))
+# # Save
+# dev.copy(png, paste0(Plot_Folder, "Treatment received by pregnant women (1st qtr, 2nd, 3rd) for malaria over time.png"),
+#          width = 1600, height = 1000, units = "px", pointsize = 12,
+#          res = 100)
+# dev.off()
 
 # What treatment are pregnant women receiving? by gestational age
 ggplot(data = subset(SIVEP_TREAT, SEXO == "F" & PREGNANT == "Yes"), 
@@ -273,6 +273,24 @@ dev.copy(png, paste0(Plot_Folder, "Treatment received by pregnant women in 1st, 
          width = 1600, height = 1000, units = "px", pointsize = 12,
          res = 100)
 dev.off()
+
+# What treatment are pregnant women receiving? by year
+ggplot(data = pregnant_women_gestage, 
+       aes(AGE_CAT, CASES, fill = ESQUEMA)) +
+  scale_fill_manual(values=Colors_preg,
+                    labels=names(Colors_preg)) +
+  stat_summary(fun.y = sum, geom = "bar") +
+  facet_wrap(~YEAR) +
+  labs(title = "Treatment received by pregnant women for malaria over time, Brazil", x = "Age Groups", y = "Cases") +
+  guides(fill=guide_legend(title="Treatment scheme (* out of use)")) + 
+  theme(panel.grid.minor.x = element_blank(),
+        axis.text.x = element_text(angle = 90, hjust = 1))
+# Save
+dev.copy(png, paste0(Plot_Folder, "Treatment received by pregnant women (1st qtr, 2nd, 3rd) for malaria over time.png"),
+         width = 1600, height = 1000, units = "px", pointsize = 12,
+         res = 100)
+dev.off()
+
 
 # Number of pregnant women (1-3rd trimester) taking PQ by amount
 ggplot(data = pregnant_women_gestage, 

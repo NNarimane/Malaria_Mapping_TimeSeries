@@ -170,14 +170,35 @@ getBRA_plot=function(Year){
                              "< 1 000 000", "< 10 000 000", "> 10 000 000"))
   
   
+  # # With colors
+  # BRA_plot=ggplot(data=BRA_shp_lvl2) +
+  #   geom_polygon(color=NA, aes(long, lat, group=group, fill=Population)) +
+  #   scale_fill_brewer(palette="Blues", na.value = "grey") +
+  #   ggtitle(paste("Brazilian", Year, "Population")) +
+  #   coord_equal() +
+  #   theme_minimal() +
+  #   labs(caption = "Source: Instituto Brasileiro de Geografia e Estatistica")
+  
   # With colors
   BRA_plot=ggplot(data=BRA_shp_lvl2) +
     geom_polygon(color=NA, aes(long, lat, group=group, fill=Population)) +
     scale_fill_brewer(palette="Blues", na.value = "grey") +
-    ggtitle(paste("Brazilian", Year, "Population")) +
+    ggtitle(Year) +
     coord_equal() +
     theme_minimal() +
-    labs(caption = "Source: Instituto Brasileiro de Geografia e Estatistica")
+    theme(plot.title = element_text(size=22, hjust = 0.5),
+          axis.line=element_blank(),
+          axis.text.x=element_blank(),
+          axis.text.y=element_blank(),
+          axis.ticks=element_blank(),
+          axis.title.x=element_blank(),
+          axis.title.y=element_blank(),
+          # legend.position="none",
+          panel.background=element_blank(),
+          panel.border=element_blank(),
+          panel.grid.major=element_blank(),
+          panel.grid.minor=element_blank(),
+          plot.background=element_blank())
   
   return(BRA_plot)
 }
@@ -187,10 +208,13 @@ for(i in seq(2010,2018)){
   #Run
   BRA_plot=getBRA_plot(i)
   #Path
-  SavePath=file.path(paste0("BRA_POP_MAP_", i, ".jpeg"))
+  SavePath=file.path(paste0("POP_MAP_", i, ".png"))
   #Plot
-  jpeg(SavePath, width = 30, height = 30, units = 'cm', res = 300)
-  print(BRA_plot)
+  BRA_plot
+  dev.copy(png, SavePath,
+           width = 800, height = 800, units = "px", pointsize = 12,
+           res = 100)
   dev.off()
+  plot.new()
 }
 

@@ -280,4 +280,23 @@ BRA_POP_2003_2018_MU=BRA_POP_2003_2018[which(BRA_POP_2003_2018$Level =="MU"),]
 
 ### Conclusion: RL values and NN values same
 
+##########
+## Plot ##
 
+Plot_Data=BRA_POP_EST[,c("LEVEL","NAME",as.character(seq(2003,2018,1)))]
+Plot_Data=subset(Plot_Data, LEVEL == "BR")
+mPlot_Data=melt(Plot_Data, idvar = c("LEVEL","NAME"), 
+                   variable.name = "YEAR", value.name = "POPULATION")
+
+ggplot(mPlot_Data, aes(YEAR, POPULATION/1000000, group = NAME)) +
+  geom_line(size = 1.1) +
+  theme_minimal() +
+  labs(title = "Brazilian Population", y = "Population (in millions)", x = "Year", caption = "Source: Instituto Brasileiro de Geografia e Estatistica") +
+  theme(panel.grid.minor.x = element_blank(),
+        axis.text.x = element_text(angle = 90, hjust = 1))
+
+# Save
+dev.copy(png, paste0("C:/Users/nnekkab/Desktop/Malaria_Mapping_TimeSeries/Malaria_Mapping_TimeSeries_Plots/Population 2003-2018.png"),
+         width = 600, height = 400, units = "px", pointsize = 12,
+         res = 100)
+dev.off()
