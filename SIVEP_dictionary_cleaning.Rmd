@@ -100,6 +100,11 @@ df <- df %>%
       select(-DT_ENVLO, -DT_DIGIT, -SEM_NOTI, -COD_UNIN, -COD_AGEN, -RACA, -GESTANTE1, -NIV_ESCO_1, -ESQUEMA_1, -HEMOPARASI, -EXAME_, -EXAMINADOR, -VIVAX, -FALCIPARUM) %>% 
       filter(RES_EXAM == "2" | RES_EXAM == "3" | RES_EXAM == "4" | RES_EXAM == "5" | RES_EXAM == "6" | RES_EXAM == "7" | RES_EXAM == "9")
 
+df <- df %>% 
+      select(-DT_ENVLO, -DT_DIGIT, -SEM_NOTI, -COD_AGEN, -GESTANTE1, -NIV_ESCO_1, -ESQUEMA_1, -HEMOPARASI, -EXAME_, -EXAMINADOR, -VIVAX, -FALCIPARUM) %>% 
+      filter(RES_EXAM == "2" | RES_EXAM == "3" | RES_EXAM == "4" | RES_EXAM == "5" | RES_EXAM == "6" | RES_EXAM == "7" | RES_EXAM == "9")
+
+
 ```
 
 ### Filtering and grouping to falciparum and vivax types.
@@ -262,7 +267,7 @@ This variable is not explored here. Go to *Manipulate_data_maps_ts.rmd*.
 
 Saving RData.
 ```{r}
-save.image(file = "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/SIVEP_clean.RData")
+save.image(file = "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/SIVEP_clean_v1.RData")
 
 ```
 
@@ -280,15 +285,68 @@ save.image(file = "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/Anali
 **LONGITUD**: informs the coordinate referring to the longitude where the geographical center of the locality is located.   
 **LATITUDE**: informs the coordinate about the latitude where the geographical center of the locality is located. 
 **ZONA**: informs the Zone (urban / rural) where the locality is located, 1-Urban and 2-Rural.      
-**CATEGORI**: informs the category to which the locality belongs (neighborhood, site, village, settlement, etc.), according to the table of categories attached.       
+**CATEGORI**: informs the category to which the locality belongs, according to the table of categories attached:           
+1- SITIO  
+2- FAZENDA  
+3- BAIRRO  
+4- POVOADO  
+5- VILA  
+6- NUCLEO  
+7- CIDADE/SEDE MUNICIPAL  
+8- USINA  
+9- CONJUNTO HABITACIONAL  
+10- ENGENHO  
+11- ACAMPAMENTO  
+12- MALOCA  
+13- SERRARIA  
+14- QUADRA  
+15- QUARTEIRAO  
+16- BLOCO DE APARTAMENTO  
+17- GARIMPO  
+18- CEMITERIO  
+19- CASA ISOLADA  
+20- PRACA/PARQUE  
+21- IGREJA/TEMPLO    
+22- AEROPORTO  
+23- ESTADIOS/GINASIOS  
+24- CLUBES  
+25- RODOVIARIA/FERROVIARIA  
+26- COLONIA  
+27- SERINGAL  
+28- GLEBA  
+29- ALDEIA  
+30- RAMAL  
+31- PROJETO  
+32- PROJETO ASSENTAMENTO DIRIGIDO  
+33- BAIXAO  
+34- GROTA  
+35- LINHA  
+36- ILHA  
+37- FAVELA  
+38- CORTICO  
+39- MORRO  
+40- LAGOA  
+41- ESTRADA  
+42- PORTO  
+43- AREA DE ABRANGENCIA  
+
 **AGLOMERA**: informs the code of the agglomerate to which the locality belongs.   
 **STATUS**: informs the status of the locality, 1-Active and 2-Extinct.   
 **CODSEI**: ?   
 **COPOBASE**: ?
 ```{r}
 l1 <- read.dbf("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Dados/LOCANOT.DBF")
+l1 <- read.dbf("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Dados/LOCANOT.DBF", as.is = F)
+
 head(l1)
 str(l1)
+tail(l1)
+
+write.csv(l1, file = "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Dados/locality_database.csv", row.names = F)
+
+l1 <- fread("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Dados/locality_database.csv", encoding = "UTF-8")
+
+l1 <- fread("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Dados/locality_database.csv", encoding = "Latin-1")
 
 ```
 
