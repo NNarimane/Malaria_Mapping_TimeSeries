@@ -286,49 +286,49 @@ save.image(file = "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/Anali
 **LATITUDE**: informs the coordinate about the latitude where the geographical center of the locality is located. 
 **ZONA**: informs the Zone (urban / rural) where the locality is located, 1-Urban and 2-Rural.      
 **CATEGORI**: informs the category to which the locality belongs, according to the table of categories attached:           
-1- SITIO  
-2- FAZENDA  
-3- BAIRRO  
-4- POVOADO  
-5- VILA  
-6- NUCLEO  
-7- CIDADE/SEDE MUNICIPAL  
-8- USINA  
-9- CONJUNTO HABITACIONAL  
-10- ENGENHO  
-11- ACAMPAMENTO  
-12- MALOCA  
-13- SERRARIA  
-14- QUADRA  
-15- QUARTEIRAO  
-16- BLOCO DE APARTAMENTO  
-17- GARIMPO  
-18- CEMITERIO  
-19- CASA ISOLADA  
-20- PRACA/PARQUE  
-21- IGREJA/TEMPLO    
-22- AEROPORTO  
-23- ESTADIOS/GINASIOS  
-24- CLUBES  
-25- RODOVIARIA/FERROVIARIA  
-26- COLONIA  
-27- SERINGAL  
-28- GLEBA  
-29- ALDEIA  
-30- RAMAL  
-31- PROJETO  
-32- PROJETO ASSENTAMENTO DIRIGIDO  
-33- BAIXAO  
-34- GROTA  
-35- LINHA  
-36- ILHA  
-37- FAVELA  
-38- CORTICO  
-39- MORRO  
-40- LAGOA  
-41- ESTRADA  
-42- PORTO  
-43- AREA DE ABRANGENCIA  
+1- SITIO (SIT)  
+2- FAZENDA (FAZ.)  
+3- BAIRRO (BAIR)  
+4- POVOADO (POVO)    
+5- VILA (VILA)    
+6- NUCLEO (NUCL)    
+7- CIDADE/SEDE MUNICIPAL (CID.)    
+8- USINA (USIN)    
+9- CONJUNTO HABITACIONAL (CONJ)    
+10- ENGENHO (ENGE)   
+11- ACAMPAMENTO (ACAM)   
+12- MALOCA (MALO)    
+13- SERRARIA (SERR)    
+14- QUADRA (QUAD)    
+15- QUARTEIRAO (QUAR)    
+16- BLOCO DE APARTAMENTO (BLOC)    
+17- GARIMPO (GARI)    
+18- CEMITERIO (CEMI)    
+19- CASA ISOLADA (CASA)    
+20- PRACA/PARQUE (PRAC)    
+21- IGREJA/TEMPLO (IGRE)      
+22- AEROPORTO (AERO)    
+23- ESTADIOS/GINASIOS (ESTA)    
+24- CLUBES (CLUB)    
+25- RODOVIARIA/FERROVIARIA (RODO)    
+26- COLONIA (COL)    
+27- SERINGAL (SER)    
+28- GLEBA (GLE)    
+29- ALDEIA (ALD)    
+30- RAMAL (RAM)    
+31- PROJETO (PROJ)    
+32- PROJETO ASSENTAMENTO DIRIGIDO (PAD)    
+33- BAIXAO (BAIX)    
+34- GROTA (GROT)    
+35- LINHA (LINH)    
+36- ILHA (FAVE)    
+37- FAVELA (FAVE)    
+38- CORTICO (CORT)    
+39- MORRO (MORR)    
+40- LAGOA (LAGO)     
+41- ESTRADA (ESTR)    
+42- PORTO (PORT)    
+43- AREA DE ABRANGENCIA (ABRG)    
 
 **AGLOMERA**: informs the code of the agglomerate to which the locality belongs.   
 **STATUS**: informs the status of the locality, 1-Active and 2-Extinct.   
