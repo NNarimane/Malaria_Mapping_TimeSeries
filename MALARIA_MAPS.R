@@ -267,8 +267,8 @@ dev.off()
 BRA_SHP_MU=getShp(country = "Brazil", admin_level = "admin2", format = "df")
 
 Level="MU"
-Type="Falciparum"
-Measure="API"
+Type="Vivax"
+Measure="Cases"
 
 # Get function
 getMUNI_MAPS=function(Level, Type, Measure, Year, title, breaks, labels, Colors, fill_label){
@@ -686,8 +686,6 @@ dev.copy(png, paste0(Plot_Folder,title, ".png"),
          res = 100)
 dev.off()
 rm(FALCI_API_MAP)
-<<<<<<< HEAD
-=======
 
 #########################################################
 
@@ -730,4 +728,175 @@ ggplot(data=BRA_SHP_MU_SIVEP) +
         axis.title.y=element_blank(),
         axis.text.y=element_blank(),
         axis.ticks.y=element_blank())
->>>>>>> 11925e7350843a592658f8e5c5787d56c55d638a
+
+
+
+################################################################################################
+
+###############################
+## Mapping Indigeneous lands ##
+###############################
+
+library("rgdal")
+library("sf")
+library("maptools")
+library("stringr")
+library("dplyr")
+library("RColorBrewer")
+library("ggplot2")
+library("plyr")
+library("raster")
+
+# Load state abbreviations
+ADMIN_NAMES=read.csv(file = "C:/Users/nnekkab/Desktop/Malaria_Mapping_TimeSeries/Malaria_Mapping_TimeSeries_Data/BRA_ADMIN_NAMES.csv", sep = "")
+ADMIN_NAMES$Code=as.character(ADMIN_NAMES$Code)
+
+# Read shape file
+Shape_File="C:/Users/nnekkab/Desktop/Malaria_Mapping_TimeSeries/Malaria_Mapping_TimeSeries_Data/IBGE/Indigenous/ti_sirgas/ti_sirgas2000.shp"
+# INDI_SHP=readOGR(dsn = Shape_File, use_iconv = T)
+INDI_SHP=shapefile(Shape_File, use_iconv = T, encoding = "UTF-8")
+# Plot
+# plot(INDI_SHP)
+
+# Codes
+INDI_SHP$terrai_cod
+# Padding codes to length 5
+TI_CODES=data.frame(INDI_SHP[,c("gid","terrai_nom","terrai_cod","uf_sigla")])
+# TI_CODES$terrai_nom=as.character(TI_CODES$terrai_nom)
+# TI_CODES$terrai_nom=iconv(TI_CODES$terrai_nom, from = "UTF-8",to = "latin2")
+# TI_CODES$terrai_cod=as.character(TI_CODES$terrai_cod)
+# Add state codes
+# TI_CODES$uf_sigla=as.character(TI_CODES$uf_sigla)
+
+# Fix UF
+ADMIN_NAMES_UF=ADMIN_NAMES[which(ADMIN_NAMES$Level == "UF"),]
+TI_CODES$UF1=substr(TI_CODES$uf_sigla,1,2)
+TI_CODES$UF2=substr(TI_CODES$uf_sigla,4,5)
+TI_CODES$UF3=substr(TI_CODES$uf_sigla,7,8)
+TI_CODES$UF1_CODE = ADMIN_NAMES_UF[match(TI_CODES$UF1, ADMIN_NAMES_UF$UF),"Code"] 
+TI_CODES$UF2_CODE = ADMIN_NAMES_UF[match(TI_CODES$UF2, ADMIN_NAMES_UF$UF),"Code"] 
+TI_CODES$UF3_CODE = ADMIN_NAMES_UF[match(TI_CODES$UF3, ADMIN_NAMES_UF$UF),"Code"] 
+# TI_CODES$TI_CODE=paste0(TI_CODES$UF_CODE, TI_CODES$terrai_cod)
+
+# TI code names
+TI_CODES$NAMES=TI_CODES$terrai_nom
+TI_CODES$NAMES=str_replace_all(TI_CODES$NAMES, "[[:punct:]]", "")
+TI_CODES$NAMES=iconv(TI_CODES$NAMES,from="UTF-8",to="ASCII//TRANSLIT")
+TI_CODES$NAMES=gsub(" ", "", TI_CODES$NAMES, fixed = TRUE)
+TI_CODES$NAMES=gsub(" ", "", TI_CODES$NAMES, fixed = TRUE)
+# TI_CODES$NAMES=TI_CODES$NAMES[order(TI_CODES$NAMES)]
+
+# Match shape file to population by name
+INDI_POP_File="C:/Users/nnekkab/Desktop/Malaria_Mapping_TimeSeries/Malaria_Mapping_TimeSeries_Data/IBGE/Indigenous/INDI_POP_2010.csv"
+INDI_POP=read.csv(file = INDI_POP_File, sep = ",")
+# Seperate UF
+INDI_POP$UF=gsub("[\\(\\)]", "", regmatches(INDI_POP$NAME, gregexpr("\\(.*?\\)", INDI_POP$NAME)))
+INDI_POP[which(INDI_POP$UF == "character0"),"UF"] = NA
+# Clean names
+INDI_POP$NAME = as.character(INDI_POP$NAME)
+TI_NAMES=INDI_POP[which(INDI_POP$LEVEL == "TI"),"NAME"]
+TI_NAMES = substr(TI_NAMES,1,nchar(TI_NAMES)-5)
+INDI_POP[which(INDI_POP$LEVEL == "TI"),"NAME"] = TI_NAMES
+# Remove accents in names and space and make lowercase
+TI_NAMES=str_replace_all(TI_NAMES, "[[:punct:]]", "")
+TI_NAMES=iconv(TI_NAMES,from="UTF-8",to="ASCII//TRANSLIT")
+TI_NAMES=gsub(" ", "", TI_NAMES, fixed = TRUE)
+TI_NAMES=TI_NAMES[order(TI_NAMES)]
+
+# Check matches
+mTERRA_INDI_NAMES <- paste(TI_CODES$NAMES, collapse="|")
+table(grepl(mTERRA_INDI_NAMES, TI_NAMES, ignore.case = TRUE)) # 14F, 487T
+# Get non-matches and check
+MATCHED_NAMES=grepl(mTERRA_INDI_NAMES, TI_NAMES, ignore.case = TRUE)
+NON_MATCHED_NAMES=TI_NAMES[!MATCHED_NAMES]
+NON_MATCHED_NAMES
+# Add new corrections
+TI_CODES$NAME_FIXED=TI_CODES$NAMES
+TI_CODES$NAME_FIXED[which(TI_CODES$NAME_FIXED == "BoaVistaAM")] = "BoaVista"
+TI_CODES$NAME_FIXED[which(TI_CODES$NAME_FIXED == "BoaVistaPR")] = "BoaVista"
+TI_CODES$NAME_FIXED[which(TI_CODES$NAME_FIXED == "Erikpatsa")] = "Erikbaktsa"
+TI_CODES$NAME_FIXED[which(TI_CODES$NAME_FIXED == "Geripanco")] = "Jeripanco"
+TI_CODES$NAME_FIXED[which(TI_CODES$NAME_FIXED == "KampadoRioAmonia")] = "KampadoRioAmonea"
+TI_CODES$NAME_FIXED[which(TI_CODES$NAME_FIXED == "PanambiLagoaRica")] = "Panambi"
+TI_CODES$NAME_FIXED[which(TI_CODES$NAME_FIXED == "SaoDomingosMT")] = "SaoDomingos"
+TI_CODES$NAME_FIXED[which(TI_CODES$NAME_FIXED == "SaoFranciscodoCanimari")] = "SaoFranciscodoCanamari"
+TI_CODES$NAME_FIXED[which(TI_CODES$NAME_FIXED == "SaoMarcosMT")] = "SaoMarcos"
+TI_CODES$NAME_FIXED[which(TI_CODES$NAME_FIXED == "SaoMarcosRR")] = "SaoMarcos"
+TI_CODES$NAME_FIXED[which(TI_CODES$NAME_FIXED == "TikunadeSantoAntonio")] = "TikunaSantoAntonio"
+# Check matches again
+mTERRA_INDI_NAMES_FIXED <- paste(TI_CODES$NAME_FIXED, collapse="|")
+table(grepl(mTERRA_INDI_NAMES_FIXED, TI_NAMES, ignore.case = TRUE)) # 3F, 498F
+
+# Add names for indi pop merge
+INDI_POP$NAMES_MERGE=ifelse(INDI_POP$LEVEL == "TI",INDI_POP$NAME,NA)
+INDI_POP$NAMES_MERGE=str_replace_all(INDI_POP$NAMES_MERGE, "[[:punct:]]", "")
+INDI_POP$NAMES_MERGE=iconv(INDI_POP$NAMES_MERGE,from="UTF-8",to="ASCII//TRANSLIT")
+INDI_POP$NAMES_MERGE=gsub(" ", "", INDI_POP$NAMES_MERGE, fixed = TRUE)
+
+# Merge
+TI_MERGE=merge(TI_CODES, INDI_POP, by.x = c("NAME_FIXED","UF1"), by.y=c("NAMES_MERGE","UF"), all.x=T)
+
+# Set break points
+breaks=c(-Inf, 0, 100, 500, 1000, 5000, 10000, 15000, Inf)
+labels=c("0", paste("<", breaks[3:(length(breaks)-1)]), paste(">", breaks[(length(breaks)-1)]))
+
+# Add categories# Categories
+TI_MERGE[is.na(TI_MERGE$RES_TOTAL_INDI_LAND),"RES_TOTAL_INDI_LAND"] = 0
+TI_MERGE$RES_CAT <- cut(as.numeric(TI_MERGE$RES_TOTAL_INDI_LAND), 
+                        breaks = breaks, labels = labels)
+
+# Colors
+getColors=colorRampPalette(brewer.pal(6,"Blues"))
+Colors=c("gray85", getColors(length(labels)-1))
+names(Colors)=labels
+TI_MERGE$RES_CAT_COL=TI_MERGE$RES_CAT
+levels(TI_MERGE$RES_CAT_COL) = unname(Colors)
+TI_MERGE$RES_CAT_COL=as.character(TI_MERGE$RES_CAT_COL)
+
+#################
+# Merge with plot
+
+# Select variables to merge
+TI_MERGE_SELECT=TI_MERGE[,c("gid","RES_TOTAL_INDI_LAND",
+                            "RES_CAT","RES_CAT_COL")]
+# TI_MERGE_SELECT$terrai_cod=as.integer(TI_MERGE_SELECT$terrai_cod)
+
+# Order by name
+# TI_MERGE_SELECT=TI_MERGE_SELECT[match(INDI_SHP$terrai_cod, TI_MERGE_SELECT$terrai_cod),]
+
+# Merge by left join
+# INDI_SHP=merge(INDI_SHP, TI_MERGE_SELECT, by = "gid", duplicateGeoms = T)
+# INDI_SHP=inner_join(INDI_SHP, TI_MERGE_SELECT, by = "gid")
+INDI_SHP$RES_CAT=INDI_SHP$gid
+INDI_SHP$RES_CAT_COL=INDI_SHP$gid
+INDI_SHP$RES_CAT_COL[INDI_SHP$RES_CAT %in% TI_MERGE_SELECT$gid] <- TI_MERGE_SELECT$RES_CAT_COL
+
+# Labels
+title="Resident population of indigeneous lands"
+fill_label="Population"
+
+
+######
+# Plot
+
+plot(INDI_SHP)
+
+ggplot(data=INDI_SHP) +
+  geom_polygon(color="black", fill=NA, aes(long, lat, group=group)) +
+  coord_equal() +
+  theme_minimal() + 
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())
+
+# library(rgdal)
+# library(raster)
+# plot(subs2, col='blue')
+# plot(subs1, add=TRUE, col='red')
+# subs_union <- union(subs1, subs2)
+
+
+

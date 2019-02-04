@@ -355,7 +355,6 @@ dev.off()
 ################
 ## LINE PLOTS ##
 ################
-<<<<<<< HEAD
 
 # Colors
 getColors=colorRampPalette(brewer.pal(10,"Spectral"))
@@ -420,8 +419,7 @@ WHO_Malaria_Plot
 
 # Save
 dev.copy(png, paste0(Plot_Folder,"WHO reported annual malaria cases in South America, 2000-2017",".png"),
-         width = 1000, height = 500, units = "px", pointsize = 12,
-=======
+         width = 1000, height = 500, units = "px", pointsize = 12)
 
 # Colors
 getColors=colorRampPalette(brewer.pal(10,"Spectral"))
@@ -455,7 +453,6 @@ ggplot(mDATA_FALCI, aes(y=value*100, x=variable, group = COUNTRY, color = COUNTR
 # Save
 dev.copy(png, paste0(Plot_Folder,title,".png"),
          width = 2000, height = 1000, units = "px", pointsize = 12,
->>>>>>> f0ab53497a243b73314201b90ee8c36641d789d7
          res = 100)
 dev.off()
 
@@ -672,14 +669,11 @@ dev.off()
 ############################# STATE-LEVEL #############################
 #######################################################################
 
-<<<<<<< HEAD
-=======
 # Set file path
 if(envNN){
   FilePath=paste0(getwd(),"/SIVEP_clean.RData")
 }else{}
 
->>>>>>> f0ab53497a243b73314201b90ee8c36641d789d7
 # Get SIVEP raw notification data
 load(FilePath)
 
@@ -1318,17 +1312,45 @@ dev.off()
 ## BORDER MUNICIPALITIES ##
 ###########################
 
+#################
+## Get SIVEP data
+
+# Environment: NN or RL
+envNN=TRUE
+
+# Set working directory on your desktop
+if(envNN){
+  setwd("C:/Users/nnekkab/Desktop/Malaria_Mapping_TimeSeries/")
+}else{
+  setwd("~/")
+}
+
+# Plot folder
+Plot_Folder=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Plots/Importations/")
+options(scipen=999)
+
+# Load state abbreviations
+ADMIN_NAMES=read.csv(file = paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/BRA_ADMIN_NAMES.csv"), sep = "")
+ADMIN_NAMES$Code=as.character(ADMIN_NAMES$Code)
+
+# Set file path
+FilePath=paste0(getwd(),"/SIVEP_clean.RData")
+
+# Get SIVEP raw notification data
+load(FilePath)
+
+# Read country codes files
+PAIS_CODE=read.csv(file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/COUNTRY_CODES.csv"), header = TRUE, stringsAsFactors = FALSE)
+PAIS_CODE$PAIS_CODE=as.character(PAIS_CODE$PAIS_CODE)
+
+
 #######################################
 ## GET BORDER STATES AND MUNICIPALITIES
 
 # Border states
 Border_UF = c("AC","AM","AP","RO","RR","PA","MT")
-<<<<<<< HEAD
-=======
 Border_UF_Code = ADMIN_NAMES[which(ADMIN_NAMES$Level == "UF" &
                                    ADMIN_NAMES$UF %in% Border_UF),]
-
->>>>>>> f0ab53497a243b73314201b90ee8c36641d789d7
 
 # Border municipalities
 Border_MU_AC = c("Acrelandia","Assis Brasil","Brasileia","Capixaba","Cruzeiro do Sul","Epitaciolandia",
@@ -1346,37 +1368,15 @@ Border_MU_MT=c("Vila Bela da Santissima Trindade","Porto Esperidiao","Caceres","
 Border_MU_All=c(Border_MU_AC,Border_MU_AM,Border_MU_AP,Border_MU_RO,Border_MU_RR,Border_MU_PA,Border_MU_MT)
 
 # Merge UF and MU border names
-<<<<<<< HEAD
 Border_Names_UF_MU = c(Border_UF, Border_MU_All)
 Border_Codes_UF_MU=data.frame(cbind(NAME = Border_Names_UF_MU,
                          CODE = ADMIN_NAMES[which(as.character(ADMIN_NAMES$Name) %in% Border_Names_UF_MU),"Code"],
                          BORDER = "Yes"))
-=======
+
 # Border_Names_UF_MU = c(Border_UF, Border_MU_All)
 Border_Codes_UF_MU=data.frame(ADMIN_NAMES[which(as.character(ADMIN_NAMES$Name) %in% Border_MU_All &
                                                   as.character(ADMIN_NAMES$UF) %in% Border_UF),c("Name","Code")],
                               BORDER = "Yes")
->>>>>>> f0ab53497a243b73314201b90ee8c36641d789d7
-
-
-#################
-## Get SIVEP data
-
-cat("Run data upload script\n")
-
-# Set file path
-if(envNN){
-  FilePath=paste0(getwd(),"/SIVEP_clean.RData")
-}else{
-  
-}
-
-# Get SIVEP raw notification data
-load(FilePath)
-
-# Read country codes files
-PAIS_CODE=read.csv(file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/COUNTRY_CODES.csv"), header = TRUE, stringsAsFactors = FALSE)
-PAIS_CODE$PAIS_CODE=as.character(PAIS_CODE$PAIS_CODE)
 
 
 ################################
@@ -1384,14 +1384,11 @@ PAIS_CODE$PAIS_CODE=as.character(PAIS_CODE$PAIS_CODE)
 
 # Get SIVEP by
 SIVEP_BORDER_MU = df %>%
-<<<<<<< HEAD
   select(DT_NOTIF, PAIS_RES, PAIS_INF, MUN_NOTI, RES_EXAM) %>%
   mutate(BORDER = ifelse(MUN_NOTI %in% Border_Codes_UF_MU$CODE,"Yes",NA)) %>%
-=======
   select(DT_NOTIF, PAIS_RES, PAIS_INF, MUN_NOTI, UF_NOTIF, RES_EXAM) %>%
   mutate(BORDER = ifelse(MUN_NOTI %in% Border_Codes_UF_MU$Code &
                            UF_NOTIF %in% Border_UF_Code$Code,"Yes",NA)) %>%
->>>>>>> f0ab53497a243b73314201b90ee8c36641d789d7
   mutate(BRASIL_RES = ifelse(PAIS_RES == "1","Yes","No")) %>%
   mutate(BRASIL_INF = ifelse(PAIS_INF == "1","Yes","No")) %>%
   mutate(YEAR = year(DT_NOTIF)) %>%
@@ -1462,14 +1459,11 @@ ggplot(data=SIVEP_BORDER_MU[which(SIVEP_BORDER_MU$BRASIL_INF == "No"),],
 
 # Get SIVEP by
 SIVEP_BORDER_MU_MAP_VIVAX = df %>%
-<<<<<<< HEAD
   select(DT_NOTIF, PAIS_RES, PAIS_INF, MUN_NOTI, UF_NOTIF, RES_EXAM) %>% 
   mutate(BORDER = ifelse(MUN_NOTI %in% Border_Codes_UF_MU$CODE,"Yes",NA)) %>% 
-=======
   select(DT_NOTIF, PAIS_RES, PAIS_INF, MUN_NOTI, UF_NOTIF, RES_EXAM) %>%
   mutate(BORDER = ifelse(MUN_NOTI %in% Border_Codes_UF_MU$Code &
                            UF_NOTIF %in% Border_UF_Code$Code,"Yes",NA)) %>%
->>>>>>> f0ab53497a243b73314201b90ee8c36641d789d7
   mutate(BRASIL_RES = ifelse(PAIS_RES == "1","Yes","No")) %>% 
   mutate(BRASIL_INF = ifelse(PAIS_INF == "1","Yes","No")) %>%
   mutate(YEAR = year(DT_NOTIF)) %>% 
@@ -1522,26 +1516,20 @@ Venezuela_RES=Venezuela_RES[,-2]
 BRA_SHP_MU=getShp(country = "Brazil", admin_level = "admin2", format = "df")
 
 # Add border variable
-<<<<<<< HEAD
 BRA_SHP_MU$name_2=as.character(BRA_SHP_MU$name_2)
 BRA_SHP_MU$BORDER = ifelse((BRA_SHP_MU$name_2 %in% Border_Codes_UF_MU$NAME),"Yes","No")
-=======
 BRA_SHP_MU$name_1=as.character(BRA_SHP_MU$name_1)
 BRA_SHP_MU$name_2=as.character(BRA_SHP_MU$name_2)
 BRA_SHP_MU$BORDER = ifelse((BRA_SHP_MU$name_2 %in% Border_Codes_UF_MU$Name &
                               BRA_SHP_MU$name_1 %in% Border_UF_Code$Name),"Yes","No") 
->>>>>>> f0ab53497a243b73314201b90ee8c36641d789d7
 
 # Make TS data wide by year and by type
 wVenezuela_RES=reshape(Venezuela_RES, idvar = c("MUN_NOTI","UF_NOTIF"), 
                timevar = "YEAR", direction = "wide")
 
 # Step 1: make names into character temporarily
-<<<<<<< HEAD
 BRA_SHP_MU$name_1=as.character(BRA_SHP_MU$name_1)
 BRA_SHP_MU$name_2=as.character(BRA_SHP_MU$name_2)
-=======
->>>>>>> f0ab53497a243b73314201b90ee8c36641d789d7
 Venezuela_RES$MUN_NOTI=as.character(Venezuela_RES$MUN_NOTI)
 Venezuela_RES$UF_NOTIF=as.character(Venezuela_RES$UF_NOTIF)
 
@@ -1588,11 +1576,8 @@ if(Measure == "Vivax"){
 PLOT=ggplot(data=mBRA_SHP_MU_SIVEP) +
   geom_polygon(aes(long, lat, group=group, fill=CAT, color = BORDER)) +
   scale_fill_manual(values = Colors) +
-<<<<<<< HEAD
   scale_color_manual(values = c("gray95","black")) +
-=======
   scale_color_manual(values = c("gray95","red")) +
->>>>>>> f0ab53497a243b73314201b90ee8c36641d789d7
   coord_equal() +
   theme_minimal() + 
   labs(title = title, fill = fill_label) +  
