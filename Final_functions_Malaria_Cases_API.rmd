@@ -1,0 +1,28 @@
+---
+title: "Malaria_Cases_API_final_functions"
+author: "Raquel Lana and Narimane Nekkab"
+date: "4 de fevereiro de 2019"
+output: html_document
+---
+
+# Final functions for the analyzes and figures of the first paper
+
+
+```{r}
+
+
+```
+
+
+```{r}
+
+```
+
+## Including Plots
+
+
+```{r}
+
+
+```
+
