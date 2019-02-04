@@ -754,7 +754,6 @@ MU_MCMC_VIVAX_DATA=subset(TS, LEVEL == "MU" & NAME %in% Candidate_MU & TYPE == "
 # Save csv
 write.table(MU_MCMC_VIVAX_DATA,"C:/Users/nnekkab/Desktop/MCMC_Fitting/MU_MCMC_VIVAX_DATA.csv",sep = ",",
             row.names = F)
-<<<<<<< HEAD
 
 #######
 ## Save
@@ -763,18 +762,6 @@ write.table(MU_MCMC_VIVAX_DATA,"C:/Users/nnekkab/Desktop/MCMC_Fitting/MU_MCMC_VI
 
 if(SavePlots){
   if(!byGender){
-
-=======
-
-#######
-## Save
-#######
-
-
-if(SavePlots){
-  if(!byGender){
-
->>>>>>> 11925e7350843a592658f8e5c5787d56c55d638a
     # Acre
     TS_Plot_AC
     # Save
@@ -1497,3 +1484,177 @@ dev.copy(png, paste0("C:/Users/nnekkab/Desktop/Malaria_Mapping_TimeSeries/Malari
          width = 1800, height = 800, units = "px", pointsize = 12,
          res = 100)
 dev.off()
+
+
+#############################################################
+####### Age and Gender Stratified Cases and API Plots ####### 
+#############################################################
+
+#################
+## Time Series ##
+#################
+
+# Load data
+TS_Age_Gender=fread(file=paste0(getwd(),"/Malaria_Mapping_TimeSeries_Data/sivep_admlevels_dtweek_STRAT.csv"),
+                    encoding = "UTF-8")
+# Fix age_cat factor levels
+Age_Group_Levels=c("0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80+")
+TS_Age_Gender$AGE_CAT=factor(as.character(TS_Age_Gender$AGE_CAT), 
+                             levels = Age_Group_Levels) 
+# Get dates from week
+TS_Age_Gender$DATE=as.Date(TS_Age_Gender$DT_WEEK, "%Y-%m-%d")
+
+# Assign names
+TS_Age_Gender$STATE = ADMIN_NAMES[match(TS_Age_Gender$CODE, ADMIN_NAMES$Code),"UF"] 
+TS_Age_Gender$NAME = ADMIN_NAMES[match(TS_Age_Gender$CODE, ADMIN_NAMES$Code),"Name"]
+
+# Top states
+HighIncidenceStates=c("AC","AM","AP","MA","MT","PA","RO","RR","TO")
+
+# Aggregate weekly by gender
+TS_Age_Gender=subset(TS_Age_Gender, select=-c(DT_WEEK))
+TS_Age_Gender=aggregate(cbind(CASES,API)~., TS_Age_Gender, FUN = sum)
+
+# Aggregate weekly by age
+TS_Age=subset(TS_Age_Gender, select=-c(GENDER))
+TS_Age=aggregate(cbind(CASES,API)~., TS_Age, FUN = sum)
+
+# Aggregate weekly by gender
+TS_Gender=subset(TS_Age_Gender, select=-c(AGE_CAT))
+TS_Gender=aggregate(cbind(CASES,API)~., TS_Age, FUN = sum)
+
+# Aggregate by age and gender year
+TS_Age_Gender_Year=subset(TS_Age_Gender, select=-c(DATE))
+TS_Age_Gender_Year=aggregate(cbind(CASES,API)~., TS_Age_Gender_Year, FUN = sum)
+
+# Aggregate by gender by year
+TS_Gender_Year=subset(TS_Age_Gender_Year, select=-c(AGE_CAT))
+TS_Gender_Year=aggregate(cbind(CASES,API)~., TS_Gender_Year, FUN = sum)
+
+# Aggregate by gender by year
+TS_Age_Year=subset(TS_Age_Gender_Year, select=-c(GENDER))
+TS_Age_Year=aggregate(cbind(CASES,API)~., TS_Age_Year, FUN = sum)
+
+##################
+# Plot time series
+
+# Gender
+ggplot(data = subset(TS_Age_Gender, LEVEL == "BR"), 
+       aes(DATE, log(API), color = GENDER)) +
+  stat_summary(fun.y = sum, geom = "line") +
+  scale_x_date(breaks = "year", 
+               date_labels = "%Y") +
+  facet_wrap(~TYPE, scales = "free_y", ncol = 1) +
+  labs(title = "P. vivax and P. falciparum log API by gender", 
+       subtitle = paste0("Brazil, ", StartYear, "-", EndYear),
+       x = "Year", y = "log(API)") + 
+  guides(color=guide_legend(title="Gender"))
+
+# Save
+dev.copy(png, paste0("C:/Users/nnekkab/Desktop/Malaria_Mapping_TimeSeries/Malaria_Mapping_TimeSeries_Plots/Age and Gender/",
+                     "P. vivax and P. falciparum log API by gender.png"),
+         width = 1800, height = 800, units = "px", pointsize = 12,
+         res = 100)
+dev.off()
+
+# P. vivax by gender by state
+ggplot(data = subset(TS_Age_Gender, LEVEL == "UF" & TYPE == "Vivax"), 
+       aes(DATE, log(API), color = GENDER)) +
+  stat_summary(fun.y = sum, geom = "line") +
+  scale_x_date(breaks = "year", 
+               date_labels = "%Y") +
+  facet_wrap(~NAME, ncol = 3) +
+  labs(title = "P. vivax log API by gender by state", 
+       subtitle = paste0("Brazil, ", StartYear, "-", EndYear),
+       x = "Year", y = "log(API)") + 
+  guides(color=guide_legend(title="Gender"))
+
+# Save
+dev.copy(png, paste0("C:/Users/nnekkab/Desktop/Malaria_Mapping_TimeSeries/Malaria_Mapping_TimeSeries_Plots/Age and Gender/",
+                     "P. vivax log API by gender by state.png"),
+         width = 1800, height = 800, units = "px", pointsize = 12,
+         res = 100)
+dev.off()
+
+
+
+################
+## Histograms ##
+################
+
+# By age and gender
+ggplot(aes(y = log(API), x = AGE_CAT, fill = GENDER), 
+       data = subset(TS_Age_Gender_Year, LEVEL == "BR" & TYPE == "Falciparum")) +
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(~YEAR, ncol = 3) +
+  labs(title = "P. falciparum log API by gender and age categories, Brazil 2003-2017", x = "Age categories", y = "log(API)") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  guides(fill = guide_legend(title = "Gender"))
+
+# Save
+dev.copy(png, paste0("C:/Users/nnekkab/Desktop/Malaria_Mapping_TimeSeries/Malaria_Mapping_TimeSeries_Plots/Age and Gender/",
+                     "P. falciparum log API by gender and age categories, Brazil 2003-2017.png"),
+         width = 1200, height = 1000, units = "px", pointsize = 12,
+         res = 100)
+dev.off()
+
+# By state
+ggplot(aes(y = CASES, x = AGE_CAT, fill = GENDER), 
+       data = subset(TS_Age_Gender_Year, LEVEL == "UF" & TYPE == "Vivax")) +
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(~NAME, ncol = 3) +
+  labs(title = "P. vivax API by gender and age categories by state, Brazil 2003-2017", 
+       x = "Age categories", y = "Cases") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  guides(fill = guide_legend(title = "Gender"))
+
+# Save
+dev.copy(png, paste0("C:/Users/nnekkab/Desktop/Malaria_Mapping_TimeSeries/Malaria_Mapping_TimeSeries_Plots/Age and Gender/",
+                     "P. vivax cases by gender and age categories by state, Brazil 2003-2017.png"),
+         width = 1800, height = 800, units = "px", pointsize = 12,
+         res = 100)
+dev.off()
+
+
+######################## Age and gender by state (automated)
+
+# Get highest incidence municipality plots only
+Age_Gender_State_byYear_Plots=foreach(i=1:length(HighIncidenceStates)) %do% {
+  Plot_Name=paste0("TS_Plot_",HighIncidenceStates[i])
+  assign(Plot_Name, ggplot(aes(y = CASES, x = AGE_CAT, fill = GENDER), 
+                           data = subset(TS_Age_Gender_Year, LEVEL == "UF" & TYPE == "Vivax" &
+                                           STATE == HighIncidenceStates[i])) +
+           geom_bar(stat = "identity", position = "dodge") +
+           facet_wrap(~YEAR, ncol = 3) +
+           labs(title = paste0("P. vivax cases by gender and age categories in ",HighIncidenceStates[i],", Brazil 2003-2017"), 
+                x = "Age categories", y = "Cases") + 
+           theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+           guides(fill = guide_legend(title = "Gender")))
+}
+
+TS_Plot_MT
+# Save
+dev.copy(png, paste0("C:/Users/nnekkab/Desktop/Malaria_Mapping_TimeSeries/Malaria_Mapping_TimeSeries_Plots/Age and Gender/",
+                     "P. vivax cases by gender and age categories in Mato Grosso, Brazil 2003-2017.png"),
+         width = 1800, height = 800, units = "px", pointsize = 12,
+         res = 100)
+dev.off()
+
+##################################### Occupation
+
+ggplot(aes(y = CASES, x = COD_OCUP1, fill = COD_OCUP1), data =  subset(Occup_gender, MALARIA_TYPE == "Vivax" 
+                                                                  & ANO <= 2017 & SEXO == "F")) +
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(~ANO, ncol = 3) +
+  labs(title = "Occupation of women with P. vivax, Brazil 2003-2017",x = "Occupation", y = "P. vivax malaria cases") +
+  # scale_x_discrete(breaks = c("F", "M"), labels = c("Female", "Male")) +
+  guides(fill = guide_legend(title = "Occupation")) + 
+  theme(axis.text.x = element_blank())
+
+# Save
+dev.copy(png, paste0("C:/Users/nnekkab/Desktop/Malaria_Mapping_TimeSeries/Malaria_Mapping_TimeSeries_Plots/Age and Gender/",
+                     "Occupation of women with P. vivax, Brazil 2003-2017.png"),
+         width = 1800, height = 800, units = "px", pointsize = 12,
+         res = 100)
+dev.off()
+
