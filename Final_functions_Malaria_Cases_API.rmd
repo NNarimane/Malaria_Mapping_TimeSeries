@@ -9,7 +9,7 @@ editor_options:
 
 # Final functions for the analyzes and figures of the first paper
 
-- Packages - change after for the header file together th
+- Packages - change after for the header file together the parameters.
 ```{r}
 library(foreign)
 library('stringr')
@@ -31,6 +31,7 @@ library(rgdal)
 
 - resolução e cortes:
 2004-2018
+poder escolher notificação, residencia e infecção
 PCD + ACD
 weekly
 - uma tabela
@@ -40,39 +41,68 @@ agge and gender
 
 
 
-
+- mover para o header file
 ```{r}
 # Get SIVEP data cleaned up and by species
 FilePath = "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/SIVEP_clean.RData"
 StartYear = 2010
 EndYear = 2011
+AgTimeUnit = "week"
+byNotification = F
+byResidence = F
+byInfection = T
+d <- getWEEKLY_SIVEP_MALARIA_TYPE(FilePath, StartYear, EndYear, AgTimeUnit)
 
-getWEEKLY_SIVEP_MALARIA_TYPE <- function(FilePath, StartYear, EndYear){
+```
+
+### Function
+```{r}
+getWEEKLY_SIVEP_MALARIA_TYPE <- function(FilePath, StartYear, EndYear, AgTimeUnit){
   
   # Get SIVEP raw notification data
   load(FilePath)
-#  load("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/SIVEP_clean.RData")
-  
+  #load("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/SIVEP_clean.RData")
+
   # Choose time period
   df <- df[which(df[,"DT_NOTIF"] >= paste0(StartYear,"-01-01") & df[,"DT_NOTIF"] <= paste0(EndYear, "-12-31")),]
   
+  
   # Replace missing state code with municipality state code
-  df$UF_NOTIF <- substr(df$MUN_NOTI, 1, 2) 
+  df$UF_NOTIF=substr(df$MUN_NOTI, 1, 2) 
+  df$UF_RESID=substr(df$MUN_RESI, 1, 2)
+  df$UF_INFEC=substr(df$MUN_INFE, 1, 2)
 
-# Split data by malaria type and aggregate to day (MU - level)
+  # Select administrative level via code
+  if(byNotification){
+    df$PAIS_CODE <- 1
+    names(df)[names(df) == 'UF_NOTIF'] <- 'UF_CODE'
+    names(df)[names(df) == 'MUN_NOTI'] <- 'MUN_CODE'
+  }
+  if(byResidence){
+    names(df)[names(df) == 'PAIS_RES'] <- 'PAIS_CODE'
+    names(df)[names(df) == 'UF_RESID'] <- 'UF_CODE'
+    names(df)[names(df) == 'MUN_RESI'] <- 'MUN_CODE'
+  }
+  if(byInfection){
+    names(df)[names(df) == 'PAIS_INF'] <- 'PAIS_CODE'
+    names(df)[names(df) == 'UF_INFEC'] <- 'UF_CODE'
+    names(df)[names(df) == 'MUN_INFE'] <- 'MUN_CODE'
+  }
+  
+  # Split data by malaria type and aggregate to day (MU - level)
   week_malaria_type_muni <- df %>%
-    group_by(DT_NOTIF, MUN_NOTI) %>%
+    group_by(DT_NOTIF, MUN_CODE) %>%
     count(RES_EXAM) %>%
     mutate(LEVEL = "MU") %>%
-    select(DT_NOTIF, LEVEL, MUN_NOTI, RES_EXAM, n) %>%
+    select(DT_NOTIF, LEVEL, MUN_CODE, RES_EXAM, n) %>%
     spread(RES_EXAM, n, fill = 0) %>%
-    rename(CODE = MUN_NOTI,
+    rename(CODE = MUN_CODE,
            FALCI = "Falciparum",
            VF = "V+F",
            VIVAX = "Vivax") %>%
     mutate(Falciparum = FALCI + VF,
            Vivax = VIVAX + VF,
-           DATE = floor_date(as.Date(DT_NOTIF, format = "%Y-%m-%d"), unit = "week")
+           DATE = floor_date(as.Date(DT_NOTIF, format = "%Y-%m-%d"), unit = AgTimeUnit)
            ) %>%
     ungroup %>%
     select(-DT_NOTIF) %>%
@@ -82,18 +112,18 @@ getWEEKLY_SIVEP_MALARIA_TYPE <- function(FilePath, StartYear, EndYear){
   
   # UF - level
   week_malaria_type_state <- df %>%
-    group_by(DT_NOTIF, UF_NOTIF) %>%
+    group_by(DT_NOTIF, UF_CODE) %>%
     count(RES_EXAM) %>%
     mutate(LEVEL = "UF") %>%
-    select(DT_NOTIF, LEVEL, UF_NOTIF, RES_EXAM, n) %>%
+    select(DT_NOTIF, LEVEL, UF_CODE, RES_EXAM, n) %>%
     spread(RES_EXAM, n, fill = 0) %>%
-    rename(CODE = UF_NOTIF,
+    rename(CODE = UF_CODE,
            FALCI = "Falciparum",
            VF = "V+F",
            VIVAX = "Vivax") %>%
     mutate(Falciparum = FALCI + VF,
            Vivax = VIVAX + VF,
-           DATE = floor_date(as.Date(DT_NOTIF, format = "%Y-%m-%d"), unit = "week")
+           DATE = floor_date(as.Date(DT_NOTIF, format = "%Y-%m-%d"), unit = AgTimeUnit)
            ) %>%      
     ungroup %>%
     select(-DT_NOTIF) %>%
@@ -102,18 +132,18 @@ getWEEKLY_SIVEP_MALARIA_TYPE <- function(FilePath, StartYear, EndYear){
   
   # BR - level
   week_malaria_type_brazil <- df %>%
-    group_by(DT_NOTIF, UF_NOTIF) %>%
+    group_by(DT_NOTIF, PAIS_CODE) %>%
     count(RES_EXAM) %>%
-    mutate(LEVEL = "BR",
-           CODE = "1") %>%
-    select(DT_NOTIF, LEVEL, UF_NOTIF, RES_EXAM, n) %>%
+    mutate(LEVEL = "BR")  %>% 
+    select(DT_NOTIF, LEVEL, PAIS_CODE, RES_EXAM, n) %>%
     spread(RES_EXAM, n, fill = 0) %>%
-    rename(FALCI = "Falciparum",
+    rename(CODE = PAIS_CODE,
+           FALCI = "Falciparum",
            VF = "V+F",
            VIVAX = "Vivax") %>%
     mutate(Falciparum = FALCI + VF,
            Vivax = VIVAX + VF,
-           DATE = floor_date(as.Date(DT_NOTIF, format = "%Y-%m-%d"), unit = "week")
+           DATE = floor_date(as.Date(DT_NOTIF, format = "%Y-%m-%d"), unit = AgTimeUnit)
            ) %>%
     ungroup %>%
     select(-DT_NOTIF) %>%
@@ -121,13 +151,15 @@ getWEEKLY_SIVEP_MALARIA_TYPE <- function(FilePath, StartYear, EndYear){
     gather(key = 'TYPE', value = 'CASES', -c(DATE, LEVEL, CODE))
     
   # Merge together
-  SIVEP_MALARIA_TYPE <- rbind(day_malaria_type_brazil, day_malaria_type_state, day_malaria_type_muni)
-  rm(df, day_malaria_type_brazil, day_malaria_type_state, day_malaria_type_muni)
+  SIVEP_MALARIA_TYPE <- rbind(week_malaria_type_brazil, week_malaria_type_state, week_malaria_type_muni)
+  rm(df, treat, week_malaria_type_brazil, week_malaria_type_state, week_malaria_type_muni)
 
 
   return(SIVEP_MALARIA_TYPE)
   
 }
+
+
 
 ```
 
