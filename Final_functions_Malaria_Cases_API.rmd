@@ -41,26 +41,33 @@ agge and gender
 
 
 
-- mover para o header file
+- mover para o header file para rodar a função abaixo
 ```{r}
 # Get SIVEP data cleaned up and by species
-FilePath = "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/SIVEP_clean.RData"
-StartYear = 2010
-EndYear = 2011
-AgTimeUnit = "week"
-byNotification = F
+SIVEPFilePath = "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/SIVEP_clean.RData"
+StartYear = 2004 # (inferior limit = 2003)
+EndYear = 2017 # (superior limit = 2018)
+AgTimeUnit = "week" # ("week", "month")
+byNotification = F 
 byResidence = F
 byInfection = T
-d <- getWEEKLY_SIVEP_MALARIA_TYPE(FilePath, StartYear, EndYear, AgTimeUnit)
+byPCD = F
+byPCDACD = T
+d <- getWEEKLY_SIVEP_MALARIA_TYPE(SIVEPFilePath, StartYear, EndYear, AgTimeUnit)
 
 ```
 
-### Function
+### Function to organize the SIVEP database per:
+- DATE: from the date of notification being that it can provide the first day of the epidemiological week in which the notification date was made or the month of this date.    
+- LEVEL: Country (BR), State (UF), Municipality (MU).   
+- CODE: Country (1), State (Amazon Basin states IBGE codes) and Municipality (Amazon Basin municipalities IBGE codes).  
+- TYPE: Falciparum ou Vivax malaria
+- Cases: number of cases counted by date, level, code and type of malaria.  
 ```{r}
 getWEEKLY_SIVEP_MALARIA_TYPE <- function(FilePath, StartYear, EndYear, AgTimeUnit){
   
   # Get SIVEP raw notification data
-  load(FilePath)
+  load(SIVEPFilePath)
   #load("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/SIVEP_clean.RData")
 
   # Choose time period
@@ -89,7 +96,17 @@ getWEEKLY_SIVEP_MALARIA_TYPE <- function(FilePath, StartYear, EndYear, AgTimeUni
     names(df)[names(df) == 'MUN_INFE'] <- 'MUN_CODE'
   }
   
-  # Split data by malaria type and aggregate to day (MU - level)
+  #Select the cases by Type of Detection
+  if(byPCD){
+    df <- df %>%
+      filter(TIPO_LAM == "PCD")
+  }
+  if(byPCDACD){
+    df <- df %>%
+      filter(TIPO_LAM == "PCD" | TIPO_LAM == "ACD")
+  }
+  
+  # Split data by malaria type and aggregate to MU - level
   week_malaria_type_muni <- df %>%
     group_by(DT_NOTIF, MUN_CODE) %>%
     count(RES_EXAM) %>%
@@ -163,10 +180,55 @@ getWEEKLY_SIVEP_MALARIA_TYPE <- function(FilePath, StartYear, EndYear, AgTimeUni
 
 ```
 
-
+### Function to agreggate the population size from IBGE and calculate API.
+- Move to header file 
 ```{r}
+IBGEFilePath = "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/BRA_POP_EST.csv"
+#StartYear = 2004 # (inferior limit = 2003)
+#EndYear = 2017 # (superior limit = 2018)
+#AgTimeUnit = "week" # ("week", "month")
+d2 <- getWEEKLY_SIVEP_API(IBGEFilePath, StartYear, EndYear, AgTimeUnit)
 
 ```
+
+
+```{r}
+getWEEKLY_SIVEP_API <- function(IBGEFilePath, StartYear, EndYear, AgTimeUnit){
+  
+  # Get IBGE population size 
+  d1 <- read.csv(IBGEFilePath, stringsAsFactors = F)
+
+  # Reshape the population size table to join with cases table
+  d1 <- d1 %>%
+    select(-GR) %>%
+    filter(!LEVEL %in% c("GR")) %>%
+    mutate(CODE = replace(CODE, CODE == 0, 1)) %>%
+    gather(key = 'YEAR', value = 'POP_SIZE', -c(LEVEL, CODE, NAME)) %>%
+    mutate(YEAR = as.integer(str_sub(YEAR, start = 2, end = 5))) %>%
+    filter(YEAR >= StartYear & YEAR <= EndYear)
+  
+  # Create the column YEAR in cases table to merge with population size
+  d <- d %>%
+    mutate(YEAR = year(DATE),
+           CODE = as.numeric(CODE))
+
+  # Join cases and population tables
+  API_MALARIA <- merge(d1, d)
+    
+  # Calculate API
+  API_MALARIA <- API_MALARIA %>%
+    mutate(API = CASES/POP_SIZE * 1000)
+
+  
+  return(API_MALARIA)
+  
+}
+
+
+
+```
+
+
 
 ## Including Plots
 
