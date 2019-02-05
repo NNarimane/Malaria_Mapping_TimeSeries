@@ -59,12 +59,12 @@ SIVEP provides the **treatment schema for reported cases**. Completeness is > 85
 - **GESTANTE_**: informs if the patient is pregnant (1st Quarter/2nd Quarter/3rd Quarter/Ignored gestational age/No/Not applicable).  
 - **NIV_ESCO**: informs the level of education of the patient (Illiterate/1st to 4th incomplete series of Elementary School/4th complete series of Elementary School/5th to 8th grade incomplete elementary school/Complete primary school/incomplete high school/Complete high school/Incomplete higher education/Complete higher education/Not applicable).  
 - **ESQUEMA**: informs the code of the treatment scheme used based on a complementary database. **We obtained all the information. See below**.
+**COD_UNIN**: informs the code of the Notifying Unit.
 
 ### Dropped variables
 - **DT_ENVLO**: reports the date the lot of notifications was received in the national data file (yyyy-mm-dd).
 - **DT_DIGIT**: informs the date the notification was entered (yyyy-mm-dd).  
 - **SEM_NOTI**: informs the date of notification in epidemiological week (SE/YEAR). Dropped because I have been extracted the epidemiological week and year before.
-- **COD_UNIN**: informs the code of the Notifying Unit.
 - **COD_AGEN**: informs the code of the agent who made the notification of the exam.  
 - **RACA**: race/color (White/Black/Yellow/Brown/Indigenous).  
 - **GESTANTE1**: pregnant (Yes/Not/Not applicable).  
@@ -96,9 +96,9 @@ load("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pas
 ### Removing variables  
 **Obs.**: RES_EXAM = 0 happens only in 2003 in 17 entries. I removed because this category does not exist.  
 ```{r}
-df <- df %>% 
-      select(-DT_ENVLO, -DT_DIGIT, -SEM_NOTI, -COD_UNIN, -COD_AGEN, -RACA, -GESTANTE1, -NIV_ESCO_1, -ESQUEMA_1, -HEMOPARASI, -EXAME_, -EXAMINADOR, -VIVAX, -FALCIPARUM) %>% 
-      filter(RES_EXAM == "2" | RES_EXAM == "3" | RES_EXAM == "4" | RES_EXAM == "5" | RES_EXAM == "6" | RES_EXAM == "7" | RES_EXAM == "9")
+#df <- df %>% 
+      # select(-DT_ENVLO, -DT_DIGIT, -SEM_NOTI, -COD_UNIN, -COD_AGEN, -RACA, -GESTANTE1, -NIV_ESCO_1, -ESQUEMA_1, -HEMOPARASI, -EXAME_, -EXAMINADOR, -VIVAX, -FALCIPARUM) %>% 
+      # filter(RES_EXAM == "2" | RES_EXAM == "3" | RES_EXAM == "4" | RES_EXAM == "5" | RES_EXAM == "6" | RES_EXAM == "7" | RES_EXAM == "9")
 
 df <- df %>% 
       select(-DT_ENVLO, -DT_DIGIT, -SEM_NOTI, -COD_AGEN, -GESTANTE1, -NIV_ESCO_1, -ESQUEMA_1, -HEMOPARASI, -EXAME_, -EXAMINADOR, -VIVAX, -FALCIPARUM) %>% 

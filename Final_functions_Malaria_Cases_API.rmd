@@ -3,13 +3,131 @@ title: "Malaria_Cases_API_final_functions"
 author: "Raquel Lana and Narimane Nekkab"
 date: "4 de fevereiro de 2019"
 output: html_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 # Final functions for the analyzes and figures of the first paper
 
+- Packages - change after for the header file together th
+```{r}
+library(foreign)
+library('stringr')
+library(tidyverse)
+library('data.table')
+library('forcats')
+library(lubridate)
+require(maptools, quietly = TRUE, warn.conflicts = FALSE)
+library('maptools')
+library(rgdal)
+
+```
+
+- organizar em função o que já fiz até agora pra calculo de API total e estratif por sexo e idade.
+- ter uma função que organiza o banco do sivep deixando e tenha como rresultado final casos e api em um return().
+- ter uma função para o cálculo de API total e outra estrat.
+
+- depois disso pronto, ter um arquivo que chama a funções e plota os graficos etc.
+
+- resolução e cortes:
+2004-2018
+PCD + ACD
+weekly
+- uma tabela
+notificação por UF e Mun
+- segunda tabela
+agge and gender
+
+
+
 
 ```{r}
+# Get SIVEP data cleaned up and by species
+FilePath = "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/SIVEP_clean.RData"
+StartYear = 2010
+EndYear = 2011
 
+getWEEKLY_SIVEP_MALARIA_TYPE <- function(FilePath, StartYear, EndYear){
+  
+  # Get SIVEP raw notification data
+  load(FilePath)
+#  load("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/SIVEP_clean.RData")
+  
+  # Choose time period
+  df <- df[which(df[,"DT_NOTIF"] >= paste0(StartYear,"-01-01") & df[,"DT_NOTIF"] <= paste0(EndYear, "-12-31")),]
+  
+  # Replace missing state code with municipality state code
+  df$UF_NOTIF <- substr(df$MUN_NOTI, 1, 2) 
+
+# Split data by malaria type and aggregate to day (MU - level)
+  week_malaria_type_muni <- df %>%
+    group_by(DT_NOTIF, MUN_NOTI) %>%
+    count(RES_EXAM) %>%
+    mutate(LEVEL = "MU") %>%
+    select(DT_NOTIF, LEVEL, MUN_NOTI, RES_EXAM, n) %>%
+    spread(RES_EXAM, n, fill = 0) %>%
+    rename(CODE = MUN_NOTI,
+           FALCI = "Falciparum",
+           VF = "V+F",
+           VIVAX = "Vivax") %>%
+    mutate(Falciparum = FALCI + VF,
+           Vivax = VIVAX + VF,
+           DATE = floor_date(as.Date(DT_NOTIF, format = "%Y-%m-%d"), unit = "week")
+           ) %>%
+    ungroup %>%
+    select(-DT_NOTIF) %>%
+    select(DATE, LEVEL, CODE, Falciparum, Vivax) %>%
+    gather(key = 'TYPE', value = 'CASES', -c(DATE, LEVEL, CODE))
+
+  
+  # UF - level
+  week_malaria_type_state <- df %>%
+    group_by(DT_NOTIF, UF_NOTIF) %>%
+    count(RES_EXAM) %>%
+    mutate(LEVEL = "UF") %>%
+    select(DT_NOTIF, LEVEL, UF_NOTIF, RES_EXAM, n) %>%
+    spread(RES_EXAM, n, fill = 0) %>%
+    rename(CODE = UF_NOTIF,
+           FALCI = "Falciparum",
+           VF = "V+F",
+           VIVAX = "Vivax") %>%
+    mutate(Falciparum = FALCI + VF,
+           Vivax = VIVAX + VF,
+           DATE = floor_date(as.Date(DT_NOTIF, format = "%Y-%m-%d"), unit = "week")
+           ) %>%      
+    ungroup %>%
+    select(-DT_NOTIF) %>%
+    select(DATE, LEVEL, CODE, Falciparum, Vivax) %>%
+    gather(key = 'TYPE', value = 'CASES', -c(DATE, LEVEL, CODE))
+  
+  # BR - level
+  week_malaria_type_brazil <- df %>%
+    group_by(DT_NOTIF, UF_NOTIF) %>%
+    count(RES_EXAM) %>%
+    mutate(LEVEL = "BR",
+           CODE = "1") %>%
+    select(DT_NOTIF, LEVEL, UF_NOTIF, RES_EXAM, n) %>%
+    spread(RES_EXAM, n, fill = 0) %>%
+    rename(FALCI = "Falciparum",
+           VF = "V+F",
+           VIVAX = "Vivax") %>%
+    mutate(Falciparum = FALCI + VF,
+           Vivax = VIVAX + VF,
+           DATE = floor_date(as.Date(DT_NOTIF, format = "%Y-%m-%d"), unit = "week")
+           ) %>%
+    ungroup %>%
+    select(-DT_NOTIF) %>%
+    select(DATE, LEVEL, CODE, Falciparum, Vivax) %>%
+    gather(key = 'TYPE', value = 'CASES', -c(DATE, LEVEL, CODE))
+    
+  # Merge together
+  SIVEP_MALARIA_TYPE <- rbind(day_malaria_type_brazil, day_malaria_type_state, day_malaria_type_muni)
+  rm(df, day_malaria_type_brazil, day_malaria_type_state, day_malaria_type_muni)
+
+
+  return(SIVEP_MALARIA_TYPE)
+  
+}
 
 ```
 
