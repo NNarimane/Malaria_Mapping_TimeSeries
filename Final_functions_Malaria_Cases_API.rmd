@@ -11,35 +11,29 @@ editor_options:
 
 - Packages - change after for the header file together the parameters.
 ```{r}
-library(foreign)
-library('stringr')
-library(tidyverse)
-library('data.table')
-library('forcats')
-library(lubridate)
-require(maptools, quietly = TRUE, warn.conflicts = FALSE)
-library('maptools')
-library(rgdal)
+library("ggplot2")
+library("forecast")
+library("tseries")
+library("stringr")
+library("gridExtra")
+library("data.table")
+library("fUnitRoots")
+library("FitAR")
+library("lubridate")
+#library("parallel")
+library("TSA")
+library("dplyr")
+library("foreach")
+library("tstools")
+library("ggfortify")
+library("RColorBrewer")
+library("colorspace")
+library("foreign")
+library("tidyverse")
+library("maptools")
+library("rgdal")
 
 ```
-
-- organizar em função o que já fiz até agora pra calculo de API total e estratif por sexo e idade.
-- ter uma função que organiza o banco do sivep deixando e tenha como rresultado final casos e api em um return().
-- ter uma função para o cálculo de API total e outra estrat.
-
-- depois disso pronto, ter um arquivo que chama a funções e plota os graficos etc.
-
-- resolução e cortes:
-2004-2018
-poder escolher notificação, residencia e infecção
-PCD + ACD
-weekly
-- uma tabela
-notificação por UF e Mun
-- segunda tabela
-agge and gender
-
-
 
 - mover para o header file para rodar a função abaixo
 ```{r}
@@ -48,9 +42,9 @@ SIVEPFilePath = "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/Analise
 StartYear = 2004 # (inferior limit = 2003)
 EndYear = 2017 # (superior limit = 2018)
 AgTimeUnit = "week" # ("week", "month")
-byNotification = F 
+byNotification = T 
 byResidence = F
-byInfection = T
+byInfection = F
 byPCD = F
 byPCDACD = T
 d <- getWEEKLY_SIVEP_MALARIA_TYPE(SIVEPFilePath, StartYear, EndYear, AgTimeUnit)
@@ -177,7 +171,6 @@ getWEEKLY_SIVEP_MALARIA_TYPE <- function(FilePath, StartYear, EndYear, AgTimeUni
 }
 
 
-
 ```
 
 ### Function to agreggate the population size from IBGE and calculate API.
@@ -191,7 +184,10 @@ d2 <- getWEEKLY_SIVEP_API(IBGEFilePath, StartYear, EndYear, AgTimeUnit)
 
 ```
 
-
+- NAME: name of the administrative levels.  
+- YEAR: year of the notification and population estimated.  
+- POP_SIZE: population estimated by year and administrative levels
+- API: annual parasite index - ver se tem que dividir por semanas pois se chama annual p. in.
 ```{r}
 getWEEKLY_SIVEP_API <- function(IBGEFilePath, StartYear, EndYear, AgTimeUnit){
   
@@ -219,14 +215,93 @@ getWEEKLY_SIVEP_API <- function(IBGEFilePath, StartYear, EndYear, AgTimeUnit){
   API_MALARIA <- API_MALARIA %>%
     mutate(API = CASES/POP_SIZE * 1000)
 
+  # Ratios pf and pv 
+  
+  # Reorder and rearrange variables
+  API_MALARIA <- API_MALARIA %>%
+    select(LEVEL, CODE, NAME, DATE, YEAR, TYPE, CASES, POP_SIZE, API) %>%
+    arrange(DATE, YEAR)
   
   return(API_MALARIA)
   
 }
 
 
+```
+
+- see pictures to do the figures for the paper
+- figure age-gender use the script for pregnancy in PTR proposal- ask Narimane.
+- figure por pv/pf- ask Narimane for the script
+
+### Municipalities plots
+```{r}
+StatesIncidence <- unique(d2$CODE[d2$LEVEL == "UF"])
+#Ler a tabela de ADMIn anames- está no drive para fazer o gráfico do jeito que está no script abaixo. Facilita muito
+#Merge da tabela 
+# Assign names
+TS$STATE = ADMIN_NAMES[match(TS$CODE, ADMIN_NAMES$Code),"UF"] 
+TS$NAME = ADMIN_NAMES[match(TS$CODE, ADMIN_NAMES$Code),"Name"]
+
+# Top states
+HighIncidenceStates=c("AC","AM","AP","MA","MT","PA","RO","RR","TO")
+
+
+
+MUN_Plots = foreach(i = 1:length(StatesIncidence)) %do% {
+  Plot_Name = paste0("TS_Plot_", StatesIncidence[i])
+  assign(Plot_Name, ggplot(data = subset(d2, LEVEL == "MU" & 
+                                           CODE == StatesIncidence[i]), #naõ consegui resolver o nome aqui, o script aqui usa tabelas diferentes e usa estados por sigla. 
+                                         & NAME %in% HighestIncidenceMU), 
+                           aes(DATE, CASES, color = TYPE)) +
+           stat_summary(fun.y = sum, geom = "line") +
+           scale_x_date(breaks = "year", 
+                        date_labels = "%Y") +
+           scale_color_manual(values = c("#31a354","#3182bd")) +
+           facet_wrap(~NAME) +
+           labs(title = paste0("P. vivax and P. falciparum cases in ", StatesIncidence[i]," state by municipality, ", StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
+           guides(color = guide_legend(title="Plasmodium species")) +
+           theme(panel.grid.minor.x = element_blank(),
+                 axis.text.x = element_text(angle = 90, hjust = 1)))
+}
+
+
+
 
 ```
+
+
+### State plots
+```{r}
+    MUN_Plots=foreach(i=1:length(HighIncidenceStates)) %do% {
+      Plot_Name=paste0("TS_Plot_",HighIncidenceStates[i])
+      assign(Plot_Name, ggplot(data = subset(TS, LEVEL == "UF" & 
+                                               STATE == HighIncidenceStates[i] &
+                                               NAME %in% HighestIncidenceMU), 
+                               aes(DATE, CASES, color = TYPE)) +
+               stat_summary(fun.y = sum, geom = "line") +
+               scale_x_date(breaks = "year", 
+                            date_labels = "%Y") +
+               scale_color_manual(values = c("#31a354","#3182bd")) +
+               facet_wrap(~NAME) +
+               labs(title = paste0("P. vivax and P. falciparum cases in ",HighIncidenceStates[i]," state by municipality, ", 
+                                   StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
+               guides(color=guide_legend(title="Plasmodium species")) +
+               theme(panel.grid.minor.x = element_blank(),
+                     axis.text.x = element_text(angle = 90, hjust = 1)))
+    }
+
+```
+
+
+
+## Function to organize the cases per age and gender 
+```{r}
+
+
+```
+
+
+
 
 
 
