@@ -845,11 +845,117 @@ for(i in 1:length(Years)){
   }, bg.border = NA)
   title(paste("State of probable infection of reported P. vivax cases, Brazil",as.character(2002+i)), line = -1, cex = 2, outer = F)
   # Save
-  dev.copy(png, paste0(Plot_Folder,"State of probable infection of reported P. vivax cases, Brazil ",as.character(2002+i),".png"),
-           width = 1000, height = 1000, units = "px", pointsize = 12,
-           res = 100)
-  dev.off()
+  # dev.copy(png, paste0(Plot_Folder,"State of probable infection of reported P. vivax cases, Brazil ",as.character(2002+i),".png"),
+  #          width = 1000, height = 1000, units = "px", pointsize = 12,
+  #          res = 100)
+  # dev.off()
 }
+
+##############################################################################
+
+####################################################
+## Diagram for State of Prob Infection 2017 - PTR ##
+
+# Select only data with more than 10 cases
+sub_UF_EDGELIST_INF_VIVAX_2017=subset(UF_EDGELIST_INF_VIVAX_2017, weight >= 10)
+
+# Change state to character
+sub_UF_EDGELIST_INF_VIVAX_2017$from=as.character(sub_UF_EDGELIST_INF_VIVAX_2017$from)
+sub_UF_EDGELIST_INF_VIVAX_2017$to=as.character(sub_UF_EDGELIST_INF_VIVAX_2017$to)
+
+# Get acronyms & replace acronym by name
+unique(sub_UF_EDGELIST_INF_VIVAX_2017$from)
+sub_UF_EDGELIST_INF_VIVAX_2017[which(sub_UF_EDGELIST_INF_VIVAX_2017$from == "AC"),"from"] = "Acre"
+sub_UF_EDGELIST_INF_VIVAX_2017[which(sub_UF_EDGELIST_INF_VIVAX_2017$from == "AM"),"from"] = "Amazonas"
+sub_UF_EDGELIST_INF_VIVAX_2017[which(sub_UF_EDGELIST_INF_VIVAX_2017$from == "PA"),"from"] = "Pará"
+sub_UF_EDGELIST_INF_VIVAX_2017[which(sub_UF_EDGELIST_INF_VIVAX_2017$from == "MT"),"from"] = "Mato Grosso"
+sub_UF_EDGELIST_INF_VIVAX_2017[which(sub_UF_EDGELIST_INF_VIVAX_2017$from == "RO"),"from"] = "Rondônia"
+sub_UF_EDGELIST_INF_VIVAX_2017[which(sub_UF_EDGELIST_INF_VIVAX_2017$from == "RR"),"from"] = "Roraima   "
+sub_UF_EDGELIST_INF_VIVAX_2017[which(sub_UF_EDGELIST_INF_VIVAX_2017$from == "AP"),"from"] = "Amapá"
+unique(sub_UF_EDGELIST_INF_VIVAX_2017$to)
+sub_UF_EDGELIST_INF_VIVAX_2017[which(sub_UF_EDGELIST_INF_VIVAX_2017$to == "AC"),"to"] = "Acre"
+sub_UF_EDGELIST_INF_VIVAX_2017[which(sub_UF_EDGELIST_INF_VIVAX_2017$to == "AM"),"to"] = "Amazonas"
+sub_UF_EDGELIST_INF_VIVAX_2017[which(sub_UF_EDGELIST_INF_VIVAX_2017$to == "PA"),"to"] = "Pará"
+sub_UF_EDGELIST_INF_VIVAX_2017[which(sub_UF_EDGELIST_INF_VIVAX_2017$to == "MT"),"to"] = "Mato Grosso"
+sub_UF_EDGELIST_INF_VIVAX_2017[which(sub_UF_EDGELIST_INF_VIVAX_2017$to == "RO"),"to"] = "Rondônia"
+sub_UF_EDGELIST_INF_VIVAX_2017[which(sub_UF_EDGELIST_INF_VIVAX_2017$to == "RR"),"to"] = "Roraima   "
+sub_UF_EDGELIST_INF_VIVAX_2017[which(sub_UF_EDGELIST_INF_VIVAX_2017$to == "AP"),"to"] = "Amapá"
+sub_UF_EDGELIST_INF_VIVAX_2017[which(sub_UF_EDGELIST_INF_VIVAX_2017$to == "TO"),"to"] = "TO"
+sub_UF_EDGELIST_INF_VIVAX_2017[which(sub_UF_EDGELIST_INF_VIVAX_2017$to == "MA"),"to"] = "MA"
+
+# Convert to factor with same levels (+2 for to)
+sub_UF_EDGELIST_INF_VIVAX_2017$from=factor(sub_UF_EDGELIST_INF_VIVAX_2017$from,
+                                           levels = c("Acre","Amapá","Amazonas","Mato Grosso","Pará","Rondônia","Roraima   "))
+sub_UF_EDGELIST_INF_VIVAX_2017$to=factor(sub_UF_EDGELIST_INF_VIVAX_2017$to,
+                                           levels = c("Acre","Amapá","Amazonas","MA","Mato Grosso","Pará","Rondônia","Roraima   ","TO"))
+
+# # Get order by total sum
+# From_Weight=aggregate(weight~from, sub_UF_EDGELIST_INF_VIVAX_2017, FUN = sum)
+# To_Weight=aggregate(weight~to, sub_UF_EDGELIST_INF_VIVAX_2017, FUN = sum)
+# Weight_Sum=merge(From_Weight, To_Weight, by.x = "from", by.y="to", all=T)
+# Weight_Sum$SUM=apply(Weight_Sum[,2:3], 1, FUN = sum, na.rm = T)
+# Weight_Sum=Weight_Sum[rev(order(Weight_Sum$SUM)),]
+# State_Order=as.character(Weight_Sum$from)
+
+# Colors
+# getColors=colorRampPalette(brewer.pal(10,"Spectral"))
+getColors=colorRampPalette(c("#ee4035","#f37736","#fdf498","#7bc043","#0392cf"))
+Colors=c(rev(getColors(length(unique(sub_UF_EDGELIST_INF_VIVAX_2017$to)))))
+names(Colors)=c("Acre","Amapá","Amazonas","MA","Mato Grosso","Pará","Rondônia","Roraima   ","TO")
+
+# Plot 
+plot.new()
+par(mfrow=c(1,1))
+circos.clear()
+circos.par(start.degree = 45, clock.wise = F, track.margin=c(0,0), 
+           gap.degree = 3, points.overflow.warning = T)
+chordDiagram(sub_UF_EDGELIST_INF_VIVAX_2017,
+             grid.col = Colors,
+             transparency = 0.3,
+             link.sort = T,
+             link.decreasing = T,
+             directional = 1,
+             direction.type = c("diffHeight", "arrows"),
+             link.arr.type = "big.arrow",
+             # diffHeight = -uh(1, "mm"),
+             annotationTrackHeight = c(0.05,0.1),
+             link.arr.length = 0.05,
+             diffHeight  = -0.01,
+             annotationTrack = c("grid","axis"))
+circos.trackPlotRegion(track.index = 1, panel.fun = function(x, y){
+    xlim = get.cell.meta.data("xlim")
+    xplot = get.cell.meta.data("xplot")
+    ylim = get.cell.meta.data("ylim")
+    sector.name = get.cell.meta.data("sector.index")
+    circos.text(mean(xlim),2.5, sector.name, niceFacing = T, cex = 0.7, adj = c(0.5, 0))
+}, bg.border = NA)
+circos.update(sector.index, track.index)
+
+
+# chordDiagram(sub_UF_EDGELIST_INF_VIVAX_2017, 
+#                big.gap = 0,
+#                grid.col = Colors, 
+#                directional = 0,
+#                self.link = F,
+#                annotationTrack = "grid", 
+#                preAllocateTracks = list(track.height = 0.1),
+#                transparency = 0.5,
+#              order=c("Acre","Amapá","Amazonas","Mato Grosso","Pará","Rondônia","Roraima   ","(MA)","(TO)"))
+# circos.trackPlotRegion(track.index = 1, panel.fun = function(x, y){
+#     xlim = get.cell.meta.data("xlim")
+#     xplot = get.cell.meta.data("xplot")
+#     ylim = get.cell.meta.data("ylim")
+#     sector.name = get.cell.meta.data("sector.index")
+#     circos.text(mean(xlim),0.2, sector.name, niceFacing = T, cex = 0.7, adj = c(0.5, 0))
+# }, bg.border = NA)
+
+# Save
+dev.copy(png, "C:/Users/nnekkab/Desktop/Malaria_Mapping_TimeSeries/PTR Figure 5.png",
+         width = 2200, height = 2000, units = "px", pointsize = 1,
+         res = 300)
+dev.off()
+
+
 
 
 
