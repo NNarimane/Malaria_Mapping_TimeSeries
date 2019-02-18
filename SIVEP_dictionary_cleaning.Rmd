@@ -89,7 +89,7 @@ require(maptools, quietly = TRUE, warn.conflicts = FALSE)
 library('maptools')
 library(rgdal)
 
-load("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/RData_full.RData")
+load("~/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/RData_full.RData")
 
 ```
 
