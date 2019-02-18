@@ -39,7 +39,7 @@ library("rgdal")
 ```{r}
 # Get SIVEP data cleaned up and by species
 SIVEPFilePath = "~/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/SIVEP_clean.RData"
-#SIVEPFilePath = "~/Documentos/PosDoc_PROCC/OwnCloud/malaria/AnalisesRaquel/Pasteur/SIVEP_clean.RData"
+SIVEPFilePath = "~/Documentos/PosDoc_PROCC/OwnCloud/malaria/AnalisesRaquel/Pasteur/SIVEP_clean.RData"
 StartYear = 2004 # (inferior limit = 2003)
 EndYear = 2017 # (superior limit = 2018)
 AgTimeUnit = "week" # ("week", "month")
@@ -326,63 +326,74 @@ UF_Plots = foreach(i = 1:length(States_sivep)) %do% {
 ## Function to organize the cases per age and gender - doing
 - um painel com todos os estados- somatório de todos os anos.
 - Para suplementar, seria interessante ter uma figura para cada estado mostrando por ano- facet_wrap por ano.
+
+-REVER SE FAZ POR ANO- VER O PLOT.
 ```{r}
+load("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/SIVEP_clean.RData")
 
-getSTRAT_AGE_GENDER <- function(){
+getSTRAT_AGE_GENDER <- function(SIVEPFilePath, StartYear, EndYear, AgTimeUnit){
 
+  
+# Brazil  
 day_malaria_type_brazil_age_gender <- df %>%
-                          group_by(DT_NOTIF, AGE_CAT, SEXO) %>%
-                          count(RES_EXAM)%>%
-                          mutate(LEVEL = "BR",
-                                 CODE = "1") %>%
-                          select(DT_NOTIF, LEVEL, CODE, RES_EXAM, AGE_CAT, SEXO, n) %>%
-                          spread(RES_EXAM, n, fill = 0) %>%
-                          rename(GENDER = SEXO, FALCI = "Falciparum", VF = "V+F", VIVAX = "Vivax") %>%
-                          mutate(Falciparum = FALCI + VF) %>%
-                          mutate(Vivax = VIVAX + VF) %>%
-                          select(DT_NOTIF, LEVEL, CODE, AGE_CAT, GENDER, Falciparum, Vivax) %>%
-                          gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE, AGE_CAT, GENDER))
+  group_by(DT_NOTIF, AGE_CAT, SEXO) %>%
+  count(RES_EXAM)%>%
+  mutate(LEVEL = "BR",
+         CODE = "1") %>%
+  select(DT_NOTIF, LEVEL, CODE, RES_EXAM, AGE_CAT, SEXO, n) %>%
+  spread(RES_EXAM, n, fill = 0) %>%
+  rename(GENDER = SEXO, FALCI = "Falciparum", VF = "V+F", VIVAX = "Vivax") %>%
+  mutate(Falciparum = FALCI + VF,
+         Vivax = VIVAX + VF,
+         DATE = floor_date(as.Date(DT_NOTIF, format = "%Y-%m-%d"), unit = AgTimeUnit)
+          ) %>%
+  ungroup %>%
+  select(-DT_NOTIF) %>%
+  mutate(GENDER = ifelse(GENDER == "F", "Female", 
+                         ifelse(GENDER == "M", "Male", NA))) %>%
+  select(DATE, LEVEL, CODE, AGE_CAT, GENDER, Falciparum, Vivax) %>%
+  gather(key = 'TYPE', value = 'CASES', -c(DATE, LEVEL, CODE, AGE_CAT, GENDER))
 
-
+# State
 day_malaria_type_state_age_gender <- df %>%
-                          group_by(DT_NOTIF, UF_NOTIF, AGE_CAT, SEXO) %>%
-                          count(RES_EXAM) %>%
-                          mutate(LEVEL = "UF") %>%
-                          select(DT_NOTIF, LEVEL, UF_NOTIF, RES_EXAM, AGE_CAT, SEXO, n) %>%
-                          spread(RES_EXAM, n, fill = 0) %>%
-                          rename(CODE = UF_NOTIF, GENDER = SEXO, FALCI = "Falciparum", VF = "V+F", VIVAX = "Vivax") %>%
-                          mutate(Falciparum = FALCI + VF) %>%
-                          mutate(Vivax = VIVAX + VF) %>%
-                          select(DT_NOTIF, LEVEL, CODE, AGE_CAT, GENDER, Falciparum, Vivax) %>%
-                          gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE, AGE_CAT, GENDER))
+  group_by(DT_NOTIF, UF_NOTIF, AGE_CAT, SEXO) %>%
+  count(RES_EXAM) %>%
+  mutate(LEVEL = "UF") %>%
+  select(DT_NOTIF, LEVEL, UF_NOTIF, RES_EXAM, AGE_CAT, SEXO, n) %>%
+  spread(RES_EXAM, n, fill = 0) %>%
+  rename(CODE = UF_NOTIF, GENDER = SEXO, FALCI = "Falciparum", VF = "V+F", VIVAX = "Vivax") %>%
+  mutate(Falciparum = FALCI + VF,
+         Vivax = VIVAX + VF,
+         DATE = floor_date(as.Date(DT_NOTIF, format = "%Y-%m-%d"), unit = AgTimeUnit)
+          ) %>%
+  ungroup %>%
+  select(-DT_NOTIF) %>%
+  mutate(GENDER = ifelse(GENDER == "F", "Female", 
+                         ifelse(GENDER == "M", "Male", NA))) %>%
+  select(DATE, LEVEL, CODE, AGE_CAT, GENDER, Falciparum, Vivax) %>%
+  gather(key = 'TYPE', value = 'CASES', -c(DATE, LEVEL, CODE, AGE_CAT, GENDER))
 
+# Municipality
 day_malaria_type_age_gender <- df %>%
-                            group_by(DT_NOTIF, MUN_NOTI, AGE_CAT, SEXO) %>%
-                            count(RES_EXAM) %>%
-                            mutate(LEVEL = "MU") %>%
-                            select(DT_NOTIF, LEVEL, MUN_NOTI, RES_EXAM, AGE_CAT, SEXO, n) %>%
-                            spread(RES_EXAM, n, fill = 0) %>%
-                            rename(CODE = MUN_NOTI, GENDER = SEXO, FALCI = "Falciparum", VF = "V+F", VIVAX = "Vivax") %>%
-                            mutate(Falciparum = FALCI + VF) %>%
-                            mutate(Vivax = VIVAX + VF) %>%
-                            select(DT_NOTIF, LEVEL, CODE, AGE_CAT, GENDER, Falciparum, Vivax) %>%
-                            gather(key = 'TYPE', value = 'CASES', -c(DT_NOTIF, LEVEL, CODE, AGE_CAT, GENDER))
+  group_by(DT_NOTIF, MUN_NOTI, AGE_CAT, SEXO) %>%
+  count(RES_EXAM) %>%
+  mutate(LEVEL = "MU") %>%
+  select(DT_NOTIF, LEVEL, MUN_NOTI, RES_EXAM, AGE_CAT, SEXO, n) %>%
+  spread(RES_EXAM, n, fill = 0) %>%
+  rename(CODE = MUN_NOTI, GENDER = SEXO, FALCI = "Falciparum", VF = "V+F", VIVAX = "Vivax") %>%
+  mutate(Falciparum = FALCI + VF,
+         Vivax = VIVAX + VF,
+         DATE = floor_date(as.Date(DT_NOTIF, format = "%Y-%m-%d"), unit = AgTimeUnit)
+         ) %>%
+  ungroup %>%
+  select(-DT_NOTIF) %>%
+  mutate(GENDER = ifelse(GENDER == "F", "Female", 
+                       ifelse(GENDER == "M", "Male", NA))) %>%
+  select(DATE, LEVEL, CODE, AGE_CAT, GENDER, Falciparum, Vivax) %>%
+  gather(key = 'TYPE', value = 'CASES', -c(DATE, LEVEL, CODE, AGE_CAT, GENDER))
+
                            
 sivep_strat <- rbind(day_malaria_type_brazil_age_gender, day_malaria_type_state_age_gender, day_malaria_type_age_gender)
-
-sivep_strat$GENDER1 <- NA
-sivep_strat[which(sivep_strat$GENDER == "F"),]$GENDER1 <- "Female" 
-sivep_strat[which(sivep_strat$GENDER == "M"),]$GENDER1 <- "Male" 
-sivep_strat[which(sivep_strat$GENDER == "I"),]$GENDER1 <- NA 
-
-unique(sivep_strat$GENDER1)
-class(sivep_strat$GENDER1)
-table(sivep_strat$GENDER1)
-
-sivep_strat <- sivep_strat[, c(1, 2, 3, 4, 8, 6, 7)]
-
-sivep_strat <- sivep_strat %>%
-                        rename(GENDER = GENDER1)
 
 return(sivep_strat)
 
