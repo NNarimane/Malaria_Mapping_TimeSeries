@@ -154,7 +154,7 @@ day_malaria_type_brazil_gender <- df %>%
 
 ### Counting malaria cases by day, UF, municipality, AGE Categories, malaria type.
 ```{r}
-day_malaria_type_age <- df %>%envNN = F
+day_malaria_type_age <- df %>%
                             group_by(DT_NOTIF, MUN_NOTI, AGE_CAT) %>%
                             count(RES_EXAM) %>%
                             mutate(LEVEL = "MU") %>%
