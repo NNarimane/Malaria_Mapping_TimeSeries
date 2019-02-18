@@ -49,7 +49,7 @@ source(paste0(getwd(),"/Malaria_Mapping_TimeSeries/Malaria_Mapping_TimeSeries_Fu
 #################################################################
 
 # Load data or run code? (if saved as RData before, set to TRUE)
-loadCleanData = F
+loadCleanData = T
 
 # Melted data (if TRUE, will include all daily, weekly, monthly, yearly, and all admin level data - very big file!)
 Melted = F
@@ -127,7 +127,7 @@ byInfection = FALSE
 ###############
 
 # # Which variable(s) ?
-# byType = TRUE # do we still need this?
+byType = TRUE # do we still need this?
 # byGender = FALSE # might be removed
 # byAge = FALSE # night be removed
 # byTreatment = FALSE

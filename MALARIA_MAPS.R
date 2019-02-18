@@ -333,8 +333,11 @@ getMUNI_MAPS=function(Level, Type, Measure, Year, title, breaks, labels, Colors,
 ## VIVAX CASES ##
 
 # Set break points
-breaks=c(-Inf, 0, 500, 1000, seq(10000,80000,10000), Inf)
-labels=factor(c("0", paste("<", breaks[3:(length(breaks)-1)]), paste(">", breaks[(length(breaks)-1)])))
+# breaks=c(-Inf, 0, 500, 1000, seq(10000,80000,10000), Inf)
+# labels=factor(c("0", paste("<", breaks[3:(length(breaks)-1)]), paste(">", breaks[(length(breaks)-1)])))
+
+breaks=c(-Inf, 1, 100, 500, 1000, 5000, 10000, 20000, 30000)
+labels=factor(c("0", "1-100", "100-500", "500-1000", "1000-5000", "5000-10000", "10000-20000", "20000-30000"))
 
 # Colors
 getColors=colorRampPalette(brewer.pal(6,"Blues"))
