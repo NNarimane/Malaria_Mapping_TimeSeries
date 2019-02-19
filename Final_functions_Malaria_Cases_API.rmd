@@ -9,7 +9,7 @@ editor_options:
 
 # Final functions for the analyzes and figures of the first paper
 
-- Packages - change after for the header file together the parameters.
+- Packages - move to header file together the parameters.
 ```{r}
 library("ggplot2")
 library("forecast")
@@ -232,7 +232,7 @@ getWEEKLY_SIVEP_API <- function(IBGEFilePath, StartYear, EndYear, AgTimeUnit){
 - Check if here It's necessary to group by YEAR.
 - Obs.: for some strange reason **tidyr** needs another index to do the **spread**.
 ```{r}
-d3 <- getWEEKLY_SIVEP_RATIOS(API_MALARIA, StartYear, EndYear, AgTimeUnit)
+d3 <- getWEEKLY_SIVEP_RATIOS(API_MALARIA, StartYear, EndYear, AgTimeUnit) # move to header file
   
 getWEEKLY_SIVEP_RATIOS <- function(API_MALARIA, StartYear, EndYear, AgTimeUnit){
 
@@ -240,7 +240,8 @@ getWEEKLY_SIVEP_RATIOS <- function(API_MALARIA, StartYear, EndYear, AgTimeUnit){
   RATIOS <- d2 %>%
   select(LEVEL, CODE, NAME, DATE, YEAR, TYPE, CASES) %>%
   group_by_at(vars(-CASES)) %>%  # group by everything other than the value column. 
-  mutate(row_id = 1:n()) %>% ungroup() %>%  # build group index
+  mutate(row_id = 1:n()) %>% 
+  ungroup() %>%  # build group index
   spread(key = TYPE, value = CASES, fill = 0) %>%    # spread
   select(-row_id) %>%  # drop the index
   mutate(PvPf = Falciparum / Vivax,
@@ -256,7 +257,7 @@ getWEEKLY_SIVEP_RATIOS <- function(API_MALARIA, StartYear, EndYear, AgTimeUnit){
 
 
 
-### Municipalities plots
+### Municipalities plots fro each state
 - Ler a tabela de ADMIn anames -facilita pra plotar o gráfico
 - Não consegui salvar ainda. Try to save again. Doing
 ```{r}
@@ -329,73 +330,73 @@ UF_Plots = foreach(i = 1:length(States_sivep)) %do% {
 
 -REVER SE FAZ POR ANO- VER O PLOT.
 ```{r}
-load("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/SIVEP_clean.RData")
+load("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/SIVEP_clean.RData") # move to header file
 
 getSTRAT_AGE_GENDER <- function(SIVEPFilePath, StartYear, EndYear, AgTimeUnit){
 
   
-# Brazil  
-day_malaria_type_brazil_age_gender <- df %>%
-  group_by(DT_NOTIF, AGE_CAT, SEXO) %>%
-  count(RES_EXAM)%>%
-  mutate(LEVEL = "BR",
-         CODE = "1") %>%
-  select(DT_NOTIF, LEVEL, CODE, RES_EXAM, AGE_CAT, SEXO, n) %>%
-  spread(RES_EXAM, n, fill = 0) %>%
-  rename(GENDER = SEXO, FALCI = "Falciparum", VF = "V+F", VIVAX = "Vivax") %>%
-  mutate(Falciparum = FALCI + VF,
-         Vivax = VIVAX + VF,
-         DATE = floor_date(as.Date(DT_NOTIF, format = "%Y-%m-%d"), unit = AgTimeUnit)
-          ) %>%
-  ungroup %>%
-  select(-DT_NOTIF) %>%
-  mutate(GENDER = ifelse(GENDER == "F", "Female", 
+  # Brazil  
+  day_malaria_type_brazil_age_gender <- df %>%
+    group_by(DT_NOTIF, AGE_CAT, SEXO) %>%
+    count(RES_EXAM)%>%
+    mutate(LEVEL = "BR",
+           CODE = "1") %>%
+    select(DT_NOTIF, LEVEL, CODE, RES_EXAM, AGE_CAT, SEXO, n) %>%
+    spread(RES_EXAM, n, fill = 0) %>%
+    rename(GENDER = SEXO, FALCI = "Falciparum", VF = "V+F", VIVAX = "Vivax") %>%
+    mutate(Falciparum = FALCI + VF,
+           Vivax = VIVAX + VF,
+           DATE = floor_date(as.Date(DT_NOTIF, format = "%Y-%m-%d"), unit = AgTimeUnit)
+            ) %>%
+    ungroup %>%
+    select(-DT_NOTIF) %>%
+    mutate(GENDER = ifelse(GENDER == "F", "Female", 
+                           ifelse(GENDER == "M", "Male", NA))) %>%
+    select(DATE, LEVEL, CODE, AGE_CAT, GENDER, Falciparum, Vivax) %>%
+    gather(key = 'TYPE', value = 'CASES', -c(DATE, LEVEL, CODE, AGE_CAT, GENDER))
+  
+  # State
+  day_malaria_type_state_age_gender <- df %>%
+    group_by(DT_NOTIF, UF_NOTIF, AGE_CAT, SEXO) %>%
+    count(RES_EXAM) %>%
+    mutate(LEVEL = "UF") %>%
+    select(DT_NOTIF, LEVEL, UF_NOTIF, RES_EXAM, AGE_CAT, SEXO, n) %>%
+    spread(RES_EXAM, n, fill = 0) %>%
+    rename(CODE = UF_NOTIF, GENDER = SEXO, FALCI = "Falciparum", VF = "V+F", VIVAX = "Vivax") %>%
+    mutate(Falciparum = FALCI + VF,
+           Vivax = VIVAX + VF,
+           DATE = floor_date(as.Date(DT_NOTIF, format = "%Y-%m-%d"), unit = AgTimeUnit)
+            ) %>%
+    ungroup %>%
+    select(-DT_NOTIF) %>%
+    mutate(GENDER = ifelse(GENDER == "F", "Female", 
+                           ifelse(GENDER == "M", "Male", NA))) %>%
+    select(DATE, LEVEL, CODE, AGE_CAT, GENDER, Falciparum, Vivax) %>%
+    gather(key = 'TYPE', value = 'CASES', -c(DATE, LEVEL, CODE, AGE_CAT, GENDER))
+  
+  # Municipality
+  day_malaria_type_age_gender <- df %>%
+    group_by(DT_NOTIF, MUN_NOTI, AGE_CAT, SEXO) %>%
+    count(RES_EXAM) %>%
+    mutate(LEVEL = "MU") %>%
+    select(DT_NOTIF, LEVEL, MUN_NOTI, RES_EXAM, AGE_CAT, SEXO, n) %>%
+    spread(RES_EXAM, n, fill = 0) %>%
+    rename(CODE = MUN_NOTI, GENDER = SEXO, FALCI = "Falciparum", VF = "V+F", VIVAX = "Vivax") %>%
+    mutate(Falciparum = FALCI + VF,
+           Vivax = VIVAX + VF,
+           DATE = floor_date(as.Date(DT_NOTIF, format = "%Y-%m-%d"), unit = AgTimeUnit)
+           ) %>%
+    ungroup %>%
+    select(-DT_NOTIF) %>%
+    mutate(GENDER = ifelse(GENDER == "F", "Female", 
                          ifelse(GENDER == "M", "Male", NA))) %>%
-  select(DATE, LEVEL, CODE, AGE_CAT, GENDER, Falciparum, Vivax) %>%
-  gather(key = 'TYPE', value = 'CASES', -c(DATE, LEVEL, CODE, AGE_CAT, GENDER))
-
-# State
-day_malaria_type_state_age_gender <- df %>%
-  group_by(DT_NOTIF, UF_NOTIF, AGE_CAT, SEXO) %>%
-  count(RES_EXAM) %>%
-  mutate(LEVEL = "UF") %>%
-  select(DT_NOTIF, LEVEL, UF_NOTIF, RES_EXAM, AGE_CAT, SEXO, n) %>%
-  spread(RES_EXAM, n, fill = 0) %>%
-  rename(CODE = UF_NOTIF, GENDER = SEXO, FALCI = "Falciparum", VF = "V+F", VIVAX = "Vivax") %>%
-  mutate(Falciparum = FALCI + VF,
-         Vivax = VIVAX + VF,
-         DATE = floor_date(as.Date(DT_NOTIF, format = "%Y-%m-%d"), unit = AgTimeUnit)
-          ) %>%
-  ungroup %>%
-  select(-DT_NOTIF) %>%
-  mutate(GENDER = ifelse(GENDER == "F", "Female", 
-                         ifelse(GENDER == "M", "Male", NA))) %>%
-  select(DATE, LEVEL, CODE, AGE_CAT, GENDER, Falciparum, Vivax) %>%
-  gather(key = 'TYPE', value = 'CASES', -c(DATE, LEVEL, CODE, AGE_CAT, GENDER))
-
-# Municipality
-day_malaria_type_age_gender <- df %>%
-  group_by(DT_NOTIF, MUN_NOTI, AGE_CAT, SEXO) %>%
-  count(RES_EXAM) %>%
-  mutate(LEVEL = "MU") %>%
-  select(DT_NOTIF, LEVEL, MUN_NOTI, RES_EXAM, AGE_CAT, SEXO, n) %>%
-  spread(RES_EXAM, n, fill = 0) %>%
-  rename(CODE = MUN_NOTI, GENDER = SEXO, FALCI = "Falciparum", VF = "V+F", VIVAX = "Vivax") %>%
-  mutate(Falciparum = FALCI + VF,
-         Vivax = VIVAX + VF,
-         DATE = floor_date(as.Date(DT_NOTIF, format = "%Y-%m-%d"), unit = AgTimeUnit)
-         ) %>%
-  ungroup %>%
-  select(-DT_NOTIF) %>%
-  mutate(GENDER = ifelse(GENDER == "F", "Female", 
-                       ifelse(GENDER == "M", "Male", NA))) %>%
-  select(DATE, LEVEL, CODE, AGE_CAT, GENDER, Falciparum, Vivax) %>%
-  gather(key = 'TYPE', value = 'CASES', -c(DATE, LEVEL, CODE, AGE_CAT, GENDER))
-
-                           
-sivep_strat <- rbind(day_malaria_type_brazil_age_gender, day_malaria_type_state_age_gender, day_malaria_type_age_gender)
-
-return(sivep_strat)
+    select(DATE, LEVEL, CODE, AGE_CAT, GENDER, Falciparum, Vivax) %>%
+    gather(key = 'TYPE', value = 'CASES', -c(DATE, LEVEL, CODE, AGE_CAT, GENDER))
+  
+                             
+  sivep_strat <- rbind(day_malaria_type_brazil_age_gender, day_malaria_type_state_age_gender, day_malaria_type_age_gender)
+  
+  return(sivep_strat)
 
 }
 
