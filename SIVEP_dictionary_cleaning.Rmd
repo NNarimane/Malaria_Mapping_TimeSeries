@@ -7,7 +7,7 @@ editor_options:
   chunk_output_type: console
 ---
 
-# SIVEP - Epidemiological Surveillance Information System
+# SIVEP - Epidemiological Surveillance Information System 
 This file was done to share details of SIVEP variables and register all dropped variables and modifications we did on kept variables.  
   
 ## SIVEP time and space resolution  
