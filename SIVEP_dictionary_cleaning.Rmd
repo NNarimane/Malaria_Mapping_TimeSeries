@@ -89,12 +89,15 @@ require(maptools, quietly = TRUE, warn.conflicts = FALSE)
 library('maptools')
 library(rgdal)
 
-load("~/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/RData_full.RData")
+#load("~/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/RData_full.RData")
+load("/home/rlana/Dados/RData_full_new.RData")
 
 ```
 
 ### Removing variables  
 **Obs.**: RES_EXAM = 0 happens only in 2003 in 17 entries. I removed because this category does not exist.  
+- 5972938 notifications from 2003 to 2018. 5972938 - 17 wrong entries in 2017 = 5972921
+
 ```{r}
 #df <- df %>% 
       # select(-DT_ENVLO, -DT_DIGIT, -SEM_NOTI, -COD_UNIN, -COD_AGEN, -RACA, -GESTANTE1, -NIV_ESCO_1, -ESQUEMA_1, -HEMOPARASI, -EXAME_, -EXAMINADOR, -VIVAX, -FALCIPARUM) %>% 
@@ -105,20 +108,47 @@ df <- df %>%
       filter(RES_EXAM == "2" | RES_EXAM == "3" | RES_EXAM == "4" | RES_EXAM == "5" | RES_EXAM == "6" | RES_EXAM == "7" | RES_EXAM == "9")
 
 
+## For paper description
+df %>% count()
+df %>% filter(RES_EXAM != "0") %>% count()
+# % of malaria types
+df %>% filter(RES_EXAM != "0") %>% 
+  mutate(RES_EXAM = as.factor(RES_EXAM))
+
+tmal <- df %>%
+  filter(RES_EXAM != "0") %>% 
+  mutate(RES_EXAM = if_else(RES_EXAM == "2" | RES_EXAM == "3" | RES_EXAM == "7", "F", 
+          if_else(RES_EXAM == "4", "V",
+                  if_else(RES_EXAM == "5" | RES_EXAM == "6", "F+V",
+                          if_else(RES_EXAM == "8", "M", 
+                              if_else(RES_EXAM == "9", "F+M", "Others")))))) %>%  
+  group_by(RES_EXAM) %>%
+  count() %>%
+  mutate(pmType = n/5972921 * 100)
+  
+
 ```
 
 ### Filtering and grouping to falciparum and vivax types.
-RES_EXAM categories:  
-2 - Falciparum    
-3 - F+FG    
-4 - Vivax    
-5 - F+V  
-6 - V+FG   
-7 - FG    
-8 - Malariae    
-9 - F+M    
-10 – Ovale    
-11 – Não F      
+RES_EXAM categories, absolute number and percentages from 2003 to 2018:  
+2 - Falciparum: 897411 (15.0 %)      
+3 - F+FG: 151502  (2.54 %)      
+4 - Vivax: 4782306 (80.1 %)      
+5 - F+V: 44389  (0.743 %)     
+6 - V+FG: 28042  (0.469 %)    
+7 - FG: 46786  (0.783 %)      
+8 - Malariae: 1928  (0.0323 %)       
+9 - F+M: 577  (0.00966 %)      
+10 – Ovale: 69 (0.00116 %)      
+11 – Não F: 19911  (0.333 %)    
+
+- Recategorization for paper description:  
+F: 1095699 (18.3 %)      
+V: 4782306 (80.1 %)  
+F+M: 577  (0.00966 %)  
+F+V: 72431  (1.21 %)     
+M: 1928 (0.0323 %)   
+Others: 19980 (0.335 %)    
 
 
 - Categorizing variables and transforming to factor.
@@ -126,7 +156,7 @@ RES_EXAM categories:
 df <- df %>% 
       mutate(RES_EXAM = if_else(RES_EXAM == "2" | RES_EXAM == "3" | RES_EXAM == "7" | RES_EXAM == "9", "F", 
                                 if_else(RES_EXAM == "4" | RES_EXAM == "6", "V",
-                                        if_else(RES_EXAM == "5", "F+V", RES_EXAM)))) %>%
+                                        if_else(RES_EXAM == "5", "F+V", RES_EXAM)))) %>% #confirm if "9" is a mixed too
       mutate(SINTOMAS = if_else(SINTOMAS == "1", "YES", "NO")) %>%
       mutate(QTD_CRUZ = if_else(QTD_CRUZ == "1", "< +/2", 
                                 if_else(QTD_CRUZ == "2", "+/2",
@@ -267,7 +297,7 @@ This variable is not explored here. Go to *Manipulate_data_maps_ts.rmd*.
 
 Saving RData.
 ```{r}
-save.image(file = "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/SIVEP_clean_v1.RData")
+save(df, file = "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/SIVEP_clean_v1.RData")
 
 ```
 
