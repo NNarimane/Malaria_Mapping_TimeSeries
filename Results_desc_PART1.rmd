@@ -1,0 +1,126 @@
+---
+title: "Initial descriptions paper"
+author: "Raquel Lana"
+date: "April 17, 2019"
+output: html_document
+---
+
+# Descriptions for Results part 1
+### The first initial descriptions for Rsults section part 1 needs the full database to calculate cases and API for the text and table 1.
+
+- Loading RData file and libraries
+```{r}
+library(foreign)
+library('stringr')
+library("tidyverse")
+library(lubridate)
+library(data.table)
+library(bit64)
+require(maptools, quietly = TRUE, warn.conflicts = FALSE)
+library('maptools')
+library(rgdal)
+
+#load("~/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/RData_full.RData") #until first weeks of 2018
+load("/home/rlana/Dados/RData_full_new.RData") #until the end of 2018 and a update of 2017.
+
+```
+
+For paper description:  
+```{r}
+# Brazil 2003 to 2018
+tmal <- df %>%
+  filter(RES_EXAM != "0") %>% 
+  mutate(RES_EXAM = if_else(RES_EXAM == "2" | RES_EXAM == "3" | RES_EXAM == "7", "F", 
+          if_else(RES_EXAM == "4" | RES_EXAM == "6", "V",
+                  if_else(RES_EXAM == "5", "F+V",
+                          if_else(RES_EXAM == "8", "M", 
+                              if_else(RES_EXAM == "9", "F+M", "Others")))))) %>%  
+  group_by(RES_EXAM) %>%
+  count() %>%
+  mutate(pmType = n/5972921 * 100)
+  
+
+# Counting all cases by year
+df %>%
+  filter(RES_EXAM != "0") %>% 
+  group_by(ANO) %>%
+  count()
+
+
+# Brazil 2018
+tmal18 <- df %>%
+  filter(ANO == 2018) %>%
+  mutate(RES_EXAM = if_else(RES_EXAM == "2" | RES_EXAM == "3" | RES_EXAM == "7" | RES_EXAM == "9", "F", 
+          if_else(RES_EXAM == "4" | RES_EXAM == "6", "V",
+                  if_else(RES_EXAM == "5", "F+V", "Others")))) %>%   
+  group_by(RES_EXAM) %>% 
+  count() %>% 
+  mutate(pmType = n/242797 * 100)
+
+# Brazi: top states per year
+df %>%
+  filter(RES_EXAM != "0") %>% 
+  select(UF_NOTIF, RES_EXAM, ANO) %>%
+  group_by(ANO, UF_NOTIF) %>% 
+  count() %>%
+  filter(ANO == 2018) %>% #change the year
+  arrange(desc(n))
+
+df %>%
+  filter(RES_EXAM != "0") %>% 
+  select(UF_NOTIF, RES_EXAM) %>%
+  group_by(UF_NOTIF) %>% 
+  count() %>%
+  arrange(desc(n)) %>%
+  mutate(prop = n/5972921 * 100)
+
+#Cases per year only vivax and falci- double counting for mixed infectio 
+## Vivax
+vyear <- df %>%
+  filter(RES_EXAM == "4" | RES_EXAM == "5" | RES_EXAM == "6") %>%   
+  group_by(ANO) %>%
+  count()
+
+fyear <- df %>%
+  filter(RES_EXAM == "2" | RES_EXAM == "3" | RES_EXAM == "5" | RES_EXAM == "7" | RES_EXAM == "9") %>%   
+  group_by(ANO) %>%
+  count()
+
+
+
+# Brazi: vivax, falciparum and total API and top states per year- ver se faço aqui ou depois, mas aí tem que ser com todos os casos.
+
+```
+
+
+### Filtering and grouping to falciparum and vivax types.
+RES_EXAM categories, absolute number and percentages from 2003 to 2018:  
+2 - Falciparum: 897411 (15.0 %)      
+3 - F+FG: 151502  (2.54 %)      
+4 - Vivax: 4782306 (80.1 %)      
+5 - F+V: 44389  (0.743 %)     
+6 - V+FG: 28042  (0.469 %)    
+7 - FG: 46786  (0.783 %)      
+8 - Malariae: 1928  (0.0323 %)       
+9 - F+M: 577  (0.00966 %)      
+10 – Ovale: 69 (0.00116 %)      
+11 – Não F: 19911  (0.333 %)    
+
+- Recategorization for paper description:  
+Falciparum: 1095699 (18.3 %)      
+Vivax: 4810348 (80.5 %)  
+Falciparum + Malariae: 577  (0.00966 %)  
+Falciparum + Vivax: 44389  (0.743 %)     
+Malariae: 1928 (0.0323 %)   
+Others (Ovale + Not Falciparum): 19980 (0.335 %)    
+
+- 2018 description without and with mixed infection
+cases: 242,797    
+V: 216769 (89.3 %), 217685 (89.7 %)    
+F: 20357  (8.38 %), 21273 (8.8%)     
+
+
+- Top states per year  
+2003 to 2008: 13    
+2009 to 2012: 15  
+2013 to 2018: 13 

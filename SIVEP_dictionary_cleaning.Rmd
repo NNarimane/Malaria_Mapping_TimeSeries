@@ -12,7 +12,7 @@ This file was done to share details of SIVEP variables and register all dropped 
   
 ## SIVEP time and space resolution  
 
-SIVEP started in 2003 January. We have complete data from 2003 to 2017 and initial months of 2018. The database has entries, permitting to aggregate into **daily case numbers** (reported date in year/month/day) and **epidemiological week**. These can later be aggregated to a different temporal resolution if needed.   
+SIVEP started in 2003 January. We have complete data from 2003 to 2018. The database has entries, permitting to aggregate into **daily case numbers** (reported date in year/month/day) and **epidemiological week**. These can later be aggregated to a different temporal resolution if needed.   
 
 ### Spatial resolution  
 SIVEP is database for malaria notification that is mandatory in Brazil. Before 2003, the database was named SISMAL, which was a different database in relation to variables and categories.  
@@ -77,7 +77,7 @@ SIVEP provides the **treatment schema for reported cases**. Completeness is > 85
 - **FALCIPARUM**: informs if the patient received treatment for falciparum malaria in the last 40 days prior to notification.
 
 
-- Loading RData file 
+- Loading RData file and libraries
 ```{r}
 library(foreign)
 library('stringr')
@@ -89,14 +89,14 @@ require(maptools, quietly = TRUE, warn.conflicts = FALSE)
 library('maptools')
 library(rgdal)
 
-#load("~/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/RData_full.RData")
-load("/home/rlana/Dados/RData_full_new.RData")
+#load("~/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/RData_full.RData") #until first weeks of 2018
+load("/home/rlana/Dados/RData_full_new.RData") #until the end of 2018 and a update of 2017.
 
 ```
 
 ### Removing variables  
 **Obs.**: RES_EXAM = 0 happens only in 2003 in 17 entries. I removed because this category does not exist.  
-- 5972938 notifications from 2003 to 2018. 5972938 - 17 wrong entries in 2017 = 5972921
+- 5972938 notifications from 2003 to 2018. 5972938 - 17 wrong entries in 2003 = 5972921
 
 ```{r}
 #df <- df %>% 
@@ -106,26 +106,6 @@ load("/home/rlana/Dados/RData_full_new.RData")
 df <- df %>% 
       select(-DT_ENVLO, -DT_DIGIT, -SEM_NOTI, -COD_AGEN, -GESTANTE1, -NIV_ESCO_1, -ESQUEMA_1, -HEMOPARASI, -EXAME_, -EXAMINADOR, -VIVAX, -FALCIPARUM) %>% 
       filter(RES_EXAM == "2" | RES_EXAM == "3" | RES_EXAM == "4" | RES_EXAM == "5" | RES_EXAM == "6" | RES_EXAM == "7" | RES_EXAM == "9")
-
-
-## For paper description
-df %>% count()
-df %>% filter(RES_EXAM != "0") %>% count()
-# % of malaria types
-df %>% filter(RES_EXAM != "0") %>% 
-  mutate(RES_EXAM = as.factor(RES_EXAM))
-
-tmal <- df %>%
-  filter(RES_EXAM != "0") %>% 
-  mutate(RES_EXAM = if_else(RES_EXAM == "2" | RES_EXAM == "3" | RES_EXAM == "7", "F", 
-          if_else(RES_EXAM == "4", "V",
-                  if_else(RES_EXAM == "5" | RES_EXAM == "6", "F+V",
-                          if_else(RES_EXAM == "8", "M", 
-                              if_else(RES_EXAM == "9", "F+M", "Others")))))) %>%  
-  group_by(RES_EXAM) %>%
-  count() %>%
-  mutate(pmType = n/5972921 * 100)
-  
 
 ```
 
@@ -142,21 +122,13 @@ RES_EXAM categories, absolute number and percentages from 2003 to 2018:
 10 – Ovale: 69 (0.00116 %)      
 11 – Não F: 19911  (0.333 %)    
 
-- Recategorization for paper description:  
-F: 1095699 (18.3 %)      
-V: 4782306 (80.1 %)  
-F+M: 577  (0.00966 %)  
-F+V: 72431  (1.21 %)     
-M: 1928 (0.0323 %)   
-Others: 19980 (0.335 %)    
-
 
 - Categorizing variables and transforming to factor.
 ```{r}
 df <- df %>% 
       mutate(RES_EXAM = if_else(RES_EXAM == "2" | RES_EXAM == "3" | RES_EXAM == "7" | RES_EXAM == "9", "F", 
                                 if_else(RES_EXAM == "4" | RES_EXAM == "6", "V",
-                                        if_else(RES_EXAM == "5", "F+V", RES_EXAM)))) %>% #confirm if "9" is a mixed too
+                                        if_else(RES_EXAM == "5", "F+V", RES_EXAM)))) %>% 
       mutate(SINTOMAS = if_else(SINTOMAS == "1", "YES", "NO")) %>%
       mutate(QTD_CRUZ = if_else(QTD_CRUZ == "1", "< +/2", 
                                 if_else(QTD_CRUZ == "2", "+/2",
