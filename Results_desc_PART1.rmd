@@ -5,10 +5,10 @@ date: "April 17, 2019"
 output: html_document
 ---
 
-# Descriptions for Results part 1
+# Descriptions for Results part 1: manuscript and table 1
 ### The first initial descriptions for Rsults section part 1 needs the full database to calculate cases and API for the text and table 1.
 
-- Loading RData file and libraries
+- Loading files and libraries
 ```{r}
 library(foreign)
 library('stringr')
@@ -23,11 +23,14 @@ library(rgdal)
 #load("~/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/RData_full.RData") #until first weeks of 2018
 load("/home/rlana/Dados/RData_full_new.RData") #until the end of 2018 and a update of 2017.
 
+pop <-fread("/home/rlana/Dados/BRA_POP_EST.csv", encoding = "UTF-8")
+
 ```
 
-For paper description:  
+## For paper description  
+
+### Brazil 2003 to 2018:  
 ```{r}
-# Brazil 2003 to 2018
 tmal <- df %>%
   filter(RES_EXAM != "0") %>% 
   mutate(RES_EXAM = if_else(RES_EXAM == "2" | RES_EXAM == "3" | RES_EXAM == "7", "F", 
@@ -46,55 +49,9 @@ df %>%
   group_by(ANO) %>%
   count()
 
-
-# Brazil 2018
-tmal18 <- df %>%
-  filter(ANO == 2018) %>%
-  mutate(RES_EXAM = if_else(RES_EXAM == "2" | RES_EXAM == "3" | RES_EXAM == "7" | RES_EXAM == "9", "F", 
-          if_else(RES_EXAM == "4" | RES_EXAM == "6", "V",
-                  if_else(RES_EXAM == "5", "F+V", "Others")))) %>%   
-  group_by(RES_EXAM) %>% 
-  count() %>% 
-  mutate(pmType = n/242797 * 100)
-
-# Brazi: top states per year
-df %>%
-  filter(RES_EXAM != "0") %>% 
-  select(UF_NOTIF, RES_EXAM, ANO) %>%
-  group_by(ANO, UF_NOTIF) %>% 
-  count() %>%
-  filter(ANO == 2018) %>% #change the year
-  arrange(desc(n))
-
-df %>%
-  filter(RES_EXAM != "0") %>% 
-  select(UF_NOTIF, RES_EXAM) %>%
-  group_by(UF_NOTIF) %>% 
-  count() %>%
-  arrange(desc(n)) %>%
-  mutate(prop = n/5972921 * 100)
-
-#Cases per year only vivax and falci- double counting for mixed infectio 
-## Vivax
-vyear <- df %>%
-  filter(RES_EXAM == "4" | RES_EXAM == "5" | RES_EXAM == "6") %>%   
-  group_by(ANO) %>%
-  count()
-
-fyear <- df %>%
-  filter(RES_EXAM == "2" | RES_EXAM == "3" | RES_EXAM == "5" | RES_EXAM == "7" | RES_EXAM == "9") %>%   
-  group_by(ANO) %>%
-  count()
-
-
-
-# Brazi: vivax, falciparum and total API and top states per year- ver se faço aqui ou depois, mas aí tem que ser com todos os casos.
-
 ```
 
-
-### Filtering and grouping to falciparum and vivax types.
-RES_EXAM categories, absolute number and percentages from 2003 to 2018:  
+### RES_EXAM categories, absolute number and percentages from 2003 to 2018:  
 2 - Falciparum: 897411 (15.0 %)      
 3 - F+FG: 151502  (2.54 %)      
 4 - Vivax: 4782306 (80.1 %)      
@@ -114,13 +71,147 @@ Falciparum + Vivax: 44389  (0.743 %)
 Malariae: 1928 (0.0323 %)   
 Others (Ovale + Not Falciparum): 19980 (0.335 %)    
 
-- 2018 description without and with mixed infection
+
+
+### Brazil 2018:  
+```{r}
+tmal18 <- df %>%
+  filter(ANO == 2018) %>%
+  mutate(RES_EXAM = if_else(RES_EXAM == "2" | RES_EXAM == "3" | RES_EXAM == "7" | RES_EXAM == "9", "F", 
+          if_else(RES_EXAM == "4" | RES_EXAM == "6", "V",
+                  if_else(RES_EXAM == "5", "F+V", "Others")))) %>%   
+  group_by(RES_EXAM) %>% 
+  count() %>% 
+  mutate(pmType = n/242797 * 100)
+
+```
+
+- 2018 description without and with double counting mixed infection  
 cases: 242,797    
 V: 216769 (89.3 %), 217685 (89.7 %)    
 F: 20357  (8.38 %), 21273 (8.8%)     
 
 
+### Amazon Basin top state case per year:  
+```{r}
+df %>%
+  filter(RES_EXAM != "0") %>% 
+  select(UF_NOTIF, RES_EXAM, ANO) %>%
+  group_by(ANO, UF_NOTIF) %>% 
+  count() %>%
+  filter(ANO == 2018) %>% #change the year
+  arrange(desc(n))
+
+```
+
 - Top states per year  
 2003 to 2008: 13    
 2009 to 2012: 15  
 2013 to 2018: 13 
+
+
+### Cases per year only vivax and falci- double counting for mixed infection:  
+```{r}
+## Vivax
+vyear <- df %>%
+  filter(RES_EXAM == "4" | RES_EXAM == "5" | RES_EXAM == "6") %>%   
+  group_by(ANO) %>%
+  count()
+
+fyear <- df %>%
+  filter(RES_EXAM == "2" | RES_EXAM == "3" | RES_EXAM == "5" | RES_EXAM == "7" | RES_EXAM == "9") %>%   
+  group_by(ANO) %>%
+  count()
+
+```
+
+## Vivax, falciparum and total API and top API states per year
+
+### Amazon Basin Total API per year
+```{r}
+# Amazon Basin cases per year
+cases_AB_year <- df %>%
+    filter(RES_EXAM != "0") %>%
+    mutate(ANO = as.integer(ANO)) %>%
+    group_by(ANO) %>%
+    count() %>%
+    rename(CASES = n)
+
+# Amazon Basin population size per year
+pop_AB_year <- pop %>%
+  filter(CODE == 11 | CODE == 12 | CODE == 13 | CODE == 14 | CODE == 15 | CODE == 16 | CODE == 17 | CODE == 21 | CODE == 51) %>%
+  select(-LEVEL, -NAME, -GR) %>%
+  gather(key = ANO, value = POP_SIZE, -c(CODE)) %>% 
+  mutate(ANO = as.integer(ANO)) %>% 
+  group_by(ANO) %>% 
+  summarise(POP_SIZE = sum(POP_SIZE))
+
+# Amazon Basin API  
+API_AB_year <- left_join(cases_AB_year, pop_AB_year) %>%
+  mutate(API = CASES/POP_SIZE * 1000)
+
+```
+
+### Amazon Basin vivax and falciparum API per year
+```{r}
+# Amazon Basin cases per year
+cases_AB_year <- df %>%
+    filter(RES_EXAM != "0") %>%
+    mutate(ANO = as.integer(ANO)) %>%
+    group_by(ANO) %>%
+    count() %>%
+    rename(CASES = n)
+
+vyear <- df %>%
+  filter(RES_EXAM == "4" | RES_EXAM == "5" | RES_EXAM == "6") %>%       
+  mutate(ANO = as.integer(ANO)) %>% 
+  group_by(ANO) %>%
+  count() %>% 
+  rename(VIVAX = n) 
+
+fyear <- df %>%
+  filter(RES_EXAM == "2" | RES_EXAM == "3" | RES_EXAM == "5" | RES_EXAM == "7" | RES_EXAM == "9") %>%    
+  mutate(ANO = as.integer(ANO)) %>% 
+  group_by(ANO) %>%
+  count() %>% 
+  rename(FALCIPARUM = n) 
+
+
+# Amazon Basin vivax and falciparum API  
+APIvf_AB_year <- left_join(vyear, fyear)
+APIvf_AB_year <- left_join(APIvf_AB_year, pop_AB_year)%>%
+  mutate(APIV = VIVAX/POP_SIZE * 1000,
+         APIF = FALCIPARUM/POP_SIZE * 1000)
+
+```
+
+### Top state API
+```{r}
+# Amazon Basin cases per year
+cases_AB_yearTOP <- df %>%
+    filter(RES_EXAM != "0") %>%
+    mutate(ANO = as.integer(ANO),
+           UF_NOTIF = as.integer(UF_NOTIF)) %>%
+    group_by(ANO, UF_NOTIF) %>%
+    count() %>%
+    rename(CASES = n,
+           CODE = UF_NOTIF) 
+
+# Amazon Basin population size per year
+pop_AB_yearTOP <- pop %>%
+  filter(CODE == 11 | CODE == 12 | CODE == 13 | CODE == 14 | CODE == 15 | CODE == 16 | CODE == 17 | CODE == 21 | CODE == 51) %>%
+  select(-LEVEL, -NAME, -GR) %>%
+  gather(key = ANO, value = POP_SIZE, -c(CODE)) %>% 
+  mutate(ANO = as.integer(ANO)) 
+
+# Top API states per year
+API_top <- left_join(cases_AB_yearTOP, pop_AB_yearTOP) %>% 
+  mutate(API = CASES/POP_SIZE * 1000)
+
+API_top %>% 
+  filter(ANO == 2018) %>% #change the year
+  arrange(desc(API))
+
+```
+
+
