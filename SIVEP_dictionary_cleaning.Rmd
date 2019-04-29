@@ -175,6 +175,9 @@ df <- df %>%
 
 USAR CUT e cria as categ no LABEL: para não sair o level, tenho que fazer um cut em uma variável numerica e depois geral o label...ver se é isso.
 
+LEMBRAR DE GERAR MEDIANA E DESVIO PADRAO IDADE X SEXO QUANDO GERAR AS TABELAS PAR AOS PLOTS.
+
+
 ```{r}
 
 teste <- df %>% 
