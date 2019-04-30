@@ -155,7 +155,7 @@ df <- df %>%
          COD_OCUP = as.factor(COD_OCUP),
          NIV_ESCO = as.factor(NIV_ESCO))
 
-levels(df$SINTOMAS)
+#levels(df$SINTOMAS)
 
 ```
 
@@ -172,42 +172,32 @@ df <- df %>%
 ```
 
 - Age range
-
-USAR CUT e cria as categ no LABEL: para não sair o level, tenho que fazer um cut em uma variável numerica e depois geral o label...ver se é isso.
-
-LEMBRAR DE GERAR MEDIANA E DESVIO PADRAO IDADE X SEXO QUANDO GERAR AS TABELAS PAR AOS PLOTS.
-
-
 ```{r}
+labs <- c("0-4","5-9","10-14","15-19","20-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64","65-69","70-74","75-79","80+")
+df <- df %>% 
+  mutate(AGE_CAT = cut(AGE_CONT, breaks = c(seq(0, 80, by = 5), Inf), labels = labs, right = FALSE))
+           
+```
 
-teste <- df %>% 
-   mutate(AGE_CONT = as.double(AGE_CONT)) %>%
-  cut(AGE_CONT, breaks = 17, labels = c("0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80+"), ordered_result = T) #VER COMO USAR DIREITO
 
-
-
-df$AGE_CAT <- NA 
-df[which(df$AGE_CONT <= 4),]$AGE_CAT <- "0-4"
-df[which(df$AGE_CONT >= 5 & df$AGE_CONT <= 9),]$AGE_CAT <- "5-9"
-df[which(df$AGE_CONT >= 10 & df$AGE_CONT <= 14),]$AGE_CAT <- "10-14"
-df[which(df$AGE_CONT >= 15 & df$AGE_CONT <= 19),]$AGE_CAT <- "15-19"
-df[which(df$AGE_CONT >= 20 & df$AGE_CONT <= 24),]$AGE_CAT <- "20-24"
-df[which(df$AGE_CONT >= 25 & df$AGE_CONT <= 29),]$AGE_CAT <- "25-29"
-df[which(df$AGE_CONT >= 30 & df$AGE_CONT <= 34),]$AGE_CAT <- "30-34"
-df[which(df$AGE_CONT >= 35 & df$AGE_CONT <= 39),]$AGE_CAT <- "35-39"
-df[which(df$AGE_CONT >= 40 & df$AGE_CONT <= 44),]$AGE_CAT <- "40-44"
-df[which(df$AGE_CONT >= 45 & df$AGE_CONT <= 49),]$AGE_CAT <- "45-49"
-df[which(df$AGE_CONT >= 50 & df$AGE_CONT <= 54),]$AGE_CAT <- "50-54"
-df[which(df$AGE_CONT >= 55 & df$AGE_CONT <= 59),]$AGE_CAT <- "55-59"
-df[which(df$AGE_CONT >= 60 & df$AGE_CONT <= 64),]$AGE_CAT <- "60-64"
-df[which(df$AGE_CONT >= 65 & df$AGE_CONT <= 69),]$AGE_CAT <- "65-69"
-df[which(df$AGE_CONT >= 70 & df$AGE_CONT <= 74),]$AGE_CAT <- "70-74"
-df[which(df$AGE_CONT >= 75 & df$AGE_CONT <= 79),]$AGE_CAT <- "75-79"
-df[which(df$AGE_CONT >= 80),]$AGE_CAT <- "80+"
-
-df$AGE_CAT = factor(df$AGE_CAT, label=c("0-4","5-9","10-14","15-19","20-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64","65-69","70-74","75-79","80+"), levels= c("0-4","5-9","10-14","15-19","20-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64","65-69","70-74","75-79","80+"))
+- Convert some characters to integer
+```{r}
+df <- df %>% 
+  mutate(COD_NOTI = as.integer(COD_NOTI),
+         UF_NOTIF = as.integer(UF_NOTIF),
+         MUN_NOTI = as.integer(MUN_NOTI),
+         COD_UNIN = as.integer(COD_UNIN),
+         PAIS_RES = as.integer(PAIS_RES),
+         UF_RESID = as.integer(UF_RESID),
+         MUN_RESI = as.integer(MUN_RESI),
+         LOC_RESI = as.integer(LOC_RESI),
+         UF_INFEC = as.integer(UF_INFEC),
+         PAIS_INF = as.integer(PAIS_INF),
+         MUN_INFE = as.integer(MUN_INFE),
+         LOC_INFE = as.integer(LOC_INFE))
 
 ```
+
 
 
 Saving RData.
