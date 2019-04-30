@@ -127,9 +127,9 @@ RES_EXAM categories, absolute number and percentages from 2003 to 2018:
 - Categorizing variables and transforming to factor.
 ```{r}
 df <- df %>%
-  mutate(RES_EXAM = as.factor(case_when(RES_EXAM == "2" | RES_EXAM == "3" | RES_EXAM == "7" | RES_EXAM == "9" ~ "Falciparum",
-                                        RES_EXAM == "4" | RES_EXAM == "6" ~ "Vivax",
-                                        TRUE  ~  "Mixed"))) %>%
+  mutate(RES_EXAM = as.factor(case_when(RES_EXAM == "2" | RES_EXAM == "3" | RES_EXAM == "7" | RES_EXAM == "9" ~ "F",
+                                        RES_EXAM == "4" | RES_EXAM == "6" ~ "V",
+                                        TRUE  ~  "V+F"))) %>%
   mutate(SINTOMAS = as.factor(case_when(SINTOMAS == "1" ~ "YES", 
                                         TRUE ~ "NO"))) %>% 
   mutate(QTD_CRUZ = as.factor(case_when(QTD_CRUZ == "1" ~ "< +/2",

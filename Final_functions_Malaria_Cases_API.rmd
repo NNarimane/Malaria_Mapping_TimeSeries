@@ -39,9 +39,9 @@ library("rgdal")
 ```{r}
 # Get SIVEP data cleaned up and by species
 SIVEPFilePath = "~/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/SIVEP_clean.RData"
-SIVEPFilePath = "~/Documentos/PosDoc_PROCC/OwnCloud/malaria/AnalisesRaquel/Pasteur/SIVEP_clean.RData"
+SIVEPFilePath = "/home/rlana/Dados/SIVEP_clean_2003_2018.RData"
 StartYear = 2004 # (inferior limit = 2003)
-EndYear = 2017 # (superior limit = 2018)
+EndYear = 2018 # (superior limit = 2018)
 AgTimeUnit = "week" # ("week", "month")
 byNotification = T 
 byResidence = F
@@ -69,10 +69,11 @@ getWEEKLY_SIVEP_MALARIA_TYPE <- function(SIVEPFilePath, StartYear, EndYear, AgTi
   
   
   # Replace missing state code with municipality state code
-  df$UF_NOTIF=substr(df$MUN_NOTI, 1, 2) 
-  df$UF_RESID=substr(df$MUN_RESI, 1, 2)
-  df$UF_INFEC=substr(df$MUN_INFE, 1, 2)
-
+  df <- df %>% 
+    mutate(UF_NOTIF = as.integer(substr(as.character(MUN_NOTI), 1, 2)),
+           UF_RESID = as.integer(substr(as.character(MUN_RESI), 1, 2)),
+           UF_INFEC = as.integer(substr(as.character(MUN_INFE), 1, 2)))
+  
   # Select administrative level via code
   if(byNotification){
     df$PAIS_CODE <- 1
@@ -95,6 +96,7 @@ getWEEKLY_SIVEP_MALARIA_TYPE <- function(SIVEPFilePath, StartYear, EndYear, AgTi
     df <- df %>%
       filter(TIPO_LAM == "PCD")
   }
+
   if(byPCDACD){
     df <- df %>%
       filter(TIPO_LAM == "PCD" | TIPO_LAM == "ACD")
@@ -108,9 +110,9 @@ getWEEKLY_SIVEP_MALARIA_TYPE <- function(SIVEPFilePath, StartYear, EndYear, AgTi
     select(DT_NOTIF, LEVEL, MUN_CODE, RES_EXAM, n) %>%
     spread(RES_EXAM, n, fill = 0) %>%
     rename(CODE = MUN_CODE,
-           FALCI = "Falciparum",
+           FALCI = "F",
            VF = "V+F",
-           VIVAX = "Vivax") %>%
+           VIVAX = "V") %>%
     mutate(Falciparum = FALCI + VF,
            Vivax = VIVAX + VF,
            DATE = floor_date(as.Date(DT_NOTIF, format = "%Y-%m-%d"), unit = AgTimeUnit)
@@ -118,7 +120,7 @@ getWEEKLY_SIVEP_MALARIA_TYPE <- function(SIVEPFilePath, StartYear, EndYear, AgTi
     ungroup %>%
     select(-DT_NOTIF) %>%
     select(DATE, LEVEL, CODE, Falciparum, Vivax) %>%
-    gather(key = 'TYPE', value = 'CASES', -c(DATE, LEVEL, CODE))
+    gather(key = TYPE, value = CASES, -c(DATE, LEVEL, CODE))
 
   
   # UF - level
@@ -129,9 +131,9 @@ getWEEKLY_SIVEP_MALARIA_TYPE <- function(SIVEPFilePath, StartYear, EndYear, AgTi
     select(DT_NOTIF, LEVEL, UF_CODE, RES_EXAM, n) %>%
     spread(RES_EXAM, n, fill = 0) %>%
     rename(CODE = UF_CODE,
-           FALCI = "Falciparum",
+           FALCI = "F",
            VF = "V+F",
-           VIVAX = "Vivax") %>%
+           VIVAX = "V") %>%
     mutate(Falciparum = FALCI + VF,
            Vivax = VIVAX + VF,
            DATE = floor_date(as.Date(DT_NOTIF, format = "%Y-%m-%d"), unit = AgTimeUnit)
@@ -139,7 +141,7 @@ getWEEKLY_SIVEP_MALARIA_TYPE <- function(SIVEPFilePath, StartYear, EndYear, AgTi
     ungroup %>%
     select(-DT_NOTIF) %>%
     select(DATE, LEVEL, CODE, Falciparum, Vivax) %>%
-    gather(key = 'TYPE', value = 'CASES', -c(DATE, LEVEL, CODE))
+    gather(key = TYPE, value = CASES, -c(DATE, LEVEL, CODE))
   
   # BR - level
   week_malaria_type_brazil <- df %>%
@@ -149,9 +151,9 @@ getWEEKLY_SIVEP_MALARIA_TYPE <- function(SIVEPFilePath, StartYear, EndYear, AgTi
     select(DT_NOTIF, LEVEL, PAIS_CODE, RES_EXAM, n) %>%
     spread(RES_EXAM, n, fill = 0) %>%
     rename(CODE = PAIS_CODE,
-           FALCI = "Falciparum",
+           FALCI = "F",
            VF = "V+F",
-           VIVAX = "Vivax") %>%
+           VIVAX = "V") %>%
     mutate(Falciparum = FALCI + VF,
            Vivax = VIVAX + VF,
            DATE = floor_date(as.Date(DT_NOTIF, format = "%Y-%m-%d"), unit = AgTimeUnit)
