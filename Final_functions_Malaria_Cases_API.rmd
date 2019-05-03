@@ -46,8 +46,8 @@ SIVEPFilePath = "/home/rlana/Dados/SIVEP_clean_2003_2018.RData"
 StartYear = 2004 # (inferior limit = 2003)
 EndYear = 2018 # (superior limit = 2018)
 AgTimeUnit = "week" # ("week", "month")
-byNotification = F 
-byResidence = T
+byNotification = T 
+byResidence = F
 byInfection = F
 byPCD = F
 byPCDACD = T
@@ -67,7 +67,7 @@ getWEEKLY_SIVEP_MALARIA_TYPE <- function(SIVEPFilePath, StartYear, EndYear, AgTi
   load(SIVEPFilePath)
 
   # Choose time period
-  df <- df[which(df[,"DT_NOTIF"] >= paste0(StartYear,"-01-01") & df[,"DT_NOTIF"] <= paste0(EndYear, "-12-31")),]
+  df <- df[which(df[,"DT_NOTIF"] >= paste0(StartYear,"-01-01") & df[,"DT_NOTIF"] <= paste0(EndYear, "-12-31")),] # parece não funcionar para residencia e prob infe, mas na sequencia corta...quando vai para merge com população
   
   
   # Replace missing state code with municipality state code
@@ -221,8 +221,6 @@ getWEEKLY_SIVEP_API <- function(IBGEFilePath, StartYear, EndYear, AgTimeUnit){
     group_by(DATE, LEVEL, CODE, TYPE) %>% 
     summarise(CASES = sum(CASES)) %>% 
     mutate(YEAR = year(DATE))
-
-  #CODE = as.numeric(CODE)
     
   # Join cases and population tables
   API_MALARIA <- left_join(d1, d)  
@@ -288,6 +286,10 @@ d3 <- getWEEKLY_SIVEP_RATIOS(API_MALARIA, StartYear, EndYear, AgTimeUnit)
 
 
 ### Cases and API Brazil time series plot 
+
+Esses plots estão funcionando, só não consegui salvar.  
+Não consegui cortar o 2019 do gráfico.  
+
 ```{r}
 #Move to header
 # Date type (by day == "Daily" , week == "Weekly", month == "Monthly", year == "Yearly")
@@ -344,26 +346,28 @@ dev.off()
 
 # Time series by STATE- one figure with all states.  
 - supp file  
+- FALTA salvar! E decidir se faremos assim, ou se faremos uma a um como mais abaixo.
+
 ```{r}
-ADMIN_NAMES <- read.table("~/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/BRA_ADMIN_NAMES.csv", sep = " ")
+ADMIN_NAMES <- read.table("/home/rlana/Dados/BRA_ADMIN_NAMES.csv", sep = " ")
 head(ADMIN_NAMES)
 
 ADMIN_NAMES <- ADMIN_NAMES %>%
   ungroup %>%
   filter(Level != "GR") %>%
-  #mutate(Code = ifelse(Code == 0, 1, Code))
-  mutate(CODE = replace(CODE, CODE == 0, 1))
+  mutate(CODE = replace(Code, Code == 0, 1))
 
 # Assign names
 d2$STATE = ADMIN_NAMES[match(d2$CODE, ADMIN_NAMES$Code),"UF"] 
 d2$NAME = ADMIN_NAMES[match(d2$CODE, ADMIN_NAMES$Code),"Name"]
 
-# States
-States_sivep = c("AC","AM","AP","MA","MT","PA","RO","RR","TO")
+# States Amazon Basin
+dAB <- d2 %>% 
+  filter(STATE == "AC"| STATE == "AM" | STATE == "AP" | STATE == "MA" | STATE == "MT" | STATE == "PA" | STATE == "RO" | STATE == "RR" | STATE == "TO")
 
 #Terminar de organizar, testando o banco ainda para residencia e provavel infecção
 
-TS_Plot_State <- ggplot(data = subset(d2, LEVEL == "UF" & STATE == States_sivep), aes(DATE, CASE, color = TYPE)) + ###testar
+Cases_Plot_State <- ggplot(data = subset(dAB, LEVEL == "UF"), aes(DATE, CASES, color = TYPE)) + ###testar
   stat_summary(fun.y = sum, geom = "line") +
   scale_x_date(breaks = "year",
                date_labels = "%Y") +
@@ -386,20 +390,22 @@ dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum cases by state, Bra
 dev.off()
 
 
-TS_Plot_State <- ggplot(data = subset(dAB, LEVEL == "UF"), aes(DATE, API, color = TYPE)) +
+API_Plot_State <- ggplot(data = subset(dAB, LEVEL == "UF"), aes(DATE, API, color = TYPE)) +
   stat_summary(fun.y = sum, geom = "line") +
   scale_x_date(breaks = "year",
                date_labels = "%Y") +
   facet_wrap(.~NAME, ncol = 3) +
   scale_color_manual(values = c("#31a354","#3182bd")) +
   labs(title = paste0("P. vivax and P. falciparum ", "API in Brazil, ", 
-                      StartYear, "-", EndYear), x = "Year", y = paste(Date_Type,"cases")) +
+                      StartYear, "-", EndYear), x = "Year", y = paste(Date_Type,"API")) +
   guides(color=guide_legend(title="Plasmodium species")) +
   theme(panel.grid.minor.x = element_blank(),
         axis.text.x = element_text(angle = 90, hjust = 1))
 
 API_Plot_State
 
+
+# Salvar!!!!!
 # Save
 dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum API by state, Brazil ", StartYear, "-", EndYear, ".png"),
          width = 1800, height = 800, units = "px", pointsize = 12,
@@ -409,29 +415,40 @@ dev.off()
 ```
 
 
+### State plots - each state separetely
+- Decidir!!!!!
+```{r}
+UF_Plots <- foreach(i = 1:length(States_sivep)) %do% {
+  Plot_Name = paste0("TS_Plot_", States_sivep[i])
+  assign(Plot_Name, ggplot(data = subset(dAB, LEVEL == "UF" & STATE == States_sivep[i]), 
+                           aes(DATE, CASES, color = TYPE)) +
+           stat_summary(fun.y = sum, geom = "line") +
+           scale_x_date(breaks = "year", 
+                        date_labels = "%Y") +
+           scale_color_manual(values = c("#31a354","#3182bd")) +
+           facet_wrap(~NAME) +
+           labs(title = paste0("P. vivax and P. falciparum cases in ", States_sivep[i], 
+                               StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
+           guides(color = guide_legend(title = "Plasmodium species")) +
+           theme(panel.grid.minor.x = element_blank(),
+                 axis.text.x = element_text(angle = 90, hjust = 1)))
+}
+
+UF_Plots
+
+```
 
 ### Municipalities plots for each state
 
-- Não consegui salvar ainda. Try to save again. Doing  -- AJUDA
+- Não consegui salvar ainda, mas funciona!!!! 
+- Aqui teria que ver se faremos mesmo, se vamos colcoar no suplementar. Para alguns estados, os que tem mais municípios, fica ruim.  
 ```{r}
-ADMIN_NAMES <- read.table("~/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/BRA_ADMIN_NAMES.csv", sep = " ")
-head(ADMIN_NAMES)
-
-ADMIN_NAMES <- ADMIN_NAMES %>%
-  ungroup %>%
-  filter(Level != "GR") %>%
-  mutate(Code = ifelse(Code == 0, 1, Code))
-
-# Assign names
-d2$STATE = ADMIN_NAMES[match(d2$CODE, ADMIN_NAMES$Code),"UF"] 
-d2$NAME = ADMIN_NAMES[match(d2$CODE, ADMIN_NAMES$Code),"Name"]
-
 # States
 States_sivep = c("AC","AM","AP","MA","MT","PA","RO","RR","TO")
 
-MUN_Plots = foreach(i = 1:length(States_sivep)) %do% {
+MUN_Plots <- foreach(i = 1:length(States_sivep)) %do% {
   Plot_Name = paste0("TS_Plot_", States_sivep[i])
-  assign(Plot_Name, ggplot(data = subset(d2, LEVEL == "MU" & 
+  assign(Plot_Name, ggplot(data = subset(dAB, LEVEL == "MU" & 
                                            STATE == States_sivep[i]), 
                            aes(DATE, CASES, color = TYPE)) +
            stat_summary(fun.y = sum, geom = "line") +
@@ -447,7 +464,7 @@ MUN_Plots = foreach(i = 1:length(States_sivep)) %do% {
   
   
 ##Testar
-  ggsave(Plot_Name, )
+ # ggsave(Plot_Name, )
   
 }
 
@@ -457,27 +474,9 @@ MUN_Plots = foreach(i = 1:length(States_sivep)) %do% {
 ```
 
 
-### State plots - each state separetely
-```{r}
-UF_Plots = foreach(i = 1:length(States_sivep)) %do% {
-  Plot_Name = paste0("TS_Plot_", States_sivep[i])
-  assign(Plot_Name, ggplot(data = subset(d2, LEVEL == "UF" & STATE == States_sivep[i]), 
-                           aes(DATE, CASES, color = TYPE)) +
-           stat_summary(fun.y = sum, geom = "line") +
-           scale_x_date(breaks = "year", 
-                        date_labels = "%Y") +
-           scale_color_manual(values = c("#31a354","#3182bd")) +
-           facet_wrap(~NAME) +
-           labs(title = paste0("P. vivax and P. falciparum cases in ", States_sivep[i], "Brazil", 
-                               StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
-           guides(color = guide_legend(title = "Plasmodium species")) +
-           theme(panel.grid.minor.x = element_blank(),
-                 axis.text.x = element_text(angle = 90, hjust = 1)))
-}
-
-```
 
 
+### PArei aqui
 
 
 
