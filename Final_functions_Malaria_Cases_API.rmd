@@ -7,6 +7,9 @@ editor_options:
   chunk_output_type: console
 ---
 
+# Daniel, a ideia desse código é que ele tenha apenas as funções, mas como ainda estou fazendo, vc verá ao longo do scrpti as partes que devem ser emovidas para um "header file". Se vc ver trechos de códigos que podem ser melhorados, por favor, fique a vontade. Só peço rpa comentar para eu veja o que mudou para aprender a fazer do melhor jeito. Eu comentei tb nas figuras, onde não consegui salvar ainda. Se puder ver isso! Até consigo gerar as figuras, mas sem salvar. 
+
+
 # Final functions for the analyzes and figures of the first paper
 
 - Packages - move to header file together the parameters.
@@ -239,13 +242,12 @@ getWEEKLY_SIVEP_API <- function(IBGEFilePath, StartYear, EndYear, AgTimeUnit){
 - Move to header file 
 ```{r}
 d2 <- getWEEKLY_SIVEP_API(IBGEFilePath, StartYear, EndYear, AgTimeUnit)
-dResi <- getWEEKLY_SIVEP_API(IBGEFilePath, StartYear, EndYear, AgTimeUnit)
 
 ```
 
 - Save
 ```{r}
-save(dNoti, dResi, dInfe, file = "API_Noti_Resi_Infe.Rdata")
+save(d2, file = "/home/rlana/Dados/API_ProbInf.Rdata")
 
 ```
 
@@ -307,7 +309,7 @@ Cases_TS_BR <- ggplot(data = subset(d2, LEVEL == "BR"), aes(DATE, CASES, color =
 
 Cases_TS_BR
 
-###### Ainda não acertei aqui....eu tinha tentado de outras formas mas sei lá o que houve que perdi algumas coisas que tinha feito...mas de qq jeito não tinha consegui salvar.
+###### Ainda não acertei aqui....eu tinha tentado de outras formas mas sei lá o que houve que perdi algumas coisas que tinha feito...mas de qq jeito não tinha conseguido salvar.
 ggsave(Cases_TS_BR, filename = , width = , height = , dpi = 300, path = Plot_Folder, device = "png")
 
 
@@ -343,9 +345,25 @@ dev.off()
 # Time series by STATE- one figure with all states.  
 - supp file  
 ```{r}
-dAB <- c()
+ADMIN_NAMES <- read.table("~/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/BRA_ADMIN_NAMES.csv", sep = " ")
+head(ADMIN_NAMES)
 
-TS_Plot_State <- ggplot(data = subset(dAB, LEVEL == "UF"), aes(DATE, CASE, color = TYPE)) +
+ADMIN_NAMES <- ADMIN_NAMES %>%
+  ungroup %>%
+  filter(Level != "GR") %>%
+  #mutate(Code = ifelse(Code == 0, 1, Code))
+  mutate(CODE = replace(CODE, CODE == 0, 1))
+
+# Assign names
+d2$STATE = ADMIN_NAMES[match(d2$CODE, ADMIN_NAMES$Code),"UF"] 
+d2$NAME = ADMIN_NAMES[match(d2$CODE, ADMIN_NAMES$Code),"Name"]
+
+# States
+States_sivep = c("AC","AM","AP","MA","MT","PA","RO","RR","TO")
+
+#Terminar de organizar, testando o banco ainda para residencia e provavel infecção
+
+TS_Plot_State <- ggplot(data = subset(d2, LEVEL == "UF" & STATE == States_sivep), aes(DATE, CASE, color = TYPE)) + ###testar
   stat_summary(fun.y = sum, geom = "line") +
   scale_x_date(breaks = "year",
                date_labels = "%Y") +
