@@ -418,6 +418,8 @@ dev.off()
 ### State plots - each state separetely
 - Decidir!!!!!
 ```{r}
+States_sivep = c("AC","AM","AP","MA","MT","PA","RO","RR","TO")
+
 UF_Plots <- foreach(i = 1:length(States_sivep)) %do% {
   Plot_Name = paste0("TS_Plot_", States_sivep[i])
   assign(Plot_Name, ggplot(data = subset(dAB, LEVEL == "UF" & STATE == States_sivep[i]), 
@@ -434,7 +436,7 @@ UF_Plots <- foreach(i = 1:length(States_sivep)) %do% {
                  axis.text.x = element_text(angle = 90, hjust = 1)))
 }
 
-UF_Plots
+UF_Plots[1]
 
 ```
 
@@ -442,6 +444,7 @@ UF_Plots
 
 - Não consegui salvar ainda, mas funciona!!!! 
 - Aqui teria que ver se faremos mesmo, se vamos colcoar no suplementar. Para alguns estados, os que tem mais municípios, fica ruim.  
+- Se colocarmos no nível de município tb no supp file, talvez fosse melhor usar somente os que tem muitos casos..
 ```{r}
 # States
 States_sivep = c("AC","AM","AP","MA","MT","PA","RO","RR","TO")
@@ -468,7 +471,7 @@ MUN_Plots <- foreach(i = 1:length(States_sivep)) %do% {
   
 }
 
-
+MUN_Plots[1]
 
 
 ```
