@@ -43,7 +43,7 @@ library("rgdal")
 # Get SIVEP data cleaned up and by species
 #SIVEPFilePath = "~/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/SIVEP_clean.RData"
 SIVEPFilePath = "/home/rlana/Dados/SIVEP_clean_2003_2018.RData"
-SIVEPFilePath = "/home/daniel/temp/Malaria_mapping"
+#SIVEPFilePath = "/home/daniel/temp/Malaria_mapping"
 StartYear = 2004 # (inferior limit = 2003)
 EndYear = 2018 # (superior limit = 2018)
 AgTimeUnit = "week" # ("week", "month")
@@ -196,6 +196,7 @@ IBGEFilePath = "/home/daniel/temp/Malaria_mapping"
 #StartYear = 2004 # (inferior limit = 2003)
 #EndYear = 2017 # (superior limit = 2018)
 #AgTimeUnit = "week" # ("week", "month")
+unitTime <- ifelse(AgTimeUnit == "week", 52, 12) # If AgTimeUnit == "week", unitTime == 52
 
 ```
 
@@ -208,7 +209,10 @@ getWEEKLY_SIVEP_API <- function(IBGEFilePath, StartYear, EndYear, AgTimeUnit){
   
   # Get IBGE population size 
   d1 <- read.csv(IBGEFilePath, stringsAsFactors = F)
-
+  # Get names
+  ADMIN_NAMES <- read.table("/home/rlana/Dados/BRA_ADMIN_NAMES.csv", sep = " ")
+  #ADMIN_NAMES <- read.table("/home/daniel/temp/Malaria_mapping/BRA_ADMIN_NAMES.csv", sep = " ") 
+  
   # Reshape the population size table to join with cases table
   d1 <- d1 %>%
     select(-GR) %>%
@@ -216,11 +220,34 @@ getWEEKLY_SIVEP_API <- function(IBGEFilePath, StartYear, EndYear, AgTimeUnit){
     mutate(CODE = replace(CODE, CODE == 0, 1)) %>%
     gather(key = YEAR, value = POP_SIZE, -c(LEVEL, CODE, NAME)) %>%
     mutate(YEAR = as.integer(str_sub(YEAR, start = 2, end = 5))) %>%
-    filter(YEAR >= StartYear & YEAR <= EndYear) %>% 
-    filter(CODE == | CODE == | CODE == | CODE == | CODE == | CODE == | CODE == | CODE == | CODE == |)
+    filter(YEAR >= StartYear & YEAR <= EndYear) 
+
+  # Cut the database only for Amazon Basin States and municipalities
+  ADMIN_NAMES <- ADMIN_NAMES %>%
+    ungroup %>%
+    filter(Level != "GR") %>%
+    mutate(CODE = replace(Code, Code == 0, 1))
+
+  d1$STATE = ADMIN_NAMES[match(d1$CODE, ADMIN_NAMES$Code),"UF"] 
+  d1$NAME = ADMIN_NAMES[match(d1$CODE, ADMIN_NAMES$Code),"Name"]
+
+  d1 <- d1 %>% 
+    filter(STATE == "AC"| STATE == "AM" | STATE == "AP" | STATE == "MA" | STATE == "MT" | STATE == "PA" | STATE == "RO" | STATE == "RR" | STATE == "TO")
+
+  # Add BR level again only for Amazon Basin population
+  dBR <- d1 %>% 
+    filter(LEVEL == "UF") %>% 
+    group_by(YEAR) %>% 
+    summarise(POP_SIZE = sum(POP_SIZE)) %>% 
+    mutate(LEVEL = "BR",
+           CODE = 1,
+           NAME = "Amazonia Legal",
+           STATE = "NA") %>% 
+    select(CODE, LEVEL, NAME, YEAR, POP_SIZE, STATE)
   
+  d1 <- bind_rows(dBR, d1)
   
-  # Agregate cases by time amd create the column year
+  # Agregate cases by time and create the column year
   d <- d %>% 
     group_by(DATE, LEVEL, CODE, TYPE) %>% 
     summarise(CASES = sum(CASES)) %>% 
@@ -231,7 +258,7 @@ getWEEKLY_SIVEP_API <- function(IBGEFilePath, StartYear, EndYear, AgTimeUnit){
   
   # Calculate API and reorder columns and rearrange variables
   API_MALARIA <- API_MALARIA %>% 
-    mutate(API = CASES/POP_SIZE * 1000) %>%
+    mutate(API = CASES/POP_SIZE * 1000 * unitTime) %>%
     select(LEVEL, CODE, NAME, DATE, YEAR, TYPE, CASES, POP_SIZE, API) %>%
     arrange(DATE, YEAR, CODE)
   
@@ -249,8 +276,8 @@ d2 <- getWEEKLY_SIVEP_API(IBGEFilePath, StartYear, EndYear, AgTimeUnit)
 
 - Save
 ```{r}
-save(d2, file = "/home/rlana/Dados/API_ProbInf.Rdata")
-save(d2, file = "/home/daniel/temp/Malaria_mapping")
+save(d2, file = "/home/rlana/Dados/API_Noti_weeklyAPI.Rdata")
+#save(d2, file = "/home/daniel/temp/Malaria_mapping")
 ```
 
 
@@ -362,7 +389,7 @@ d2$NAME = ADMIN_NAMES[match(d2$CODE, ADMIN_NAMES$Code),"Name"]
 dAB <- d2 %>% 
   filter(STATE == "AC"| STATE == "AM" | STATE == "AP" | STATE == "MA" | STATE == "MT" | STATE == "PA" | STATE == "RO" | STATE == "RR" | STATE == "TO")
 
-#Terminar de organizar, testando o banco ainda para residencia e provavel infecção
+
 
 Cases_Plot_State <- ggplot(data = subset(dAB, LEVEL == "UF"), aes(DATE, CASES, color = TYPE)) + ###testar
   stat_summary(fun.y = sum, geom = "line") +
