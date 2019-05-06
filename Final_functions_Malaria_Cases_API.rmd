@@ -43,6 +43,7 @@ library("rgdal")
 # Get SIVEP data cleaned up and by species
 #SIVEPFilePath = "~/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/SIVEP_clean.RData"
 SIVEPFilePath = "/home/rlana/Dados/SIVEP_clean_2003_2018.RData"
+SIVEPFilePath = "/home/daniel/temp/Malaria_mapping"
 StartYear = 2004 # (inferior limit = 2003)
 EndYear = 2018 # (superior limit = 2018)
 AgTimeUnit = "week" # ("week", "month")
@@ -191,6 +192,7 @@ d <- getWEEKLY_SIVEP_MALARIA_TYPE(SIVEPFilePath, StartYear, EndYear, AgTimeUnit)
 #IBGEFilePath = "~/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/BRA_POP_EST.csv"
 #IBGEFilePath = "~/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/BRA_POP_EST.csv"
 IBGEFilePath = "/home/rlana/Dados/BRA_POP_EST.csv"
+IBGEFilePath = "/home/daniel/temp/Malaria_mapping"
 #StartYear = 2004 # (inferior limit = 2003)
 #EndYear = 2017 # (superior limit = 2018)
 #AgTimeUnit = "week" # ("week", "month")
@@ -214,7 +216,9 @@ getWEEKLY_SIVEP_API <- function(IBGEFilePath, StartYear, EndYear, AgTimeUnit){
     mutate(CODE = replace(CODE, CODE == 0, 1)) %>%
     gather(key = YEAR, value = POP_SIZE, -c(LEVEL, CODE, NAME)) %>%
     mutate(YEAR = as.integer(str_sub(YEAR, start = 2, end = 5))) %>%
-    filter(YEAR >= StartYear & YEAR <= EndYear)
+    filter(YEAR >= StartYear & YEAR <= EndYear) %>% 
+    filter(CODE == | CODE == | CODE == | CODE == | CODE == | CODE == | CODE == | CODE == | CODE == |)
+  
   
   # Agregate cases by time amd create the column year
   d <- d %>% 
@@ -246,7 +250,7 @@ d2 <- getWEEKLY_SIVEP_API(IBGEFilePath, StartYear, EndYear, AgTimeUnit)
 - Save
 ```{r}
 save(d2, file = "/home/rlana/Dados/API_ProbInf.Rdata")
-
+save(d2, file = "/home/daniel/temp/Malaria_mapping")
 ```
 
 
@@ -295,7 +299,7 @@ Não consegui cortar o 2019 do gráfico.
 # Date type (by day == "Daily" , week == "Weekly", month == "Monthly", year == "Yearly")
 Date_Type = "Weekly"
 Plot_Folder = "/home/rlana/Plots/TimeSeries/BR/"
-
+Plot_Folder = "/home/daniel/temp/Malaria_mapping"
 
 #Cases
 Cases_TS_BR <- ggplot(data = subset(d2, LEVEL == "BR"), aes(DATE, CASES, color = TYPE)) +
@@ -311,15 +315,10 @@ Cases_TS_BR <- ggplot(data = subset(d2, LEVEL == "BR"), aes(DATE, CASES, color =
 
 Cases_TS_BR
 
-###### Ainda não acertei aqui....eu tinha tentado de outras formas mas sei lá o que houve que perdi algumas coisas que tinha feito...mas de qq jeito não tinha conseguido salvar.
-ggsave(Cases_TS_BR, filename = , width = , height = , dpi = 300, path = Plot_Folder, device = "png")
-
-
 # Save
-dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum cases in Brazil ", StartYear, "-", EndYear, ".png"),
-         width = 1800, height = 800, units = "px", pointsize = 12,
-         res = 100)
-dev.off()
+ggsave(Cases_TS_BR, filename = paste0("P. vivax and P. falciparum cases in Brazil ", StartYear, "-", EndYear, ".png"), width = 1800/300, height = 800/300, dpi = 300, path = Plot_Folder, units = "in", device = "png")
+
+
 
 #API
 API_TS_BR <- ggplot(data = subset(d2, LEVEL == "BR"), aes(DATE, API, color = TYPE)) +
@@ -336,10 +335,7 @@ API_TS_BR <- ggplot(data = subset(d2, LEVEL == "BR"), aes(DATE, API, color = TYP
 API_TS_BR
 
 # Save
-dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum API in Brazil ", StartYear, "-", EndYear, ".png"),
-         width = 1800, height = 800, units = "px", pointsize = 12,
-         res = 100)
-dev.off()
+ggsave(API_TS_BR, filename = paste0("P. vivax and P. falciparum API in Brazil ", StartYear, "-", EndYear, ".png"), width = 1800/300, height = 800/300, dpi = 300, path = Plot_Folder, units = "in", device = "png")
 
 ```
 
@@ -350,6 +346,7 @@ dev.off()
 
 ```{r}
 ADMIN_NAMES <- read.table("/home/rlana/Dados/BRA_ADMIN_NAMES.csv", sep = " ")
+ADMIN_NAMES <- read.table("/home/daniel/temp/Malaria_mapping/BRA_ADMIN_NAMES.csv", sep = " ") 
 head(ADMIN_NAMES)
 
 ADMIN_NAMES <- ADMIN_NAMES %>%
