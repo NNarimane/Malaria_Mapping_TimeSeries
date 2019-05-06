@@ -326,7 +326,7 @@ Não consegui cortar o 2019 do gráfico.
 # Date type (by day == "Daily" , week == "Weekly", month == "Monthly", year == "Yearly")
 Date_Type = "Weekly"
 Plot_Folder = "/home/rlana/Plots/TimeSeries/BR/"
-Plot_Folder = "/home/daniel/temp/Malaria_mapping"
+#Plot_Folder = "/home/daniel/temp/Malaria_mapping"
 
 #Cases
 Cases_TS_BR <- ggplot(data = subset(d2, LEVEL == "BR"), aes(DATE, CASES, color = TYPE)) +
@@ -336,14 +336,21 @@ Cases_TS_BR <- ggplot(data = subset(d2, LEVEL == "BR"), aes(DATE, CASES, color =
   scale_color_manual(values = c("#31a354","#3182bd")) +
   labs(title = paste0("P. vivax and P. falciparum ", "cases in Brazil, ", 
                       StartYear, "-", EndYear), x = "Year", y = paste(Date_Type,"cases")) + 
-  guides(color = guide_legend(title="Plasmodium species")) +
+  guides(color = guide_legend(title = "Plasmodium")) +
   theme(panel.grid.minor.x = element_blank(),
-        axis.text.x = element_text(angle = 90, hjust = 1))
+        axis.text.x = element_text(angle = 90, hjust = 1),
+        legend.position="bottom",
+        legend.text = element_text(size = 5),
+        legend.title = element_text(size = 6, face = "italic"),
+        legend.margin = margin(0,0,0,0), 
+        plot.title = element_text(size = 6),
+        axis.title = element_text(size = 5),
+        axis.text = element_text(size = 5))
 
 Cases_TS_BR
 
 # Save
-ggsave(Cases_TS_BR, filename = paste0("P. vivax and P. falciparum cases in Brazil ", StartYear, "-", EndYear, ".png"), width = 1800/300, height = 800/300, dpi = 300, path = Plot_Folder, units = "in", device = "png")
+ggsave(Cases_TS_BR, filename = paste0("P. vivax and P. falciparum cases in Brazil ", StartYear, "-", EndYear, ".png"), width = 1500/300, height = 1000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png")
 
 
 
@@ -355,16 +362,26 @@ API_TS_BR <- ggplot(data = subset(d2, LEVEL == "BR"), aes(DATE, API, color = TYP
   scale_color_manual(values = c("#31a354","#3182bd")) +
   labs(title = paste0("P. vivax and P. falciparum ", "API in Brazil, ", 
                       StartYear, "-", EndYear), x = "Year", y = paste(Date_Type,"API")) + 
-  guides(color = guide_legend(title="Plasmodium species")) +
+  guides(color = guide_legend(title = "Plasmodium")) +
   theme(panel.grid.minor.x = element_blank(),
-        axis.text.x = element_text(angle = 90, hjust = 1))
+        axis.text.x = element_text(angle = 90, hjust = 1),
+        legend.position="bottom",
+        legend.text = element_text(size = 5),
+        legend.title = element_text(size = 6, face = "italic"),
+        legend.margin = margin(0,0,0,0), 
+        plot.title = element_text(size = 6),
+        axis.title = element_text(size = 5),
+        axis.text = element_text(size = 5))
 
 API_TS_BR
 
 # Save
-ggsave(API_TS_BR, filename = paste0("P. vivax and P. falciparum API in Brazil ", StartYear, "-", EndYear, ".png"), width = 1800/300, height = 800/300, dpi = 300, path = Plot_Folder, units = "in", device = "png")
+ggsave(API_TS_BR, filename = paste0("P. vivax and P. falciparum API in Brazil ", StartYear, "-", EndYear, ".png"), width = 1500/300, height = 1000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png")
 
 ```
+
+- Estou achando o plot de casos e IPA para o Brasil muito igual...é isso mesmo? 
+
 
 
 # Time series by STATE- one figure with all states.  
@@ -372,26 +389,7 @@ ggsave(API_TS_BR, filename = paste0("P. vivax and P. falciparum API in Brazil ",
 - FALTA salvar! E decidir se faremos assim, ou se faremos uma a um como mais abaixo.
 
 ```{r}
-ADMIN_NAMES <- read.table("/home/rlana/Dados/BRA_ADMIN_NAMES.csv", sep = " ")
-ADMIN_NAMES <- read.table("/home/daniel/temp/Malaria_mapping/BRA_ADMIN_NAMES.csv", sep = " ") 
-head(ADMIN_NAMES)
-
-ADMIN_NAMES <- ADMIN_NAMES %>%
-  ungroup %>%
-  filter(Level != "GR") %>%
-  mutate(CODE = replace(Code, Code == 0, 1))
-
-# Assign names
-d2$STATE = ADMIN_NAMES[match(d2$CODE, ADMIN_NAMES$Code),"UF"] 
-d2$NAME = ADMIN_NAMES[match(d2$CODE, ADMIN_NAMES$Code),"Name"]
-
-# States Amazon Basin
-dAB <- d2 %>% 
-  filter(STATE == "AC"| STATE == "AM" | STATE == "AP" | STATE == "MA" | STATE == "MT" | STATE == "PA" | STATE == "RO" | STATE == "RR" | STATE == "TO")
-
-
-
-Cases_Plot_State <- ggplot(data = subset(dAB, LEVEL == "UF"), aes(DATE, CASES, color = TYPE)) + ###testar
+Cases_Plot_State <- ggplot(data = subset(d2, LEVEL == "UF"), aes(DATE, CASES, color = TYPE)) + ###testar
   stat_summary(fun.y = sum, geom = "line") +
   scale_x_date(breaks = "year",
                date_labels = "%Y") +
@@ -399,22 +397,24 @@ Cases_Plot_State <- ggplot(data = subset(dAB, LEVEL == "UF"), aes(DATE, CASES, c
   scale_color_manual(values = c("#31a354","#3182bd")) +
   labs(title = paste0("P. vivax and P. falciparum ", "cases in Brazil, ", 
                       StartYear, "-", EndYear), x = "Year", y = paste(Date_Type,"cases")) +
-  guides(color=guide_legend(title="Plasmodium species")) +
+  guides(color = guide_legend(title = "Plasmodium")) +
   theme(panel.grid.minor.x = element_blank(),
-        axis.text.x = element_text(angle = 90, hjust = 1))
+        axis.text.x = element_text(angle = 90, hjust = 1),
+        legend.position="bottom",
+        legend.text = element_text(size = 7),
+        legend.title = element_text(size = 8, face = "italic"),
+        legend.margin = margin(0,0,0,0), 
+        plot.title = element_text(size = 8),
+        axis.title = element_text(size = 7),
+        axis.text = element_text(size = 7))
 
 Cases_Plot_State
 
-#### Não consegui salvar!
-
 # Save
-dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum cases by state, Brazil ", StartYear, "-", EndYear, ".png"),
-         width = 1800, height = 800, units = "px", pointsize = 12,
-         res = 100)
-dev.off()
+ggsave(Cases_Plot_State, filename = paste0("P. vivax and P. falciparum cases in Brazil per State", StartYear, "-", EndYear, ".png"), width = 2500/300, height = 2000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png")
 
 
-API_Plot_State <- ggplot(data = subset(dAB, LEVEL == "UF"), aes(DATE, API, color = TYPE)) +
+API_Plot_State <- ggplot(data = subset(d2, LEVEL == "UF"), aes(DATE, API, color = TYPE)) +
   stat_summary(fun.y = sum, geom = "line") +
   scale_x_date(breaks = "year",
                date_labels = "%Y") +
@@ -422,19 +422,22 @@ API_Plot_State <- ggplot(data = subset(dAB, LEVEL == "UF"), aes(DATE, API, color
   scale_color_manual(values = c("#31a354","#3182bd")) +
   labs(title = paste0("P. vivax and P. falciparum ", "API in Brazil, ", 
                       StartYear, "-", EndYear), x = "Year", y = paste(Date_Type,"API")) +
-  guides(color=guide_legend(title="Plasmodium species")) +
+ guides(color = guide_legend(title = "Plasmodium")) +
   theme(panel.grid.minor.x = element_blank(),
-        axis.text.x = element_text(angle = 90, hjust = 1))
+        axis.text.x = element_text(angle = 90, hjust = 1),
+        legend.position="bottom",
+        legend.text = element_text(size = 7),
+        legend.title = element_text(size = 8, face = "italic"),
+        legend.margin = margin(0,0,0,0), 
+        plot.title = element_text(size = 8),
+        axis.title = element_text(size = 7),
+        axis.text = element_text(size = 7))
 
 API_Plot_State
 
-
-# Salvar!!!!!
 # Save
-dev.copy(png, paste0(Plot_Folder,"P. vivax and P. falciparum API by state, Brazil ", StartYear, "-", EndYear, ".png"),
-         width = 1800, height = 800, units = "px", pointsize = 12,
-         res = 100)
-dev.off()
+ggsave(API_Plot_State, filename = paste0("P. vivax and P. falciparum API in Brazil per State", StartYear, "-", EndYear, ".png"), width = 2500/300, height = 2000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png")
+
 
 ```
 
@@ -443,10 +446,11 @@ dev.off()
 - Decidir!!!!!
 ```{r}
 States_sivep = c("AC","AM","AP","MA","MT","PA","RO","RR","TO")
+States_code = c(11, 12, 13, 14,     15     16     17     21     51)   ###terminar aqui
 
 UF_Plots <- foreach(i = 1:length(States_sivep)) %do% {
   Plot_Name = paste0("TS_Plot_", States_sivep[i])
-  assign(Plot_Name, ggplot(data = subset(dAB, LEVEL == "UF" & STATE == States_sivep[i]), 
+  assign(Plot_Name, ggplot(data = subset(d2, LEVEL == "UF" & CODE == States_sivep[i]), 
                            aes(DATE, CASES, color = TYPE)) +
            stat_summary(fun.y = sum, geom = "line") +
            scale_x_date(breaks = "year", 
@@ -455,12 +459,25 @@ UF_Plots <- foreach(i = 1:length(States_sivep)) %do% {
            facet_wrap(~NAME) +
            labs(title = paste0("P. vivax and P. falciparum cases in ", States_sivep[i], 
                                StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
-           guides(color = guide_legend(title = "Plasmodium species")) +
-           theme(panel.grid.minor.x = element_blank(),
-                 axis.text.x = element_text(angle = 90, hjust = 1)))
-}
+           guides(color = guide_legend(title = "Plasmodium")) +
+            theme(panel.grid.minor.x = element_blank(),
+                  axis.text.x = element_text(angle = 90, hjust = 1),
+                  legend.position="bottom",
+                  legend.text = element_text(size = 7),
+                  legend.title = element_text(size = 8, face = "italic"),
+                  legend.margin = margin(0,0,0,0), 
+                  plot.title = element_text(size = 8),
+                  axis.title = element_text(size = 7),
+                  axis.text = element_text(size = 7))
+  )
 
-UF_Plots[1]
+         }
+
+UF_Plots[2]
+
+#### Ver como salvar automático - talvez isso dentro da função?
+# Save
+ggsave(UF_Plots[i], filename = paste0("P. vivax and P. falciparum API in Brazil per State", StartYear, "-", EndYear, ".png"), width = 2500/300, height = 2000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png")
 
 ```
 
