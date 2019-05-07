@@ -259,7 +259,7 @@ getWEEKLY_SIVEP_API <- function(IBGEFilePath, StartYear, EndYear, AgTimeUnit){
   # Calculate API and reorder columns and rearrange variables
   API_MALARIA <- API_MALARIA %>% 
     mutate(API = CASES/POP_SIZE * 1000 * unitTime) %>%
-    select(LEVEL, CODE, NAME, DATE, YEAR, TYPE, CASES, POP_SIZE, API) %>%
+    select(LEVEL, CODE, NAME,STATE, DATE, YEAR, TYPE, CASES, POP_SIZE, API) %>%
     arrange(DATE, YEAR, CODE)
   
   return(API_MALARIA)
@@ -276,7 +276,7 @@ d2 <- getWEEKLY_SIVEP_API(IBGEFilePath, StartYear, EndYear, AgTimeUnit)
 
 - Save
 ```{r}
-save(d2, file = "/home/rlana/Dados/API_Noti_weeklyAPI.Rdata")
+save(d2, file = "/home/rlana/Dados/API_Noti_weeklyAPI_state.Rdata")
 #save(d2, file = "/home/daniel/temp/Malaria_mapping")
 ```
 
