@@ -7,12 +7,12 @@ editor_options:
   chunk_output_type: console
 ---
 
-# SIVEP - Epidemiological Surveillance Information System
+# SIVEP - Epidemiological Surveillance Information System 
 This file was done to share details of SIVEP variables and register all dropped variables and modifications we did on kept variables.  
   
 ## SIVEP time and space resolution  
 
-SIVEP started in 2003 January. We have complete data from 2003 to 2017 and initial months of 2018. The database has entries, permitting to aggregate into **daily case numbers** (reported date in year/month/day) and **epidemiological week**. These can later be aggregated to a different temporal resolution if needed.   
+SIVEP started in 2003 January. We have complete data from 2003 to 2018. The database has entries, permitting to aggregate into **daily case numbers** (reported date in year/month/day) and **epidemiological week**. These can later be aggregated to a different temporal resolution if needed.   
 
 ### Spatial resolution  
 SIVEP is database for malaria notification that is mandatory in Brazil. Before 2003, the database was named SISMAL, which was a different database in relation to variables and categories.  
@@ -76,8 +76,9 @@ SIVEP provides the **treatment schema for reported cases**. Completeness is > 85
 - **VIVAX**: informs if the patient received treatment for vivax malaria in the last 60 days prior to notification.  
 - **FALCIPARUM**: informs if the patient received treatment for falciparum malaria in the last 40 days prior to notification.
 
+*Obs.: before here, the database was grouped and saved in another script outside Github.*  
 
-- Loading RData file 
+- Loading RData file and libraries
 ```{r}
 library(foreign)
 library('stringr')
@@ -89,12 +90,15 @@ require(maptools, quietly = TRUE, warn.conflicts = FALSE)
 library('maptools')
 library(rgdal)
 
-load("~/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/RData_full.RData")
+#load("~/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/RData_full.RData") #until first weeks of 2018
+load("/home/rlana/Dados/RData_full_new.RData") #until the end of 2018 and a update of 2017.
 
 ```
 
 ### Removing variables  
 **Obs.**: RES_EXAM = 0 happens only in 2003 in 17 entries. I removed because this category does not exist.  
+- 5972938 notifications from 2003 to 2018. 5972938 - 17 wrong entries in 2003 = 5972921
+
 ```{r}
 #df <- df %>% 
       # select(-DT_ENVLO, -DT_DIGIT, -SEM_NOTI, -COD_UNIN, -COD_AGEN, -RACA, -GESTANTE1, -NIV_ESCO_1, -ESQUEMA_1, -HEMOPARASI, -EXAME_, -EXAMINADOR, -VIVAX, -FALCIPARUM) %>% 
@@ -104,61 +108,54 @@ df <- df %>%
       select(-DT_ENVLO, -DT_DIGIT, -SEM_NOTI, -COD_AGEN, -GESTANTE1, -NIV_ESCO_1, -ESQUEMA_1, -HEMOPARASI, -EXAME_, -EXAMINADOR, -VIVAX, -FALCIPARUM) %>% 
       filter(RES_EXAM == "2" | RES_EXAM == "3" | RES_EXAM == "4" | RES_EXAM == "5" | RES_EXAM == "6" | RES_EXAM == "7" | RES_EXAM == "9")
 
-
 ```
 
 ### Filtering and grouping to falciparum and vivax types.
-RES_EXAM categories:  
-2 - Falciparum    
-3 - F+FG    
-4 - Vivax    
-5 - F+V  
-6 - V+FG   
-7 - FG    
-8 - Malariae    
-9 - F+M    
-10 – Ovale    
-11 – Não F      
+RES_EXAM categories, absolute number and percentages from 2003 to 2018:  
+2 - Falciparum: 897411 (15.0 %)      
+3 - F+FG: 151502  (2.54 %)      
+4 - Vivax: 4782306 (80.1 %)      
+5 - F+V: 44389  (0.743 %)     
+6 - V+FG: 28042  (0.469 %)    
+7 - FG: 46786  (0.783 %)      
+8 - Malariae: 1928  (0.0323 %)       
+9 - F+M: 577  (0.00966 %)      
+10 – Ovale: 69 (0.00116 %)      
+11 – Não F: 19911  (0.333 %)    
 
 
 - Categorizing variables and transforming to factor.
 ```{r}
-df <- df %>% 
-      mutate(RES_EXAM = if_else(RES_EXAM == "2" | RES_EXAM == "3" | RES_EXAM == "7" | RES_EXAM == "9", "F", 
-                                if_else(RES_EXAM == "4" | RES_EXAM == "6", "V",
-                                        if_else(RES_EXAM == "5", "F+V", RES_EXAM)))) %>%
-      mutate(SINTOMAS = if_else(SINTOMAS == "1", "YES", "NO")) %>%
-      mutate(QTD_CRUZ = if_else(QTD_CRUZ == "1", "< +/2", 
-                                if_else(QTD_CRUZ == "2", "+/2",
-                                        if_else(QTD_CRUZ == "3", "+",
-                                                if_else(QTD_CRUZ == "4", "++",
-                                                        if_else(QTD_CRUZ == "5", "+++",
-                                                                if_else(QTD_CRUZ == "6", "++++", "NA"))))))) %>%
-      mutate(ID_LVC_ = if_else(ID_LVC_ == "1", "YES", "NO")) %>%
-      mutate(GESTANTE_ = if_else(GESTANTE_ == "1", "1qtr", 
-                                  if_else(GESTANTE_ == "2", "2qtr",
-                                          if_else(GESTANTE_ == "3", "3qtr",
-                                                  if_else(GESTANTE_ == "4", "Ignored",
-                                                          if_else(GESTANTE_ == "5", "NO",
-                                                                  if_else(GESTANTE_ == "6", "NA", "NA"))))))) %>%
-       mutate(TIPO_LAM = if_else(TIPO_LAM == "1", "PCD",
-                              if_else(TIPO_LAM == "2", "ACD", "CV")))
+df <- df %>%
+  mutate(RES_EXAM = as.factor(case_when(RES_EXAM == "2" | RES_EXAM == "3" | RES_EXAM == "7" | RES_EXAM == "9" ~ "F",
+                                        RES_EXAM == "4" | RES_EXAM == "6" ~ "V",
+                                        TRUE  ~  "V+F"))) %>%
+  mutate(SINTOMAS = as.factor(case_when(SINTOMAS == "1" ~ "YES", 
+                                        TRUE ~ "NO"))) %>% 
+  mutate(QTD_CRUZ = as.factor(case_when(QTD_CRUZ == "1" ~ "< +/2",
+                                        QTD_CRUZ == "2" ~ "+/2",
+                                        QTD_CRUZ == "3" ~ "+",
+                                        QTD_CRUZ == "4" ~ "++",
+                                        QTD_CRUZ == "5" ~ "+++",
+                                        QTD_CRUZ == "6" ~ "++++",
+                                        TRUE ~ "NA"))) %>% 
+  mutate(ID_LVC_ = as.factor(case_when(ID_LVC_ == "1" ~ "YES",
+                                       TRUE ~ "NO"))) %>% 
+  mutate(GESTANTE_ = as.factor(case_when(GESTANTE_ == "1" ~ "1qtr",
+                                         GESTANTE_ == "2" ~ "2qtr",
+                                         GESTANTE_ == "3" ~ "3qtr",
+                                         GESTANTE_ == "4" ~ "Ignored",
+                                         GESTANTE_ == "5" ~ "NO",
+                                         GESTANTE_ == "6" ~ "NA",
+                                         TRUE ~ "NA"))) %>% 
+  mutate(TIPO_LAM = as.factor(case_when(TIPO_LAM == "1" ~ "PCD",
+                                        TIPO_LAM == "2" ~ "ACD",
+                                        TRUE ~ "CV"))) %>% 
+  mutate(SEXO = as.factor(SEXO),
+         COD_OCUP = as.factor(COD_OCUP),
+         NIV_ESCO = as.factor(NIV_ESCO))
 
-
-            
-df <- df %>% 
-      mutate(SEXO = as.factor(SEXO),
-             RES_EXAM = factor(RES_EXAM, c("V", "F", "F+V"), c("Vivax", "Falciparum", "V+F")),
-             SINTOMAS = factor(SINTOMAS, c("YES", "NO"), c("YES", "NO")),
-             QTD_CRUZ = as.factor(QTD_CRUZ),
-             ID_LVC_ = factor(ID_LVC_, c("YES", "NO"), c("YES", "NO")),
-             GESTANTE_ = as.factor(GESTANTE_),
-             COD_OCUP = as.factor(COD_OCUP),
-             NIV_ESCO = as.factor(NIV_ESCO),
-             TIPO_LAM = factor(TIPO_LAM, c("PCD", "ACD", "CV"), c("PCD", "ACD", "CV"))
-             )
-
-levels(df$SEXO)
+#levels(df$SINTOMAS)
 
 ```
 
@@ -168,37 +165,45 @@ levels(df$SEXO)
 - Continuos age in year: here I dropped registries with inconsistency.
 ```{r}
 df <- df %>% 
-  filter(ID_PACIE < 30 & ID_DIMEA == "D" | ID_PACIE < 12 & ID_DIMEA == "M" | ID_PACIE <= 100 & ID_DIMEA == "A")
+  filter(ID_PACIE < 30 & ID_DIMEA == "D" | ID_PACIE < 12 & ID_DIMEA == "M" | ID_PACIE <= 100 & ID_DIMEA == "A") %>% 
+  mutate(ID_PACIE = as.numeric(ID_PACIE)) %>% 
+  mutate(AGE_CONT = as.numeric(if_else(ID_DIMEA == "A", ID_PACIE, 0)))
 
-df$ID_PACIE <- as.double(df$ID_PACIE) 
-
-df <- df %>% 
-          mutate(AGE_CONT = if_else(ID_DIMEA == "A", ID_PACIE, 0))
 ```
 
 - Age range
-
 ```{r}
-df$AGE_CAT <- NA 
-df[which(df$AGE_CONT <= 4),]$AGE_CAT <- "0-4"
-df[which(df$AGE_CONT >= 5 & df$AGE_CONT <= 9),]$AGE_CAT <- "5-9"
-df[which(df$AGE_CONT >= 10 & df$AGE_CONT <= 14),]$AGE_CAT <- "10-14"
-df[which(df$AGE_CONT >= 15 & df$AGE_CONT <= 19),]$AGE_CAT <- "15-19"
-df[which(df$AGE_CONT >= 20 & df$AGE_CONT <= 24),]$AGE_CAT <- "20-24"
-df[which(df$AGE_CONT >= 25 & df$AGE_CONT <= 29),]$AGE_CAT <- "25-29"
-df[which(df$AGE_CONT >= 30 & df$AGE_CONT <= 34),]$AGE_CAT <- "30-34"
-df[which(df$AGE_CONT >= 35 & df$AGE_CONT <= 39),]$AGE_CAT <- "35-39"
-df[which(df$AGE_CONT >= 40 & df$AGE_CONT <= 44),]$AGE_CAT <- "40-44"
-df[which(df$AGE_CONT >= 45 & df$AGE_CONT <= 49),]$AGE_CAT <- "45-49"
-df[which(df$AGE_CONT >= 50 & df$AGE_CONT <= 54),]$AGE_CAT <- "50-54"
-df[which(df$AGE_CONT >= 55 & df$AGE_CONT <= 59),]$AGE_CAT <- "55-59"
-df[which(df$AGE_CONT >= 60 & df$AGE_CONT <= 64),]$AGE_CAT <- "60-64"
-df[which(df$AGE_CONT >= 65 & df$AGE_CONT <= 69),]$AGE_CAT <- "65-69"
-df[which(df$AGE_CONT >= 70 & df$AGE_CONT <= 74),]$AGE_CAT <- "70-74"
-df[which(df$AGE_CONT >= 75 & df$AGE_CONT <= 79),]$AGE_CAT <- "75-79"
-df[which(df$AGE_CONT >= 80),]$AGE_CAT <- "80+"
+labs <- c("0-4","5-9","10-14","15-19","20-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64","65-69","70-74","75-79","80+")
+df <- df %>% 
+  mutate(AGE_CAT = cut(AGE_CONT, breaks = c(seq(0, 80, by = 5), Inf), labels = labs, right = FALSE))
+           
+```
 
-df$AGE_CAT = factor(df$AGE_CAT, label=c("0-4","5-9","10-14","15-19","20-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64","65-69","70-74","75-79","80+"), levels= c("0-4","5-9","10-14","15-19","20-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64","65-69","70-74","75-79","80+"))
+
+- Convert some characters to integer
+```{r}
+df <- df %>% 
+  mutate(COD_NOTI = as.integer(COD_NOTI),
+         UF_NOTIF = as.integer(UF_NOTIF),
+         MUN_NOTI = as.integer(MUN_NOTI),
+         COD_UNIN = as.integer(COD_UNIN),
+         PAIS_RES = as.integer(PAIS_RES),
+         UF_RESID = as.integer(UF_RESID),
+         MUN_RESI = as.integer(MUN_RESI),
+         LOC_RESI = as.integer(LOC_RESI),
+         UF_INFEC = as.integer(UF_INFEC),
+         PAIS_INF = as.integer(PAIS_INF),
+         MUN_INFE = as.integer(MUN_INFE),
+         LOC_INFE = as.integer(LOC_INFE))
+
+```
+
+
+
+Saving RData.
+```{r}
+save(df, file = "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/SIVEP_clean_v1.RData")
+save(df, file = "/home/rlana/Dados/SIVEP_clean_2003_2018.RData")
 
 ```
 
@@ -264,12 +269,6 @@ This variable is not explored here. Go to *Manipulate_data_maps_ts.rmd*.
 11- Severe and complicated malaria  
 99- Other Scheme used (per physician)  
 
-
-Saving RData.
-```{r}
-save.image(file = "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Malaria_Mapping_TimeSeries_Data/SIVEP_clean_v1.RData")
-
-```
 
 
 ### Localities data availability in SIVEP
