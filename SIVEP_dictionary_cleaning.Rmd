@@ -342,6 +342,10 @@ head(l1)
 str(l1)
 tail(l1)
 
+# Localities number for Amazon Basin
+l1 %>% filter(UF_IBGE == "11" | UF_IBGE == "12" | UF_IBGE == "13" | UF_IBGE == "14" | UF_IBGE == "15" | UF_IBGE == "16" | UF_IBGE == "17" | UF_IBGE == "21" | UF_IBGE == "51") %>% group_by(STATUS) %>% count()
+
+
 write.csv(l1, file = "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Dados/locality_database.csv", row.names = F)
 
 l1 <- fread("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/Dados/locality_database.csv", encoding = "UTF-8")
