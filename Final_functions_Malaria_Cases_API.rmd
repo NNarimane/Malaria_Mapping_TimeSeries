@@ -380,8 +380,6 @@ ggsave(API_TS_BR, filename = paste0("P. vivax and P. falciparum API in Brazil ",
 
 ```
 
-- Estou achando o plot de casos e IPA para o Brasil muito igual...é isso mesmo? 
-
 
 
 # Time series by STATE- one figure with all states.  
@@ -446,7 +444,7 @@ ggsave(API_Plot_State, filename = paste0("P. vivax and P. falciparum API in Braz
 - Decidir!!!!!
 ```{r}
 States_sivep = c("AC","AM","AP","MA","MT","PA","RO","RR","TO")
-States_code = c(11, 12, 13, 14,     15     16     17     21     51)   ###terminar aqui
+States_code = c(11, 12, 13, 14, 15, 16, 17, 21, 51)   ###terminar aqui
 
 UF_Plots <- foreach(i = 1:length(States_sivep)) %do% {
   Plot_Name = paste0("TS_Plot_", States_sivep[i])
@@ -475,6 +473,7 @@ UF_Plots <- foreach(i = 1:length(States_sivep)) %do% {
 
 UF_Plots[2]
 
+##How to save automatically?
 #### Ver como salvar automático - talvez isso dentro da função?
 # Save
 ggsave(UF_Plots[i], filename = paste0("P. vivax and P. falciparum API in Brazil per State", StartYear, "-", EndYear, ".png"), width = 2500/300, height = 2000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png")
@@ -517,71 +516,122 @@ MUN_Plots[1]
 
 ```
 
-
-
-
-### PArei aqui
-
-
-
 ## Function to organize the cases per age and gender - doing
 - um painel com todos os estados- somatório de todos os anos.
 - Para suplementar, seria interessante ter uma figura para cada estado mostrando por ano- facet_wrap por ano.
 
--REVER SE FAZ POR ANO- VER O PLOT.
 ```{r}
-load("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/SIVEP_clean.RData") # move to header file
+#load("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/SIVEP_clean.RData") # move to header file
 
 getSTRAT_AGE_GENDER <- function(SIVEPFilePath, StartYear, EndYear, AgTimeUnit){
 
+  # Get SIVEP raw notification data
+  load(SIVEPFilePath)
+
+  # Choose time period
+  df <- df[which(df[,"DT_NOTIF"] >= paste0(StartYear,"-01-01") & df[,"DT_NOTIF"] <= paste0(EndYear, "-12-31")),] # parece não funcionar para residencia e prob infe, mas na sequencia corta...quando vai para merge com população
   
-  # Brazil  
+  
+  # Replace missing state code with municipality state code
+  df <- df %>% 
+    mutate(UF_NOTIF = as.integer(substr(as.character(MUN_NOTI), 1, 2)),
+           UF_RESID = as.integer(substr(as.character(MUN_RESI), 1, 2)),
+           UF_INFEC = as.integer(substr(as.character(MUN_INFE), 1, 2)))
+  
+  # Select administrative level via code
+  if(byNotification){
+    df$PAIS_CODE <- 1
+    names(df)[names(df) == 'UF_NOTIF'] <- 'UF_CODE'
+    names(df)[names(df) == 'MUN_NOTI'] <- 'MUN_CODE'
+  }
+  if(byResidence){
+    names(df)[names(df) == 'PAIS_RES'] <- 'PAIS_CODE'
+    names(df)[names(df) == 'UF_RESID'] <- 'UF_CODE'
+    names(df)[names(df) == 'MUN_RESI'] <- 'MUN_CODE'
+  }
+  if(byInfection){
+    names(df)[names(df) == 'PAIS_INF'] <- 'PAIS_CODE'
+    names(df)[names(df) == 'UF_INFEC'] <- 'UF_CODE'
+    names(df)[names(df) == 'MUN_INFE'] <- 'MUN_CODE'
+  }
+  
+  #Select the cases by Type of Detection
+  if(byPCD){
+    df <- df %>%
+      filter(TIPO_LAM == "PCD")
+  }
+
+  if(byPCDACD){
+    df <- df %>%
+      filter(TIPO_LAM == "PCD" | TIPO_LAM == "ACD")
+  }
+  
+  
+  # Brazil 
   day_malaria_type_brazil_age_gender <- df %>%
-    group_by(DT_NOTIF, AGE_CAT, SEXO) %>%
-    count(RES_EXAM)%>%
-    mutate(LEVEL = "BR",
-           CODE = "1") %>%
-    select(DT_NOTIF, LEVEL, CODE, RES_EXAM, AGE_CAT, SEXO, n) %>%
+    ungroup %>% 
+    drop_na(SEXO, AGE_CAT) %>% 
+    group_by(DT_NOTIF, PAIS_CODE, AGE_CAT, SEXO) %>%
+    count(RES_EXAM) %>%
+    mutate(LEVEL = "BR") %>%
+    select(DT_NOTIF, LEVEL, PAIS_CODE, RES_EXAM, AGE_CAT, SEXO, n) %>%
     spread(RES_EXAM, n, fill = 0) %>%
-    rename(GENDER = SEXO, FALCI = "Falciparum", VF = "V+F", VIVAX = "Vivax") %>%
+    rename(GENDER = SEXO,
+           CODE = PAIS_CODE,
+           FALCI = "F",
+           VF = "V+F",
+           VIVAX = "V") %>%
     mutate(Falciparum = FALCI + VF,
            Vivax = VIVAX + VF,
            DATE = floor_date(as.Date(DT_NOTIF, format = "%Y-%m-%d"), unit = AgTimeUnit)
-            ) %>%
+           ) %>%
     ungroup %>%
     select(-DT_NOTIF) %>%
     mutate(GENDER = ifelse(GENDER == "F", "Female", 
                            ifelse(GENDER == "M", "Male", NA))) %>%
     select(DATE, LEVEL, CODE, AGE_CAT, GENDER, Falciparum, Vivax) %>%
-    gather(key = 'TYPE', value = 'CASES', -c(DATE, LEVEL, CODE, AGE_CAT, GENDER))
+    gather(key = TYPE, value = CASES, -c(DATE, LEVEL, CODE, AGE_CAT, GENDER))
   
   # State
   day_malaria_type_state_age_gender <- df %>%
-    group_by(DT_NOTIF, UF_NOTIF, AGE_CAT, SEXO) %>%
+    ungroup %>% 
+    drop_na(SEXO, AGE_CAT) %>% 
+    group_by(DT_NOTIF, UF_CODE, AGE_CAT, SEXO) %>%
     count(RES_EXAM) %>%
     mutate(LEVEL = "UF") %>%
-    select(DT_NOTIF, LEVEL, UF_NOTIF, RES_EXAM, AGE_CAT, SEXO, n) %>%
+    select(DT_NOTIF, LEVEL, UF_CODE, RES_EXAM, AGE_CAT, SEXO, n) %>%
     spread(RES_EXAM, n, fill = 0) %>%
-    rename(CODE = UF_NOTIF, GENDER = SEXO, FALCI = "Falciparum", VF = "V+F", VIVAX = "Vivax") %>%
+    rename(GENDER = SEXO,
+           CODE = UF_CODE,
+           FALCI = "F",
+           VF = "V+F",
+           VIVAX = "V") %>%
     mutate(Falciparum = FALCI + VF,
            Vivax = VIVAX + VF,
            DATE = floor_date(as.Date(DT_NOTIF, format = "%Y-%m-%d"), unit = AgTimeUnit)
-            ) %>%
+           ) %>%
     ungroup %>%
     select(-DT_NOTIF) %>%
     mutate(GENDER = ifelse(GENDER == "F", "Female", 
                            ifelse(GENDER == "M", "Male", NA))) %>%
     select(DATE, LEVEL, CODE, AGE_CAT, GENDER, Falciparum, Vivax) %>%
-    gather(key = 'TYPE', value = 'CASES', -c(DATE, LEVEL, CODE, AGE_CAT, GENDER))
+    gather(key = TYPE, value = CASES, -c(DATE, LEVEL, CODE, AGE_CAT, GENDER))
   
   # Municipality
+  # day_malaria_type_age_gender <- day_malaria_type_age_gender %>%
   day_malaria_type_age_gender <- df %>%
-    group_by(DT_NOTIF, MUN_NOTI, AGE_CAT, SEXO) %>%
-    count(RES_EXAM) %>%
-    mutate(LEVEL = "MU") %>%
-    select(DT_NOTIF, LEVEL, MUN_NOTI, RES_EXAM, AGE_CAT, SEXO, n) %>%
-    spread(RES_EXAM, n, fill = 0) %>%
-    rename(CODE = MUN_NOTI, GENDER = SEXO, FALCI = "Falciparum", VF = "V+F", VIVAX = "Vivax") %>%
+   ungroup %>%
+   drop_na(SEXO, AGE_CAT) %>%
+   group_by(DT_NOTIF, MUN_CODE, AGE_CAT, SEXO) %>%
+   count(RES_EXAM) %>%
+   mutate(LEVEL = "MU") %>%
+   select(DT_NOTIF, LEVEL, MUN_CODE, RES_EXAM, AGE_CAT, SEXO, n) %>%
+   spread(RES_EXAM, n, fill = 0) %>%
+  rename(GENDER = SEXO,
+          CODE = MUN_CODE,
+          FALCI = "F",
+          VF = "V+F",
+          VIVAX = "V") %>%
     mutate(Falciparum = FALCI + VF,
            Vivax = VIVAX + VF,
            DATE = floor_date(as.Date(DT_NOTIF, format = "%Y-%m-%d"), unit = AgTimeUnit)
@@ -591,7 +641,7 @@ getSTRAT_AGE_GENDER <- function(SIVEPFilePath, StartYear, EndYear, AgTimeUnit){
     mutate(GENDER = ifelse(GENDER == "F", "Female", 
                          ifelse(GENDER == "M", "Male", NA))) %>%
     select(DATE, LEVEL, CODE, AGE_CAT, GENDER, Falciparum, Vivax) %>%
-    gather(key = 'TYPE', value = 'CASES', -c(DATE, LEVEL, CODE, AGE_CAT, GENDER))
+    gather(key = TYPE, value = CASES, -c(DATE, LEVEL, CODE, AGE_CAT, GENDER))
   
                              
   sivep_strat <- rbind(day_malaria_type_brazil_age_gender, day_malaria_type_state_age_gender, day_malaria_type_age_gender)
@@ -600,11 +650,128 @@ getSTRAT_AGE_GENDER <- function(SIVEPFilePath, StartYear, EndYear, AgTimeUnit){
 
 }
 
+
+
+save(sivep_strat, file = "/home/rlana/Dados/Age_gender_Noti_weekly.Rdata")
+
+###### CONFERIR ESSA PARTE
+## No banco df tem 499 registros de SEXO == "I" e 2 registros de SEXO == NA. Quando transformo para sivep_strat, 2968 NAs.
+## Testar se, transformar I em NA para ver a contagem.
+## 984 NAs para BR
+## 992 NAs para UF
+## 992 NAs para MU
+
+```
+
+```{r}
+d4 <- getSTRAT_AGE_GENDER(SIVEPFilePath, StartYear, EndYear, AgTimeUnit)
+
 ```
 
 
+### Cumulative plot  
+There’s one important change that we’ll need to make. The x-axis will have to be population weighted, i.e. proportional to the population size of the state/municipality.  
+
+Ideally I’d like to have a 4 panel plot:  
+Pv in all states in Brazil  
+Pf in all states in Brazil  
+Pv in all municipalities in Brazil  
+Pf in all municipalities in Brazil  
+With each panel showing a curve for every year.  
+
+- Create population weight   -- to adapt
+```{r}
+load("./API_Noti_weeklyAPI_state.Rdata")
+
+# Levels of population sizes is by the limits in each stratum
+d2 %>% mutate(MONTH = month(DATE, label=TRUE)) %>% 
+  mutate(LEVEL_POP = case_when(
+    POP_SIZE > 100000 ~ 100000,
+    POP_SIZE > 50000 ~ 50000,
+    POP_SIZE > 20000 ~ 20000,
+    POP_SIZE > 10000 ~ 10000,
+    POP_SIZE > 1000 ~ 1000
+  )) -> dNoti
 
 
+```
+
+- Plot  state  --- to adapt
+```{r}
+# State
+TS_UF <- d2 %>% 
+  filter(LEVEL ==  "UF")
+
+# Cummulative sum (daily)
+TS_UF$csum <- ave(TS_UF$CASES, TS_UF$NAME, TS_UF$TYPE, FUN=cumsum)
+TS_UF$sum <- ave(TS_UF$CASES, TS_UF$TYPE, FUN=sum)
+TS_UF$csum_prop = (TS_UF$csum/TS_UF$sum)*100
+ggplot(data = TS_UF, aes(x = DATE, y = csum, color = NAME)) +
+  geom_line(size = 1.1) +
+  scale_x_date(breaks = "year",
+               date_labels = "%Y") +
+  facet_wrap(.~TYPE, ncol = 3) +
+  labs(title = paste0("P. vivax and P. falciparum cumulative cases by state, Brazil ", 
+                      StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
+  guides(color=guide_legend(title="State")) +
+  theme(panel.grid.minor.x = element_blank(),
+        axis.text.x = element_text(angle = 90, hjust = 1))
+
+# Cummulative sum (monthly data) as % of total of all states per day
+ggplot(data = TS_UF, aes(x = DATE, y = csum_prop, color = NAME)) +
+  geom_line(size = 1.1) +
+  scale_x_date(breaks = "year",
+               date_labels = "%Y") +
+  facet_wrap(.~TYPE, ncol = 3) +
+  labs(title = paste0("P. vivax and P. falciparum cumulative cases by state, Brazil ", 
+                      StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
+  guides(color=guide_legend(title="State")) +
+  theme(panel.grid.minor.x = element_blank(),
+        axis.text.x = element_text(angle = 90, hjust = 1))
+
+```
+
+- Plot MU
+```{r}
+TS_MU=TS[which(TS$LEVEL == "MU"),]
+TS_MU=TS_MU[,c("LEVEL","DATE","CODE","TYPE","CASES","STATE","NAME")]
+TS_MU_AGGREGATE=aggregate(CASES~., TS_MU, FUN = sum)
+
+# Cummulative sum (daily)
+TS_MU$csum <- ave(TS_MU$CASES, TS_MU$NAME, TS_MU$TYPE, FUN=cumsum)
+TS_MU$sum <- ave(TS_MU$CASES, TS_MU$TYPE, FUN=sum)
+TS_MU$csum_prop = (TS_MU$csum/TS_MU$sum)*100
+TS_MU = TS_MU[rev(order(TS_MU$csum)),]
+Top5_MU = as.character(unique(TS_MU$NAME)[1:5])
+  
+ggplot(data = TS_MU, aes(x = DATE, y = csum, color = NAME)) +
+  geom_line(size = 1.1) +
+  scale_x_date(breaks = "year",
+               date_labels = "%Y") +
+  facet_wrap(.~TYPE, ncol = 3) +
+  labs(title = paste0("P. vivax and P. falciparum cumulative cases by municipality, Brazil ", 
+                      StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
+  guides(color = F) +
+  geom_text(data = subset(TS_MU, NAME %in% Top5_MU & DATE == "2017-12-01"), 
+            aes(label = NAME, color = NAME, x = DATE, y = csum), 
+            hjust = "top", vjust = -1, size = 3,
+            check_overlap = T) +
+  # guides(color=guide_legend(title="State")) +
+  theme(panel.grid.minor.x = element_blank(),
+        axis.text.x = element_text(angle = 90, hjust = 1))
+
+# Cummulative sum (monthly data) as % of total of all states per day
+ggplot(data = TS_MU, aes(x = DATE, y = csum_prop, color = NAME)) +
+  geom_line(size = 1.1) +
+  scale_x_date(breaks = "year",
+               date_labels = "%Y") +
+  facet_wrap(.~TYPE, ncol = 3) +
+  labs(title = paste0("P. vivax and P. falciparum cumulative cases by state, Brazil ", 
+                      StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
+  guides(color=F) +
+  theme(panel.grid.minor.x = element_blank(),
+        axis.text.x = element_text(angle = 90, hjust = 1))
+```
 
 
 - see pictures to do the figures for the paper
