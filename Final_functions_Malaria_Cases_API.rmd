@@ -682,82 +682,49 @@ teste <- sivep_strat %>%
 
 ```
 
-- Plot  state  --- to adapt
-```{r}
-# State
-TS_UF <- d2 %>% 
-  filter(LEVEL ==  "UF")
-
-# Cummulative sum (daily)
-TS_UF$csum <- ave(TS_UF$CASES, TS_UF$NAME, TS_UF$TYPE, FUN=cumsum)
-TS_UF$sum <- ave(TS_UF$CASES, TS_UF$TYPE, FUN=sum)
-TS_UF$csum_prop = (TS_UF$csum/TS_UF$sum)*100
-ggplot(data = TS_UF, aes(x = DATE, y = csum, color = NAME)) +
-  geom_line(size = 1.1) +
+Cases_Plot_State <- ggplot(data = subset(d2, LEVEL == "UF"), aes(DATE, CASES, color = TYPE)) + ###testar
+  stat_summary(fun.y = sum, geom = "line") +
   scale_x_date(breaks = "year",
                date_labels = "%Y") +
-  facet_wrap(.~TYPE, ncol = 3) +
-  labs(title = paste0("P. vivax and P. falciparum cumulative cases by state, Brazil ", 
-                      StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
-  guides(color=guide_legend(title="State")) +
+  facet_wrap(.~NAME, ncol = 3) +
+  scale_color_manual(values = c("#31a354","#3182bd")) +
+  labs(title = paste0("P. vivax and P. falciparum ", "cases in Brazil, ", 
+                      StartYear, "-", EndYear), x = "Year", y = paste(Date_Type,"cases")) +
+  guides(color = guide_legend(title = "Plasmodium")) +
   theme(panel.grid.minor.x = element_blank(),
-        axis.text.x = element_text(angle = 90, hjust = 1))
+        axis.text.x = element_text(angle = 90, hjust = 1),
+        legend.position="bottom",
+        legend.text = element_text(size = 7),
+        legend.title = element_text(size = 8, face = "italic"),
+        legend.margin = margin(0,0,0,0), 
+        plot.title = element_text(size = 8),
+        axis.title = element_text(size = 7),
+        axis.text = element_text(size = 7))
 
-# Cummulative sum (monthly data) as % of total of all states per day
-ggplot(data = TS_UF, aes(x = DATE, y = csum_prop, color = NAME)) +
-  geom_line(size = 1.1) +
-  scale_x_date(breaks = "year",
-               date_labels = "%Y") +
-  facet_wrap(.~TYPE, ncol = 3) +
-  labs(title = paste0("P. vivax and P. falciparum cumulative cases by state, Brazil ", 
-                      StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
-  guides(color=guide_legend(title="State")) +
-  theme(panel.grid.minor.x = element_blank(),
-        axis.text.x = element_text(angle = 90, hjust = 1))
+Cases_Plot_State
 
-```
+# Save
+ggsave(Cases_Plot_State, filename = paste0("P. vivax and P. falciparum cases in Brazil per State", StartYear, "-", EndYear, ".png"), width = 2500/300, height = 2000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png")
 
-- Plot MU
-```{r}
-TS_MU=TS[which(TS$LEVEL == "MU"),]
-TS_MU=TS_MU[,c("LEVEL","DATE","CODE","TYPE","CASES","STATE","NAME")]
-TS_MU_AGGREGATE=aggregate(CASES~., TS_MU, FUN = sum)
+M_age_gender <- df %>%
+                  group_by(ANO, RES_EXAM) %>%
+                  count(AGE_CAT, SEXO)
 
-# Cummulative sum (daily)
-TS_MU$csum <- ave(TS_MU$CASES, TS_MU$NAME, TS_MU$TYPE, FUN=cumsum)
-TS_MU$sum <- ave(TS_MU$CASES, TS_MU$TYPE, FUN=sum)
-TS_MU$csum_prop = (TS_MU$csum/TS_MU$sum)*100
-TS_MU = TS_MU[rev(order(TS_MU$csum)),]
-Top5_MU = as.character(unique(TS_MU$NAME)[1:5])
-  
-ggplot(data = TS_MU, aes(x = DATE, y = csum, color = NAME)) +
-  geom_line(size = 1.1) +
-  scale_x_date(breaks = "year",
-               date_labels = "%Y") +
-  facet_wrap(.~TYPE, ncol = 3) +
-  labs(title = paste0("P. vivax and P. falciparum cumulative cases by municipality, Brazil ", 
-                      StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
-  guides(color = F) +
-  geom_text(data = subset(TS_MU, NAME %in% Top5_MU & DATE == "2017-12-01"), 
-            aes(label = NAME, color = NAME, x = DATE, y = csum), 
-            hjust = "top", vjust = -1, size = 3,
-            check_overlap = T) +
-  # guides(color=guide_legend(title="State")) +
-  theme(panel.grid.minor.x = element_blank(),
-        axis.text.x = element_text(angle = 90, hjust = 1))
+options(scipen = 10000
 
-# Cummulative sum (monthly data) as % of total of all states per day
-ggplot(data = TS_MU, aes(x = DATE, y = csum_prop, color = NAME)) +
-  geom_line(size = 1.1) +
-  scale_x_date(breaks = "year",
-               date_labels = "%Y") +
-  facet_wrap(.~TYPE, ncol = 3) +
-  labs(title = paste0("P. vivax and P. falciparum cumulative cases by state, Brazil ", 
-                      StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
-  guides(color=F) +
-  theme(panel.grid.minor.x = element_blank(),
-        axis.text.x = element_text(angle = 90, hjust = 1))
-```
+MA <- ggplot(aes(y = n, x = AGE_CAT, fill = RES_EXAM), data = Sivep_strat) +
+            geom_bar(stat = "identity", position = "dodge") +
+            facet_wrap(~ANO) +
+            labs(x = "Age Categories", y = "Malaria cases") +
+            theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+            guides(fill = guide_legend(title= "Malaria type")) 
+
+dev.off()
+
+
+
+
+
 
 
 - see pictures to do the figures for the paper
