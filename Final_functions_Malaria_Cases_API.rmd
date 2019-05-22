@@ -520,6 +520,10 @@ MUN_Plots[1]
 - um painel com todos os estados- somatório de todos os anos.
 - Para suplementar, seria interessante ter uma figura para cada estado mostrando por ano- facet_wrap por ano.
 
+
+- Sobre cortar o ano de 2003- decidir   
+Usando essa função, restam alguns registros como ano de 2003 pois ao usar a função year do lubridate para extrair o ano pela data de notificação, tem semana epi de 2003.
+
 ```{r}
 #load("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/SIVEP_clean.RData") # move to header file
 
@@ -529,7 +533,7 @@ getSTRAT_AGE_GENDER <- function(SIVEPFilePath, StartYear, EndYear, AgTimeUnit){
   load(SIVEPFilePath)
 
   # Choose time period
-  df <- df[which(df[,"DT_NOTIF"] >= paste0(StartYear,"-01-01") & df[,"DT_NOTIF"] <= paste0(EndYear, "-12-31")),] # parece não funcionar para residencia e prob infe, mas na sequencia corta...quando vai para merge com população
+  df <- df[which(df[,"DT_NOTIF"] >= paste0(StartYear,"-01-01") & df[,"DT_NOTIF"] <= paste0(EndYear, "-12-31")),] # Usando essa função, restam alguns registros como ano de 2003 pois ao usar a função year do lubridate para extrair o ano pela data de notificação, tem semana epi de 2003.
   
   
   # Replace missing state code with municipality state code
@@ -569,8 +573,8 @@ getSTRAT_AGE_GENDER <- function(SIVEPFilePath, StartYear, EndYear, AgTimeUnit){
   
   # Brazil 
   day_malaria_type_brazil_age_gender <- df %>%
-    ungroup %>% 
-    drop_na(SEXO, AGE_CAT) %>% 
+  #  ungroup %>% 
+   # drop_na(SEXO, AGE_CAT) %>% 
     group_by(DT_NOTIF, PAIS_CODE, AGE_CAT, SEXO) %>%
     count(RES_EXAM) %>%
     mutate(LEVEL = "BR") %>%
@@ -587,15 +591,18 @@ getSTRAT_AGE_GENDER <- function(SIVEPFilePath, StartYear, EndYear, AgTimeUnit){
            ) %>%
     ungroup %>%
     select(-DT_NOTIF) %>%
-    mutate(GENDER = ifelse(GENDER == "F", "Female", 
-                           ifelse(GENDER == "M", "Male", NA))) %>%
+#    mutate(GENDER = ifelse(GENDER == "F", "Female", 
+#                           ifelse(GENDER == "M", "Male", NA))) %>%
+    mutate(GENDER = as.factor(case_when(GENDER == "F" ~ "Female",
+                                        GENDER == "M" ~ "Male",
+                                        TRUE ~ "NA"))) %>% 
     select(DATE, LEVEL, CODE, AGE_CAT, GENDER, Falciparum, Vivax) %>%
     gather(key = TYPE, value = CASES, -c(DATE, LEVEL, CODE, AGE_CAT, GENDER))
   
   # State
   day_malaria_type_state_age_gender <- df %>%
-    ungroup %>% 
-    drop_na(SEXO, AGE_CAT) %>% 
+#    ungroup %>% 
+#    drop_na(SEXO, AGE_CAT) %>% 
     group_by(DT_NOTIF, UF_CODE, AGE_CAT, SEXO) %>%
     count(RES_EXAM) %>%
     mutate(LEVEL = "UF") %>%
@@ -608,26 +615,27 @@ getSTRAT_AGE_GENDER <- function(SIVEPFilePath, StartYear, EndYear, AgTimeUnit){
            VIVAX = "V") %>%
     mutate(Falciparum = FALCI + VF,
            Vivax = VIVAX + VF,
-           DATE = floor_date(as.Date(DT_NOTIF, format = "%Y-%m-%d"), unit = AgTimeUnit)
+           DATE = floor_date(as.Date(DT_NOTIF, format = "%Y-%m-%d"), unit = AgTimeUnit)  # ainda continua com 496 I e 2 NA até aqui
            ) %>%
     ungroup %>%
     select(-DT_NOTIF) %>%
-    mutate(GENDER = ifelse(GENDER == "F", "Female", 
-                           ifelse(GENDER == "M", "Male", NA))) %>%
+    mutate(GENDER = as.factor(case_when(GENDER == "F" ~ "Female",
+                                        GENDER == "M" ~ "Male",
+                                        TRUE ~ "NA"))) %>%   # 498 NA após transformação de I em NA.
     select(DATE, LEVEL, CODE, AGE_CAT, GENDER, Falciparum, Vivax) %>%
     gather(key = TYPE, value = CASES, -c(DATE, LEVEL, CODE, AGE_CAT, GENDER))
   
   # Municipality
   # day_malaria_type_age_gender <- day_malaria_type_age_gender %>%
   day_malaria_type_age_gender <- df %>%
-   ungroup %>%
-   drop_na(SEXO, AGE_CAT) %>%
+#   ungroup %>%
+#   drop_na(SEXO, AGE_CAT) %>%
    group_by(DT_NOTIF, MUN_CODE, AGE_CAT, SEXO) %>%
    count(RES_EXAM) %>%
    mutate(LEVEL = "MU") %>%
    select(DT_NOTIF, LEVEL, MUN_CODE, RES_EXAM, AGE_CAT, SEXO, n) %>%
    spread(RES_EXAM, n, fill = 0) %>%
-  rename(GENDER = SEXO,
+   rename(GENDER = SEXO,
           CODE = MUN_CODE,
           FALCI = "F",
           VF = "V+F",
@@ -638,8 +646,9 @@ getSTRAT_AGE_GENDER <- function(SIVEPFilePath, StartYear, EndYear, AgTimeUnit){
            ) %>%
     ungroup %>%
     select(-DT_NOTIF) %>%
-    mutate(GENDER = ifelse(GENDER == "F", "Female", 
-                         ifelse(GENDER == "M", "Male", NA))) %>%
+    mutate(GENDER = as.factor(case_when(GENDER == "F" ~ "Female",
+                                        GENDER == "M" ~ "Male",
+                                        TRUE ~ "NA"))) %>% 
     select(DATE, LEVEL, CODE, AGE_CAT, GENDER, Falciparum, Vivax) %>%
     gather(key = TYPE, value = CASES, -c(DATE, LEVEL, CODE, AGE_CAT, GENDER))
   
@@ -652,14 +661,9 @@ getSTRAT_AGE_GENDER <- function(SIVEPFilePath, StartYear, EndYear, AgTimeUnit){
 
 
 
-save(sivep_strat, file = "/home/rlana/Dados/Age_gender_Noti_weekly.Rdata")
+save(teste, file = "/home/rlana/Dados/Age_gender_Noti_weekly.Rdata")
 
-###### CONFERIR ESSA PARTE
-## No banco df tem 499 registros de SEXO == "I" e 2 registros de SEXO == NA. Quando transformo para sivep_strat, 2968 NAs.
-## Testar se, transformar I em NA para ver a contagem.
-## 984 NAs para BR
-## 992 NAs para UF
-## 992 NAs para MU
+
 
 ```
 
@@ -669,30 +673,12 @@ d4 <- getSTRAT_AGE_GENDER(SIVEPFilePath, StartYear, EndYear, AgTimeUnit)
 ```
 
 
-### Cumulative plot  
-There’s one important change that we’ll need to make. The x-axis will have to be population weighted, i.e. proportional to the population size of the state/municipality.  
-
-Ideally I’d like to have a 4 panel plot:  
-Pv in all states in Brazil  
-Pf in all states in Brazil  
-Pv in all municipalities in Brazil  
-Pf in all municipalities in Brazil  
-With each panel showing a curve for every year.  
-
-- Create population weight   -- to adapt
 ```{r}
-load("./API_Noti_weeklyAPI_state.Rdata")
+load("/home/rlana/Dados/Age_gender_Noti_weekly.Rdata")
 
-# Levels of population sizes is by the limits in each stratum
-d2 %>% mutate(MONTH = month(DATE, label=TRUE)) %>% 
-  mutate(LEVEL_POP = case_when(
-    POP_SIZE > 100000 ~ 100000,
-    POP_SIZE > 50000 ~ 50000,
-    POP_SIZE > 20000 ~ 20000,
-    POP_SIZE > 10000 ~ 10000,
-    POP_SIZE > 1000 ~ 1000
-  )) -> dNoti
-
+teste <- sivep_strat %>% 
+  mutate(YEAR = year(DATE)) %>% 
+  filter(YEAR != 2003)
 
 ```
 
