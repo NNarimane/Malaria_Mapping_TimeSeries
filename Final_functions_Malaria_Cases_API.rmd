@@ -481,7 +481,7 @@ ggsave(UF_Plots[i], filename = paste0("P. vivax and P. falciparum API in Brazil 
 ```
 
 ### Municipalities plots for each state
-
+####Rever junto com o de cima
 - Não consegui salvar ainda, mas funciona!!!! 
 - Aqui teria que ver se faremos mesmo, se vamos colcoar no suplementar. Para alguns estados, os que tem mais municípios, fica ruim.  
 - Se colocarmos no nível de município tb no supp file, talvez fosse melhor usar somente os que tem muitos casos..
@@ -676,16 +676,10 @@ d4 <- getSTRAT_AGE_GENDER(SIVEPFilePath, StartYear, EndYear, AgTimeUnit)
 ```{r}
 load("/home/rlana/Dados/Age_gender_Noti_weekly.Rdata")
 
-teste <- sivep_strat %>% 
-  mutate(YEAR = year(DATE)) %>% 
-  filter(YEAR != 2003)
-
 ```
 
-Cases_Plot_State <- ggplot(data = subset(d2, LEVEL == "UF"), aes(DATE, CASES, color = TYPE)) + ###testar
-  stat_summary(fun.y = sum, geom = "line") +
-  scale_x_date(breaks = "year",
-               date_labels = "%Y") +
+Cases_Plot_State <- ggplot(data = subset(Sivep_Strat, LEVEL == "UF"), aes(AGE_CAT, CASES, color = GENDER)) + ###testar
+  stat_summary(fun.y = sum, geom = "bar") +
   facet_wrap(.~NAME, ncol = 3) +
   scale_color_manual(values = c("#31a354","#3182bd")) +
   labs(title = paste0("P. vivax and P. falciparum ", "cases in Brazil, ", 
@@ -710,11 +704,11 @@ M_age_gender <- df %>%
                   group_by(ANO, RES_EXAM) %>%
                   count(AGE_CAT, SEXO)
 
-options(scipen = 10000
+options(scipen = 10000)
 
-MA <- ggplot(aes(y = n, x = AGE_CAT, fill = RES_EXAM), data = Sivep_strat) +
+MA <- ggplot(aes(y = n, x = AGE_CAT, fill = GENDER), data = Sivep_strat) +
             geom_bar(stat = "identity", position = "dodge") +
-            facet_wrap(~ANO) +
+            facet_wrap(~CODE) +
             labs(x = "Age Categories", y = "Malaria cases") +
             theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
             guides(fill = guide_legend(title= "Malaria type")) 
