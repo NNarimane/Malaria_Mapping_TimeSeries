@@ -741,12 +741,12 @@ Plot  age and gender per state per year - automatizar
 #Sivep_strat <- Sivep_strat %>% 
 #  drop_na(GENDER)
 
-Age_Gender_Plot_State <- ggplot(data = subset(Sivep_strat, LEVEL == "UF" & TYPE == "Vivax"), aes(x = AGE_CAT, y = CASES, fill = GENDER)) + ###testar
+Age_Gender_Plot_State <- ggplot(data = subset(Sivep_strat, LEVEL == "UF" & TYPE == "Falciparum"), aes(x = AGE_CAT, y = CASES, fill = GENDER)) + ###testar
   stat_summary(fun.y = sum, geom = "bar", position = "dodge") +  #está somando de todos os anos? Se usar a linha de baixo mudam os valores.
 #  geom_bar(stat = "identity", position = "dodge") +
   facet_wrap(.~NAME, ncol = 3) +
   scale_color_manual(values = c("#31a354","#3182bd")) +  ## Eu usei as mesmas cores do plot de série temporal mas não ficou...
-  labs(title = paste0("P. vivax cases stratified by age and gender, ", 
+  labs(title = paste0("P. falciparum cases stratified by age and gender, ", 
                       StartYear, "-", EndYear), x = "Age profile", y = "Cases") +
   guides(color = guide_legend(title = "Plasmodium")) +
   theme(panel.grid.minor.x = element_blank(),
@@ -762,7 +762,7 @@ Age_Gender_Plot_State <- ggplot(data = subset(Sivep_strat, LEVEL == "UF" & TYPE 
 Age_Gender_Plot_State
 
 # Save
-ggsave(Age_Gender_Plot_State, filename = paste0("P. vivax cases in Brazil per State", StartYear, "-", EndYear, ".png"), width = 2500/300, height = 2000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png")
+ggsave(Age_Gender_Plot_State, filename = paste0("P. falciparum cases in Brazil per State", StartYear, "-", EndYear, ".png"), width = 2500/300, height = 2000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png")
 
 ```
 
