@@ -704,15 +704,14 @@ save(Sivep_strat , file = "/home/rlana/Dados/Age_gender_Noti_weekly.Rdata")
 
 ```  
   
-Plot  age and gender per state
+### Plot  age and gender per state
 ```{r}  
 #Removendo NA de gender
 Sivep_strat <- Sivep_strat %>% 
   drop_na(GENDER)
 
 Age_Gender_Plot_State <- ggplot(data = subset(Sivep_strat, LEVEL == "UF" & TYPE == "Vivax"), aes(x = AGE_CAT, y = CASES, fill = GENDER)) + ###testar
-  stat_summary(fun.y = sum, geom = "bar", position = "dodge") +  #está somando de todos os anos? Se usar a linha de baixo mudam os valores.
-#  geom_bar(stat = "identity", position = "dodge") +
+  stat_summary(fun.y = sum, geom = "bar", position = "dodge") +  #está somando de todos os anos? Testar.
   facet_wrap(.~NAME, ncol = 3) +
   scale_color_manual(values = c("#31a354","#3182bd")) +  ## Eu usei as mesmas cores do plot de série temporal mas não ficou...
   labs(title = paste0("P. vivax cases stratified by age and gender, ", 
