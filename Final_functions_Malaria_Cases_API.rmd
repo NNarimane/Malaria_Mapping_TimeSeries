@@ -659,12 +659,6 @@ getSTRAT_AGE_GENDER <- function(SIVEPFilePath, StartYear, EndYear, AgTimeUnit){
 
 }
 
-
-
-save(teste, file = "/home/rlana/Dados/Age_gender_Noti_weekly.Rdata")
-
-
-
 ```
 
 ```{r}
@@ -672,18 +666,57 @@ d4 <- getSTRAT_AGE_GENDER(SIVEPFilePath, StartYear, EndYear, AgTimeUnit)
 
 ```
 
-
+- join with names
 ```{r}
 load("/home/rlana/Dados/Age_gender_Noti_weekly.Rdata")
 
-```
+ # Get names
+  ADMIN_NAMES <- read.table("/home/rlana/Dados/BRA_ADMIN_NAMES.csv", sep = " ")
+  #ADMIN_NAMES <- read.table("/home/daniel/temp/Malaria_mapping/BRA_ADMIN_NAMES.csv", sep = " ")
 
-Cases_Plot_State <- ggplot(data = subset(Sivep_Strat, LEVEL == "UF"), aes(AGE_CAT, CASES, color = GENDER)) + ###testar
-  stat_summary(fun.y = sum, geom = "bar") +
+  # Cut the database only for Amazon Basin States and municipalities
+  ADMIN_NAMES <- ADMIN_NAMES %>%
+    ungroup %>%
+    filter(Level != "GR") %>%
+    mutate(CODE = replace(Code, Code == 0, 1))
+
+  Sivep_strat$STATE = ADMIN_NAMES[match(Sivep_strat$CODE, ADMIN_NAMES$Code),"UF"] 
+  Sivep_strat$NAME = ADMIN_NAMES[match(Sivep_strat$CODE, ADMIN_NAMES$Code),"Name"]
+
+  Sivep_strat <- Sivep_strat %>% 
+    filter(STATE == "AC"| STATE == "AM" | STATE == "AP" | STATE == "MA" | STATE == "MT" | STATE == "PA" | STATE == "RO" | STATE == "RR" | STATE == "TO")
+
+  # Add BR level again only for Amazon Basin population
+  adbr <- Sivep_strat %>% 
+    filter(LEVEL == "UF") %>% 
+    group_by(DATE, AGE_CAT, GENDER, YEAR, TYPE) %>% 
+    summarise(CASES = sum(CASES)) %>% 
+    mutate(LEVEL = "BR",
+           CODE = 1,
+           NAME = "Amazonia Legal",
+           STATE = "NA") %>% 
+    select(DATE, LEVEL, CODE, AGE_CAT, GENDER, TYPE, CASES, YEAR, STATE, NAME)
+  
+Sivep_strat <- bind_rows(adbr, Sivep_strat)  
+
+
+save(Sivep_strat , file = "/home/rlana/Dados/Age_gender_Noti_weekly.Rdata")
+
+```  
+  
+Plot  age and gender per state
+```{r}  
+#Removendo NA de gender
+Sivep_strat <- Sivep_strat %>% 
+  drop_na(GENDER)
+
+Age_Gender_Plot_State <- ggplot(data = subset(Sivep_strat, LEVEL == "UF" & TYPE == "Vivax"), aes(x = AGE_CAT, y = CASES, fill = GENDER)) + ###testar
+  stat_summary(fun.y = sum, geom = "bar", position = "dodge") +  #está somando de todos os anos? Se usar a linha de baixo mudam os valores.
+#  geom_bar(stat = "identity", position = "dodge") +
   facet_wrap(.~NAME, ncol = 3) +
-  scale_color_manual(values = c("#31a354","#3182bd")) +
-  labs(title = paste0("P. vivax and P. falciparum ", "cases in Brazil, ", 
-                      StartYear, "-", EndYear), x = "Year", y = paste(Date_Type,"cases")) +
+  scale_color_manual(values = c("#31a354","#3182bd")) +  ## Eu usei as mesmas cores do plot de série temporal mas não ficou...
+  labs(title = paste0("P. vivax cases stratified by age and gender, ", 
+                      StartYear, "-", EndYear), x = "Age profile", y = "Cases") +
   guides(color = guide_legend(title = "Plasmodium")) +
   theme(panel.grid.minor.x = element_blank(),
         axis.text.x = element_text(angle = 90, hjust = 1),
@@ -695,30 +728,44 @@ Cases_Plot_State <- ggplot(data = subset(Sivep_Strat, LEVEL == "UF"), aes(AGE_CA
         axis.title = element_text(size = 7),
         axis.text = element_text(size = 7))
 
-Cases_Plot_State
+Age_Gender_Plot_State
 
 # Save
-ggsave(Cases_Plot_State, filename = paste0("P. vivax and P. falciparum cases in Brazil per State", StartYear, "-", EndYear, ".png"), width = 2500/300, height = 2000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png")
+ggsave(Age_Gender_Plot_State, filename = paste0("P. vivax cases in Brazil per State", StartYear, "-", EndYear, ".png"), width = 2500/300, height = 2000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png")
 
-M_age_gender <- df %>%
-                  group_by(ANO, RES_EXAM) %>%
-                  count(AGE_CAT, SEXO)
-
-options(scipen = 10000)
-
-MA <- ggplot(aes(y = n, x = AGE_CAT, fill = GENDER), data = Sivep_strat) +
-            geom_bar(stat = "identity", position = "dodge") +
-            facet_wrap(~CODE) +
-            labs(x = "Age Categories", y = "Malaria cases") +
-            theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-            guides(fill = guide_legend(title= "Malaria type")) 
-
-dev.off()
+```
 
 
+Plot  age and gender per state per year - automatizar
+```{r}  
+#Removendo NA de gender
+#Sivep_strat <- Sivep_strat %>% 
+#  drop_na(GENDER)
 
+Age_Gender_Plot_State <- ggplot(data = subset(Sivep_strat, LEVEL == "UF" & TYPE == "Vivax"), aes(x = AGE_CAT, y = CASES, fill = GENDER)) + ###testar
+  stat_summary(fun.y = sum, geom = "bar", position = "dodge") +  #está somando de todos os anos? Se usar a linha de baixo mudam os valores.
+#  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(.~NAME, ncol = 3) +
+  scale_color_manual(values = c("#31a354","#3182bd")) +  ## Eu usei as mesmas cores do plot de série temporal mas não ficou...
+  labs(title = paste0("P. vivax cases stratified by age and gender, ", 
+                      StartYear, "-", EndYear), x = "Age profile", y = "Cases") +
+  guides(color = guide_legend(title = "Plasmodium")) +
+  theme(panel.grid.minor.x = element_blank(),
+        axis.text.x = element_text(angle = 90, hjust = 1),
+        legend.position="bottom",
+        legend.text = element_text(size = 7),
+        legend.title = element_text(size = 8, face = "italic"),
+        legend.margin = margin(0,0,0,0), 
+        plot.title = element_text(size = 8),
+        axis.title = element_text(size = 7),
+        axis.text = element_text(size = 7))
 
+Age_Gender_Plot_State
 
+# Save
+ggsave(Age_Gender_Plot_State, filename = paste0("P. vivax cases in Brazil per State", StartYear, "-", EndYear, ".png"), width = 2500/300, height = 2000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png")
+
+```
 
 
 - see pictures to do the figures for the paper
