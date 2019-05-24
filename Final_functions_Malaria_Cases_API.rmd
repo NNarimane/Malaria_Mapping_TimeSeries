@@ -325,7 +325,7 @@ Não consegui cortar o 2019 do gráfico.
 #Move to header
 # Date type (by day == "Daily" , week == "Weekly", month == "Monthly", year == "Yearly")
 Date_Type = "Weekly"
-Plot_Folder = "/home/rlana/Plots/TimeSeries/BR/"
+Plot_Folder = "/home/rlana/Plots/TimeSeries/"
 #Plot_Folder = "/home/daniel/temp/Malaria_mapping"
 
 #Cases
@@ -384,7 +384,6 @@ ggsave(API_TS_BR, filename = paste0("P. vivax and P. falciparum API in Brazil ",
 
 # Time series by STATE- one figure with all states.  
 - supp file  
-- FALTA salvar! E decidir se faremos assim, ou se faremos uma a um como mais abaixo.
 
 ```{r}
 Cases_Plot_State <- ggplot(data = subset(d2, LEVEL == "UF"), aes(DATE, CASES, color = TYPE)) + ###testar
@@ -441,21 +440,21 @@ ggsave(API_Plot_State, filename = paste0("P. vivax and P. falciparum API in Braz
 
 
 ### State plots - each state separetely
-- Decidir!!!!!
+
 ```{r}
 States_sivep = c("AC","AM","AP","MA","MT","PA","RO","RR","TO")
-States_code = c(11, 12, 13, 14, 15, 16, 17, 21, 51)   ###terminar aqui
+States_code = c(11, 12, 13, 14, 15, 16, 17, 21, 51)  
 
-UF_Plots <- foreach(i = 1:length(States_sivep)) %do% {
-  Plot_Name = paste0("TS_Plot_", States_sivep[i])
-  assign(Plot_Name, ggplot(data = subset(d2, LEVEL == "UF" & CODE == States_sivep[i]), 
+UF_Plots <- foreach(i = 1:length(States_code)) %do% {
+  Plot_Name = paste0("TS_Plot_", States_code[i])
+  assign(Plot_Name, ggplot(data = subset(d2, LEVEL == "UF" & CODE == States_code[i]), 
                            aes(DATE, CASES, color = TYPE)) +
            stat_summary(fun.y = sum, geom = "line") +
            scale_x_date(breaks = "year", 
                         date_labels = "%Y") +
            scale_color_manual(values = c("#31a354","#3182bd")) +
            facet_wrap(~NAME) +
-           labs(title = paste0("P. vivax and P. falciparum cases in ", States_sivep[i], 
+           labs(title = paste0("P. vivax and P. falciparum cases from ", 
                                StartYear, "-", EndYear), x = "Year", y = "Number of Cases") + 
            guides(color = guide_legend(title = "Plasmodium")) +
             theme(panel.grid.minor.x = element_blank(),
@@ -469,14 +468,43 @@ UF_Plots <- foreach(i = 1:length(States_sivep)) %do% {
                   axis.text = element_text(size = 7))
   )
 
-         }
+  }
 
-UF_Plots[2]
+ggsave(UF_Plots[[9]], filename = paste0("P. vivax and P. falciparum cases in Brazil per State", StartYear, "-", EndYear, "_", States_code[9], ".png"), width = 2500/300, height = 2000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png")  
 
-##How to save automatically?
-#### Ver como salvar automático - talvez isso dentro da função?
+
+
+UF_PlotsAPI <- foreach(i = 1:length(States_code)) %do% {
+  Plot_Name = paste0("TS_Plot_API", States_code[i])
+  assign(Plot_Name, ggplot(data = subset(d2, LEVEL == "UF" & CODE == States_code[i]), 
+                           aes(DATE, API, color = TYPE)) +
+           stat_summary(fun.y = sum, geom = "line") +
+           scale_x_date(breaks = "year", 
+                        date_labels = "%Y") +
+           scale_color_manual(values = c("#31a354","#3182bd")) +
+           facet_wrap(~NAME) +
+           labs(title = paste0("P. vivax and P. falciparum API from ", 
+                               StartYear, "-", EndYear), x = "Year", y = "API") + 
+           guides(color = guide_legend(title = "Plasmodium")) +
+            theme(panel.grid.minor.x = element_blank(),
+                  axis.text.x = element_text(angle = 90, hjust = 1),
+                  legend.position="bottom",
+                  legend.text = element_text(size = 7),
+                  legend.title = element_text(size = 8, face = "italic"),
+                  legend.margin = margin(0,0,0,0), 
+                  plot.title = element_text(size = 8),
+                  axis.title = element_text(size = 7),
+                  axis.text = element_text(size = 7))
+         
+  )
+
+#ggsave(UF_PlotsAPI[[i]], filename = paste0("P. vivax and P. falciparum API in Brazil per State", StartYear, "-", EndYear, "_", States_code[[i]], ".png"), width = 2500/300, height = 2000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png")  
+         
+}
+
+
 # Save
-ggsave(UF_Plots[i], filename = paste0("P. vivax and P. falciparum API in Brazil per State", StartYear, "-", EndYear, ".png"), width = 2500/300, height = 2000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png")
+ggsave(UF_PlotsAPI[[9]], filename = paste0("P. vivax and P. falciparum API in Brazil per State", StartYear, "-", EndYear, "_", States_code[[9]], ".png"), width = 2500/300, height = 2000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png")  
 
 ```
 
@@ -520,12 +548,7 @@ MUN_Plots[1]
 - um painel com todos os estados- somatório de todos os anos.
 - Para suplementar, seria interessante ter uma figura para cada estado mostrando por ano- facet_wrap por ano.
 
-
-- Sobre cortar o ano de 2003- decidir   
-Usando essa função, restam alguns registros como ano de 2003 pois ao usar a função year do lubridate para extrair o ano pela data de notificação, tem semana epi de 2003.
-
 ```{r}
-#load("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/SIVEP_clean.RData") # move to header file
 
 getSTRAT_AGE_GENDER <- function(SIVEPFilePath, StartYear, EndYear, AgTimeUnit){
 
@@ -573,8 +596,6 @@ getSTRAT_AGE_GENDER <- function(SIVEPFilePath, StartYear, EndYear, AgTimeUnit){
   
   # Brazil 
   day_malaria_type_brazil_age_gender <- df %>%
-  #  ungroup %>% 
-   # drop_na(SEXO, AGE_CAT) %>% 
     group_by(DT_NOTIF, PAIS_CODE, AGE_CAT, SEXO) %>%
     count(RES_EXAM) %>%
     mutate(LEVEL = "BR") %>%
@@ -591,8 +612,6 @@ getSTRAT_AGE_GENDER <- function(SIVEPFilePath, StartYear, EndYear, AgTimeUnit){
            ) %>%
     ungroup %>%
     select(-DT_NOTIF) %>%
-#    mutate(GENDER = ifelse(GENDER == "F", "Female", 
-#                           ifelse(GENDER == "M", "Male", NA))) %>%
     mutate(GENDER = as.factor(case_when(GENDER == "F" ~ "Female",
                                         GENDER == "M" ~ "Male",
                                         TRUE ~ "NA"))) %>% 
@@ -601,8 +620,6 @@ getSTRAT_AGE_GENDER <- function(SIVEPFilePath, StartYear, EndYear, AgTimeUnit){
   
   # State
   day_malaria_type_state_age_gender <- df %>%
-#    ungroup %>% 
-#    drop_na(SEXO, AGE_CAT) %>% 
     group_by(DT_NOTIF, UF_CODE, AGE_CAT, SEXO) %>%
     count(RES_EXAM) %>%
     mutate(LEVEL = "UF") %>%
@@ -615,21 +632,18 @@ getSTRAT_AGE_GENDER <- function(SIVEPFilePath, StartYear, EndYear, AgTimeUnit){
            VIVAX = "V") %>%
     mutate(Falciparum = FALCI + VF,
            Vivax = VIVAX + VF,
-           DATE = floor_date(as.Date(DT_NOTIF, format = "%Y-%m-%d"), unit = AgTimeUnit)  # ainda continua com 496 I e 2 NA até aqui
+           DATE = floor_date(as.Date(DT_NOTIF, format = "%Y-%m-%d"), unit = AgTimeUnit)  
            ) %>%
     ungroup %>%
     select(-DT_NOTIF) %>%
     mutate(GENDER = as.factor(case_when(GENDER == "F" ~ "Female",
                                         GENDER == "M" ~ "Male",
-                                        TRUE ~ "NA"))) %>%   # 498 NA após transformação de I em NA.
+                                        TRUE ~ "NA"))) %>%   
     select(DATE, LEVEL, CODE, AGE_CAT, GENDER, Falciparum, Vivax) %>%
     gather(key = TYPE, value = CASES, -c(DATE, LEVEL, CODE, AGE_CAT, GENDER))
   
   # Municipality
-  # day_malaria_type_age_gender <- day_malaria_type_age_gender %>%
   day_malaria_type_age_gender <- df %>%
-#   ungroup %>%
-#   drop_na(SEXO, AGE_CAT) %>%
    group_by(DT_NOTIF, MUN_CODE, AGE_CAT, SEXO) %>%
    count(RES_EXAM) %>%
    mutate(LEVEL = "MU") %>%
