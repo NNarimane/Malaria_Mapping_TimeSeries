@@ -1,6 +1,6 @@
 ---
 title: "Malaria_Cases_API_final_functions"
-author: "Raquel Lana and Narimane Nekkab"
+author: "Raquel Lana, Narimane Nekkab, Daniel Villela"
 date: "4 de fevereiro de 2019"
 output: html_document
 editor_options: 
