@@ -1,0 +1,287 @@
+---
+title: "Analysis of Malaria API Variability in the Brazilian Amazon"
+author: "Daniel Villela, Raquel Lana"
+date: "May 10, 2019"
+output: pdf_document
+---
+
+
+ Analysis of the coefficient of variation of API in the Amazon
+ using SIVEP data with several political-adminstritive levels: 
+ municipality, state, legal Amazon
+
+
+```{r setup, include=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+require(ggplot2)
+require(tidyverse)
+require(lubridate)
+require(knitr)
+
+#load("./API_Noti.RData") 
+#load("./API_Noti_weekly.Rdata")
+load("./API_Noti_weeklyAPI_state.Rdata")
+d2 %>% group_by(NAME) %>% mutate(POP_MEAN = mean(POP_SIZE, na.rm=TRUE)) %>% mutate(MONTH = month(DATE, label=TRUE)) %>% 
+  mutate(LEVEL_POP = case_when(
+    POP_MEAN > 100000 ~ 5,
+      POP_MEAN > 50000 ~ 4,
+    POP_MEAN > 20000 ~ 3,
+      POP_MEAN > 10000 ~ 2,
+      POP_MEAN > 1000 ~ 1
+  )) -> dNoti
+
+# Another option of levels of population sizes is by the limits in each stratum
+d2 %>% group_by(NAME) %>% mutate(POP_MEAN = mean(POP_SIZE, na.rm=TRUE)) %>%
+  mutate(MONTH = month(DATE, label=TRUE)) %>% 
+  mutate(LEVEL_POP = case_when(
+    POP_SIZE > 100000 ~ 100000,
+    POP_SIZE > 50000 ~ 50000,
+    POP_SIZE > 20000 ~ 20000,
+    POP_SIZE > 10000 ~ 10000,
+    POP_SIZE > 1000 ~ 1000
+  )) -> dNoti
+
+# reordering the levels from municipality to amazon level
+dNoti$LEVEL <- factor(dNoti$LEVEL, levels=c("MU", "UF", "BR"))
+
+# computing several summarising indices
+# last: obtaining the coefficient of variation which is
+# the ratio between the standard deviation and the mean
+
+dNoti %>% group_by(LEVEL, YEAR, POP_SIZE, NAME, TYPE) %>% 
+  summarise(SUMCASES = sum(CASES, na.rm=TRUE),
+    MEAN = mean(API, na.rm=TRUE), VAR = var(API, na.rm=TRUE)) %>% 
+  mutate(APIN = 1000*SUMCASES/POP_SIZE) %>% 
+  group_by(LEVEL, TYPE) %>% summarise(MEANAPI = mean(APIN, na.rm=TRUE), 
+                                         VARAPI = var(APIN, na.rm=TRUE)) %>%
+  mutate(SDEV = VARAPI ^0.5) %>% mutate(CVAR = SDEV/MEANAPI) -> dNotix
+
+```
+
+## First, an update on API and Cases time series up to the end of 2018
+
+* Cases
+
+```{r gr1, echo=FALSE}
+include_graphics("./Cases/P. vivax and P. falciparum cases in Brazil 2004-2018.png")
+```
+
+
+* API (computed on weekly number of cases, but scaled to yearly values)
+
+```{r gr2, echo=FALSE}
+include_graphics("./API/P. vivax and P. falciparum API in Brazil 2004-2018.png")
+```
+
+
+## Comparing the states
+
+```{r gr3, echo=FALSE, out.width="80%"}
+include_graphics("./Cases/P. vivax and P. falciparum cases in Brazil per State2004-2018.png")
+```
+
+
+
+```{r gr4, echo=FALSE, out.width="80%"}
+include_graphics("./API/P. vivax and P. falciparum API in Brazil per State2004-2018.png")
+```
+
+
+## Coefficient of variation
+
+
+Since we obtained the API for each unit (municipality, state or Amazon), we can 
+compute several summarising indices such as:
+* mean over all municipalities
+* mean over all municipalities of a given state
+* mean over all municipalities in a given month of the year
+* standard deviation over all municipalities
+* standard deviation over all municipalities of a given state
+* standard deviation over all municipalities in a given month of the year
+
+This allows us to obtain the coefficient of variation which is
+the ratio between the standard deviation and the mean.
+
+
+The coeficient of variation declines when we analyse APIs in the municipality level,
+state level and amazon level, in this order, which shows large variability of the API
+in the municipality level.
+For falciparum, the standard deviation is about 4 times the mean.
+
+```{r coef, warning=FALSE}
+ggplot(aes(x=LEVEL, y=CVAR, color=TYPE, group=TYPE), data=dNotix) + 
+  geom_point() + geom_line()
+```
+
+
+## Is this variability the same over all months of the year?
+
+ The previous analysis was using the API in the years from 2004 (yearly values)
+ Here we analyze monthly values of API (scaled by 12 to consider what would be 
+ the value assuming this value constant).
+ Therefore, API of january, API of february etc.
+ This is to obtain the coefficient of variation separated by month.
+
+```{r monthcomp, echo = FALSE, warning=FALSE}
+
+dNoti %>% group_by(LEVEL, MONTH, YEAR, POP_SIZE, NAME, TYPE) %>% 
+  summarise(SUMCASES = sum(CASES, na.rm=TRUE),
+            MEAN = mean(API, na.rm=TRUE), VAR = var(API, na.rm=TRUE)) %>% 
+  mutate(APIN = 1000*12*SUMCASES/POP_SIZE) %>% 
+  drop_na(TYPE) %>% group_by(LEVEL, MONTH, TYPE) %>% summarise(MEANAPI = mean(APIN, na.rm=TRUE), 
+                                                        VARAPI = var(APIN, na.rm=TRUE)) %>%
+  mutate(SDEV = VARAPI ^0.5) %>% mutate(CVAR = SDEV/MEANAPI) -> dNoti.mx
+```
+
+
+ Basically we observe the same effect as in the previous one.
+ It seems that the summer months exhibit greater variation. 
+
+
+```{r coefmonth, warning=FALSE}
+ggplot(aes(x=LEVEL, y=CVAR, color=MONTH, group=MONTH), 
+       data=dNoti.mx) + facet_grid(TYPE ~ .) +
+  geom_point() + geom_line()
+```
+
+
+## STATE
+
+ Now were are going to analyze the coefficient of variation but separating into groups
+ of states.
+
+```{r coefstate, echo=FALSE, warning=FALSE}
+dNoti %>% group_by(LEVEL, STATE, YEAR, POP_SIZE, NAME, TYPE) %>% 
+  summarise(SUMCASES = sum(CASES, na.rm=TRUE),
+            MEAN = mean(API, na.rm=TRUE), VAR = var(API, na.rm=TRUE)) %>% 
+  mutate(APIN = 1000*12*SUMCASES/POP_SIZE) %>% 
+  drop_na(TYPE) %>% group_by(LEVEL, STATE, TYPE) %>% summarise(MEANAPI = mean(APIN, na.rm=TRUE), 
+                                                        VARAPI = var(APIN, na.rm=TRUE)) %>%
+  mutate(SDEV = VARAPI ^0.5) %>% mutate(CVAR = SDEV/MEANAPI) -> dNoti.sx
+
+dNoti.sx$STATE = as.factor(dNoti.sx$STATE)
+dNoti.sx.f <- data.frame(dNoti.sx[dNoti.sx$LEVEL=="BR" &dNoti.sx$TYPE=="Falciparum",], STATENEW = levels(dNoti.sx$STATE)) 
+dNoti.sx.v <- data.frame(dNoti.sx[dNoti.sx$LEVEL=="BR" &dNoti.sx$TYPE=="Vivax",], STATENEW = levels(dNoti.sx$STATE)) 
+
+dNoti.sx <- bind_rows(dNoti.sx, dNoti.sx.f, dNoti.sx.v)
+dNoti.sx[dNoti.sx$LEVEL=="BR",]$STATE = dNoti.sx[dNoti.sx$LEVEL=="BR",]$STATENEW 
+dNoti.sx %>% drop_na(STATE) -> dNoti.sx
+
+```
+
+<!--
+ The BR level is equivalent to the Amazon level and was not originally linked 
+ to any state.
+ So we are going to repeat lines of the BR level, one for each state, so we can make lines 
+ in the plots. Probably not the most elegant solution, but it works.
+-->
+
+ We see about the same effect but it is useful to see which states have great 
+ variability in the municipality level.
+
+```{r coefmonthplot, warning=FALSE}
+ggplot(aes(x=LEVEL, y=CVAR, color=STATE, group=STATE), 
+       data=dNoti.sx) + facet_grid(TYPE ~ .) +
+  geom_point() + geom_line()
+```
+
+
+## Levels of Population sizes
+ 
+Since we had defined different population levels:
+
+ Another option of levels of population sizes is by the limits in each stratum
+
+    above 100000  ~ 100000,
+
+    50000 - 100000 ~ 50000,
+
+    20000 - 50000 ~ 20000,
+
+    10000 - 2000 ~ 10000,
+    
+    1000 - 10000 ~ 1000
+
+ We analyzed the coefficient of variation in these levels.
+ This makes possible to separate municipalities into different groups,
+ but puts together state and municipality (problem solved ahead)
+
+```{r coeflevel,echo=FALSE, warning=FALSE}
+
+dNoti %>% group_by(LEVEL_POP, YEAR, POP_SIZE, NAME, TYPE) %>% 
+  summarise(SUMCASES = sum(CASES, na.rm=TRUE),
+            MEAN = mean(API, na.rm=TRUE), VAR = var(API, na.rm=TRUE)) %>% 
+  mutate(APIN = 1000*SUMCASES/POP_SIZE) %>% 
+  drop_na(TYPE) %>% group_by(LEVEL_POP, TYPE) %>% summarise(MEANAPI = mean(APIN, na.rm=TRUE), 
+                                                        VARAPI = var(APIN, na.rm=TRUE)) %>%
+  mutate(SDEV = VARAPI ^0.5) %>% mutate(CVAR = SDEV/MEANAPI) -> dNoti.lx
+
+```
+
+ Now it is interesting that we observe the coefficient of variation to be 
+ approximately constant
+ but we still have some municipalities together with some states and the BR level.
+
+```{r coeflevelplot, warning=FALSE}
+ggplot(aes(x=LEVEL_POP, y=CVAR, color=TYPE, group=TYPE), #color=MONTH, group=MONTH), 
+       data=dNoti.lx) + #facet_grid(TYPE ~ .) +
+  geom_point() + geom_line() + ylim(c(0,5))
+```
+
+ So we excluded the UF and BR levels.
+
+```{r coeflevel2, echo=FALSE ,warning=FALSE}
+
+dNoti %>% filter(LEVEL=="MU") %>% group_by(LEVEL_POP, YEAR, POP_SIZE, NAME, TYPE) %>% 
+  summarise(SUMCASES = sum(CASES, na.rm=TRUE),
+            MEAN = mean(API, na.rm=TRUE), VAR = var(API, na.rm=TRUE)) %>% 
+  mutate(APIN = 1000*SUMCASES/POP_SIZE) %>% drop_na(TYPE) %>% 
+  group_by(LEVEL_POP, TYPE) %>% summarise(MEANAPI = mean(APIN, na.rm=TRUE), 
+                                                     VARAPI = var(APIN, na.rm=TRUE)) %>%
+  mutate(SDEV = VARAPI ^0.5) %>% mutate(CVAR = SDEV/MEANAPI) -> dNoti.lx
+
+```
+
+
+ And we observe an interesting property: for all municipalities the coefficient of variation 
+ is constant.  We observe the same variability in groups of 
+ municipality of 1000 inhabitants or groups of 100000 persons.
+ 
+ Very interesting. Even when we try to make homogeneous strata of municipalities, we still see great variability of API and pretty much constant! Standard deviation is greater than three times the mean for P. falciparum malaria and little less than three times the mean for vivax malaria.
+
+```{r coeflevelplot2, warning=FALSE}
+ggplot(aes(x=LEVEL_POP, y=CVAR, color=TYPE, group=TYPE), #color=MONTH, group=MONTH), 
+       data=dNoti.lx) + #facet_grid(TYPE ~ .) +
+  geom_point() + geom_line() + ylim(c(0,5))
+
+```
+
+Just to check the population structure of municipalities
+
+```{r coeflevel3, echo=FALSE, warning=FALSE}
+dNoti %>% filter(LEVEL=="MU") %>% 
+  group_by(LEVEL_POP, YEAR, NAME, POP_SIZE, POP_MEAN, TYPE) %>% 
+  summarise(SUMCASES = sum(CASES, na.rm=TRUE),
+            MEAN = mean(API, na.rm=TRUE), VAR = var(API, na.rm=TRUE)) %>% 
+  mutate(APIN = 1000*SUMCASES/POP_SIZE) %>% 
+  drop_na(TYPE) %>% add_count(LEVEL_POP) %>% ungroup() %>%
+  select(NAME, LEVEL_POP, POP_MEAN) %>% 
+  distinct(NAME, LEVEL_POP, POP_MEAN) -> dNoti.l1
+```
+
+First, the counts in each stratum of municipalities.
+
+```{r coeflevelplot3, echo=FALSE, warning=FALSE}
+ggplot(aes(x=LEVEL_POP), data=dNoti.l1) + geom_histogram()
+```
+
+Second, the histogram of population sizes given by the mean over the years in the studied period of time.
+
+A lognormal distribution appears to fit quite nicely to describe the population 
+in municipalities of the Brazilian amazon.
+
+```{r coeflevelplot4, echo=FALSE, warning=FALSE}
+ggplot(aes(x=POP_MEAN), data=dNoti.l1) + geom_histogram() + xlim(c(0, 1000000)) + scale_x_log10()
+```
+
+
