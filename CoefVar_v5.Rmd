@@ -19,7 +19,17 @@ require(knitr)
 
 #load("./API_Noti.RData") 
 #load("./API_Noti_weekly.Rdata")
-load("./API_Noti_weeklyAPI_state.Rdata")
+
+envNN = F
+
+if(envNN){
+  load("./API_Noti_weeklyAPI_state.Rdata") # Daniel
+} else{load("/home/rlana/Dados/API_Noti_weeklyAPI_state.Rdata")} # Raquel
+
+
+#load("./API_Noti_weeklyAPI_state.Rdata")
+#load("/home/rlana/Dados/API_Noti_weeklyAPI_state.Rdata")
+
 d2 %>% group_by(NAME) %>% mutate(POP_MEAN = mean(POP_SIZE, na.rm=TRUE)) %>% mutate(MONTH = month(DATE, label=TRUE)) %>% 
   mutate(LEVEL_POP = case_when(
     POP_MEAN > 100000 ~ 5,
