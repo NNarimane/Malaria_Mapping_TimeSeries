@@ -75,7 +75,6 @@ dNoti %>% group_by(LEVEL, YEAR, POP_SIZE, NAME, TYPE) %>%
 include_graphics("./Cases/P. vivax and P. falciparum cases in Brazil 2004-2018.png")
 ```
 
-
 - API (computed on weekly number of cases, but scaled to yearly values)
 
 ```{r gr2, echo=FALSE}
@@ -97,7 +96,6 @@ include_graphics("./API/P. vivax and P. falciparum API in Brazil per State2004-2
 
 
 ## Coefficient of variation
-
 
 Since we obtained the API for each unit (municipality, state or Amazon), we can compute several summarising indices such as:  
 - mean over all municipalities  
