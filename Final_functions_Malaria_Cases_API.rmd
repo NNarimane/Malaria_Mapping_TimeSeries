@@ -748,23 +748,27 @@ ggsave(Age_Gender_Plot_State, filename = paste0("P. falciparum cases in Brazil p
 
 
 Plot  age and gender per state per year - automatizar
+
+### Daniel,
+Para conseguir salvar novamente, tenho que limpar o Environment e rodar de novo...não sei como resolver isso aqui. De qq forma consegui fazer para todos os estados, por ano e por tipo de malária. Está salvo no servidor.
+
 ```{r}  
 #Removendo NA de gender
-#Sivep_strat <- Sivep_strat %>% 
-#  drop_na(GENDER)
+Sivep_strat <- Sivep_strat %>% 
+  drop_na(GENDER)
 Plot_Folder = "/home/rlana/Plots/Age_Gender/State"
 States_sivep = c("AC","AM","AP","MA","MT","PA","RO","RR","TO")
 
 Age_Gender_Plot_State_Year <- foreach(i = 1:length(States_sivep)) %do% {
   Plot_Name = paste0("AG_Plot_", States_sivep[i])
-  assign(Plot_Name, ggplot(data = subset(Sivep_strat, LEVEL == "UF" & STATE == States_sivep[i] & TYPE == "Falciparum"), 
+  assign(Plot_Name, ggplot(data = subset(Sivep_strat, LEVEL == "UF" & STATE == States_sivep[i] & TYPE == "Vivax"), 
                            aes(x = AGE_CAT, y = CASES, fill = GENDER))) +
            stat_summary(fun.y = sum, geom = "bar", position = "dodge") +
            scale_fill_manual(values = c("#31a354","#3182bd")) +
            facet_wrap(.~YEAR, ncol = 3) +
-           labs(title = paste0("P. falciparum cases stratified by age and gender in ", States_sivep[i], " ",  
+           labs(title = paste0("P. vivax cases stratified by age and gender in ", States_sivep[i], " ",  
                                StartYear, "-", EndYear), x = "Age categories", y = "Number of Cases") +  
-           guides(color = guide_legend(title = "Plasmodium")) +
+           guides(color = guide_legend(title = "Gender")) +
             theme(panel.grid.minor.x = element_blank(),
                   axis.text.x = element_text(angle = 90, hjust = 1),
                   legend.position="bottom",
@@ -774,9 +778,13 @@ Age_Gender_Plot_State_Year <- foreach(i = 1:length(States_sivep)) %do% {
                   plot.title = element_text(size = 8),
                   axis.title = element_text(size = 7),
                   axis.text = element_text(size = 7))
+  
+ggsave(Age_Gender_Plot_State_Year[[i]], filename = paste0("P. vivax cases stratified by age and gender in ", States_sivep[[i]], " ", StartYear, "-", EndYear, ".png"), width = 2500/300, height = 2000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png") 
 
-ggsave(Age_Gender_Plot_State_Year[[i]], filename = paste0("P. falciparum cases stratified by age and gender in ", States_sivep[[i]], StartYear, "-", EndYear, ".png"), width = 2500/300, height = 2000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png")    
   }
+
+
+
 
 
 ```
