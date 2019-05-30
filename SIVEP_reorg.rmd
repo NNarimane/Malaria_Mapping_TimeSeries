@@ -1,0 +1,85 @@
+---
+title: "SIVEP_reorg"
+author: "Raquel Lana"
+date: "May 30, 2019"
+output: html_document
+---
+
+# Reorganizado o SIVEP 
+- Inserindo todas as semanas em todos os municípios e atribuindo zero aos casos.
+
+Lendo banco
+```{r}
+library("tidyverse")
+library("lubridate")
+
+load("/home/rlana/Dados/API_Noti_weeklyAPI_state.Rdata")
+
+```
+
+### Filling weeks without cases
+```{r}
+# Filling month without cases
+ll <- unique(d2$CODE)
+yy <- 2003:2017
+mm <- 1:12
+ml <- month(mm, label = T)
+
+a <- data.frame(adm3_code = rep(ll, each = length(yy) * length(mm)),
+              year = rep(yy, each = length(mm)),
+              month_number = rep(mm), 
+              month_name = rep(ml),
+              stringsAsFactors = FALSE)
+
+
+d3 <- unique(d2$CODE)
+#week.comp <- d2 %>% distinct(DATE) %>% drop_na() 
+week.comp <- unique(d2$DATE)
+week.comp <- week.comp[-784]
+type <- c("Falciparum", "Vivax")
+
+d4 <- data.frame(CODE = rep(d3, each = length(week.comp) * length(type)),
+              DATE = rep(week.comp),
+              TYPE = rep(type),
+              stringsAsFactors = FALSE)
+
+## d4= 818 CODES * 783 weeks = 640494
+
+d5 <- d2 %>%
+      select(LEVEL, CODE, STATE, NAME, TYPE) %>%
+      unique()
+# d5 = 818 CODES
+
+## SÓ um merge para ter LEVEL tb. MAntem o tamanho de d4.
+d6 <- merge(d4, d5, all.x = T)
+head(d6)
+d6 <- d6 %>% mutate(YEAR = year(DATE))
+
+
+## Populacoa separado
+pop <- d2 %>% select(CODE, YEAR, POP_SIZE) %>% unique() 
+
+d6p <- merge(d6, pop, all.x = T)
+
+d6p <- d6p %>% arrange(LEVEL, CODE, DATE) ###Terminar de ver LEVEL, SATTE e NAME
+## Merge para ter todas as semanas e todos os municípios em todos os anos...
+d7 <- merge(d6, d2, all.x = T) 
+
+
+d8 <- d7 %>%
+        mutate(CASES = replace(CASES, NA, 0),
+              # POP_SIZE = ifelse(is.na(cases_pv1), 0, cases_pv1),
+               cases_total1 = ifelse(is.na(cases_total1), 0, cases_total1),
+               pop = ifelse(is.na(pop), 0, pop))
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

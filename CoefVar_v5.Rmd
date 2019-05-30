@@ -59,7 +59,7 @@ dNoti$LEVEL <- factor(dNoti$LEVEL, levels=c("MU", "UF", "BR"))
 
 dNoti %>% group_by(LEVEL, YEAR, POP_SIZE, NAME, TYPE) %>% 
   summarise(SUMCASES = sum(CASES, na.rm=TRUE),
-    MEAN = mean(API, na.rm=TRUE), VAR = var(API, na.rm=TRUE)) %>% 
+    MEAN = mean(API, na.rm=TRUE), VAR = var(API, na.rm=TRUE)) %>% ####Aqui eu acho que os NAs influenciam- teria que atribuir zero pelo menos uma vez para o município, pois está agregando por ano, entao bastaria ter o município, naquela ano, uma vez, com zero.
   mutate(APIN = 1000*SUMCASES/POP_SIZE) %>% 
   group_by(LEVEL, TYPE) %>% summarise(MEANAPI = mean(APIN, na.rm=TRUE), 
                                          VARAPI = var(APIN, na.rm=TRUE)) %>%
@@ -129,7 +129,7 @@ dNoti %>% group_by(LEVEL, MONTH, YEAR, POP_SIZE, NAME, TYPE) %>%
   summarise(SUMCASES = sum(CASES, na.rm=TRUE),
             MEAN = mean(API, na.rm=TRUE), VAR = var(API, na.rm=TRUE)) %>% 
   mutate(APIN = 1000*12*SUMCASES/POP_SIZE) %>% 
-  drop_na(TYPE) %>% group_by(LEVEL, MONTH, TYPE) %>% summarise(MEANAPI = mean(APIN, na.rm=TRUE), 
+  drop_na(TYPE) %>% group_by(LEVEL, MONTH, TYPE) %>% summarise(MEANAPI = mean(APIN, na.rm=TRUE),   ####Aqui tb eu acho que os NAs impactam. Agregou por mês, teria que aparecer 12 vezes. Mas isso fosse resolvido na origem, que é a gregação por semana, já resolve tudo. PEnso que talvez seja o melhor.
                                                         VARAPI = var(APIN, na.rm=TRUE)) %>%
   mutate(SDEV = VARAPI ^0.5) %>% mutate(CVAR = SDEV/MEANAPI) -> dNoti.mx
 ```
@@ -154,7 +154,7 @@ ggplot(aes(x=LEVEL, y=CVAR, color=MONTH, group=MONTH),
 dNoti %>% group_by(LEVEL, STATE, YEAR, POP_SIZE, NAME, TYPE) %>% 
   summarise(SUMCASES = sum(CASES, na.rm=TRUE),
             MEAN = mean(API, na.rm=TRUE), VAR = var(API, na.rm=TRUE)) %>% 
-  mutate(APIN = 1000*12*SUMCASES/POP_SIZE) %>% 
+  mutate(APIN = 1000*12*SUMCASES/POP_SIZE) %>%   ##### Vc agrega por ano, não precisa multiplicar por 12.
   drop_na(TYPE) %>% group_by(LEVEL, STATE, TYPE) %>% summarise(MEANAPI = mean(APIN, na.rm=TRUE), 
                                                         VARAPI = var(APIN, na.rm=TRUE)) %>%
   mutate(SDEV = VARAPI ^0.5) %>% mutate(CVAR = SDEV/MEANAPI) -> dNoti.sx
