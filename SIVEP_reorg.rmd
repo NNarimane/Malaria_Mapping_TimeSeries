@@ -3,6 +3,8 @@ title: "SIVEP_reorg"
 author: "Raquel Lana"
 date: "May 30, 2019"
 output: html_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 # Reorganizado o SIVEP 
@@ -14,26 +16,13 @@ library("tidyverse")
 library("lubridate")
 
 load("/home/rlana/Dados/API_Noti_weeklyAPI_state.Rdata")
+load("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/AnaliseExploratoria/API_Noti_weeklyAPI_state.Rdata")
 
 ```
 
 ### Filling weeks without cases
 ```{r}
-# Filling month without cases
-ll <- unique(d2$CODE)
-yy <- 2003:2017
-mm <- 1:12
-ml <- month(mm, label = T)
-
-a <- data.frame(adm3_code = rep(ll, each = length(yy) * length(mm)),
-              year = rep(yy, each = length(mm)),
-              month_number = rep(mm), 
-              month_name = rep(ml),
-              stringsAsFactors = FALSE)
-
-
 d3 <- unique(d2$CODE)
-#week.comp <- d2 %>% distinct(DATE) %>% drop_na() 
 week.comp <- unique(d2$DATE)
 week.comp <- week.comp[-784]
 type <- c("Falciparum", "Vivax")
@@ -46,40 +35,38 @@ d4 <- data.frame(CODE = rep(d3, each = length(week.comp) * length(type)),
 ## d4= 818 CODES * 783 weeks = 640494
 
 d5 <- d2 %>%
-      select(LEVEL, CODE, STATE, NAME, TYPE) %>%
+      mutate(STATE = ifelse(STATE == "NA", "BR", STATE)) %>% 
+      select(CODE, DATE, YEAR, TYPE) %>% 
+      drop_na() %>% 
       unique()
 # d5 = 818 CODES
 
-## SÓ um merge para ter LEVEL tb. MAntem o tamanho de d4.
-d6 <- merge(d4, d5, all.x = T)
+## Merge d4 e d5
+d6 <- left_join(d4, d5)
 head(d6)
-d6 <- d6 %>% mutate(YEAR = year(DATE))
 
+## Deixando só CODE, DATE, TYPE, YEAR e CASES em d2
+d7 <- d2 %>% select(CODE, DATE, TYPE, YEAR, CASES)
 
-## Populacoa separado
+## Separando a população
 pop <- d2 %>% select(CODE, YEAR, POP_SIZE) %>% unique() 
 
-d6p <- merge(d6, pop, all.x = T)
-
-d6p <- d6p %>% arrange(LEVEL, CODE, DATE) ###Terminar de ver LEVEL, SATTE e NAME
 ## Merge para ter todas as semanas e todos os municípios em todos os anos...
-d7 <- merge(d6, d2, all.x = T) 
+d8 <- left_join(d6, d7) %>% 
+  mutate(CASES = replace(CASES, is.na(CASES), 0))
 
+d8 <- left_join(d8, pop)
 
-d8 <- d7 %>%
-        mutate(CASES = replace(CASES, NA, 0),
-              # POP_SIZE = ifelse(is.na(cases_pv1), 0, cases_pv1),
-               cases_total1 = ifelse(is.na(cases_total1), 0, cases_total1),
-               pop = ifelse(is.na(pop), 0, pop))
+nomes <- d2 %>% select(LEVEL, CODE, STATE, NAME) %>% drop_na() %>% unique() %>% mutate(STATE = ifelse(STATE == "NA", "BR", STATE))
+
+d8 <- left_join(d8, nomes)
+
+d8 <- d8 %>% select(LEVEL, CODE, STATE, NAME, DATE, YEAR, TYPE, CASES, POP_SIZE) %>% arrange(LEVEL, CODE, DATE, TYPE)
+
+d8 <- d8 %>% mutate(APIw = CASES/POP_SIZE * 1000 * 52)
+    
+save(d8, file = "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/AnaliseExploratoria/API_Noti_week_state_final.Rdata")
+
 
 ```
 
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
