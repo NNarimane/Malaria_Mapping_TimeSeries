@@ -315,22 +315,22 @@ d3 <- getWEEKLY_SIVEP_RATIOS(API_MALARIA, StartYear, EndYear, AgTimeUnit)
 
 
 ### Cases and API Brazil time series plot 
-
-Esses plots estão funcionando, só não consegui salvar.  
 Não consegui cortar o 2019 do gráfico.  
 
 ```{r}
 #Move to header
 # Date type (by day == "Daily" , week == "Weekly", month == "Monthly", year == "Yearly")
 Date_Type = "Weekly"
-Plot_Folder = "/home/rlana/Plots/TimeSeries/"
+Plot_Folder = "/home/rlana/Plos_new/TimeSeries/STATE"
 #Plot_Folder = "/home/daniel/temp/Malaria_mapping"
 
 #Cases
 Cases_TS_BR <- ggplot(data = subset(d2, LEVEL == "BR"), aes(DATE, CASES, color = TYPE)) +
   stat_summary(fun.y = sum, geom = "line") +
-  scale_x_date(breaks = "year",
-               date_labels = "%Y") +
+   scale_x_date(breaks = "year",
+               date_labels = "%Y",
+               limits = c(min(d2$DATE), max(d2$DATE)),
+               expand = c(0.01, 0)) +  #Tentei colocar limite até 2018 por aqui e não consegui
   scale_color_manual(values = c("#31a354","#3182bd")) +
   labs(title = paste0("P. vivax and P. falciparum ", "cases in Brazil, ", 
                       StartYear, "-", EndYear), x = "Year", y = paste(Date_Type,"cases")) + 
@@ -353,10 +353,12 @@ ggsave(Cases_TS_BR, filename = paste0("P. vivax and P. falciparum cases in Brazi
 
 
 #API
-API_TS_BR <- ggplot(data = subset(d2, LEVEL == "BR"), aes(DATE, API, color = TYPE)) +
+API_TS_BR <- ggplot(data = subset(d2, LEVEL == "BR"), aes(DATE, APIw, color = TYPE)) +
   stat_summary(fun.y = sum, geom = "line") +
   scale_x_date(breaks = "year",
-               date_labels = "%Y") +
+               date_labels = "%Y",
+               limits = c(min(d2$DATE), max(d2$DATE)),
+               expand = c(0.01, 0)) +
   scale_color_manual(values = c("#31a354","#3182bd")) +
   labs(title = paste0("P. vivax and P. falciparum ", "API in Brazil, ", 
                       StartYear, "-", EndYear), x = "Year", y = paste(Date_Type,"API")) + 
@@ -384,10 +386,12 @@ ggsave(API_TS_BR, filename = paste0("P. vivax and P. falciparum API in Brazil ",
 - supp file  
 
 ```{r}
-Cases_Plot_State <- ggplot(data = subset(d2, LEVEL == "UF"), aes(DATE, CASES, color = TYPE)) + ###testar
+Cases_Plot_State <- ggplot(data = subset(d2, LEVEL == "UF"), aes(DATE, CASES, color = TYPE)) +
   stat_summary(fun.y = sum, geom = "line") +
   scale_x_date(breaks = "year",
-               date_labels = "%Y") +
+               date_labels = "%Y",
+               limits = c(min(d2$DATE), max(d2$DATE)),
+               expand = c(0.01, 0)) +
   facet_wrap(.~NAME, ncol = 3) +
   scale_color_manual(values = c("#31a354","#3182bd")) +
   labs(title = paste0("P. vivax and P. falciparum ", "cases in Brazil, ", 
@@ -409,10 +413,12 @@ Cases_Plot_State
 ggsave(Cases_Plot_State, filename = paste0("P. vivax and P. falciparum cases in Brazil per State", StartYear, "-", EndYear, ".png"), width = 2500/300, height = 2000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png")
 
 
-API_Plot_State <- ggplot(data = subset(d2, LEVEL == "UF"), aes(DATE, API, color = TYPE)) +
+API_Plot_State <- ggplot(data = subset(d2, LEVEL == "UF"), aes(DATE, APIw, color = TYPE)) +
   stat_summary(fun.y = sum, geom = "line") +
   scale_x_date(breaks = "year",
-               date_labels = "%Y") +
+               date_labels = "%Y",
+               limits = c(min(d2$DATE), max(d2$DATE)),
+               expand = c(0.01, 0)) +
   facet_wrap(.~NAME, ncol = 3) +
   scale_color_manual(values = c("#31a354","#3182bd")) +
   labs(title = paste0("P. vivax and P. falciparum ", "API in Brazil, ", 
@@ -433,7 +439,6 @@ API_Plot_State
 # Save
 ggsave(API_Plot_State, filename = paste0("P. vivax and P. falciparum API in Brazil per State", StartYear, "-", EndYear, ".png"), width = 2500/300, height = 2000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png")
 
-
 ```
 
 
@@ -443,13 +448,15 @@ ggsave(API_Plot_State, filename = paste0("P. vivax and P. falciparum API in Braz
 States_sivep = c("AC","AM","AP","MA","MT","PA","RO","RR","TO")
 States_code = c(11, 12, 13, 14, 15, 16, 17, 21, 51)  
 
-UF_Plots <- foreach(i = 1:length(States_code)) %do% {
-  Plot_Name = paste0("TS_Plot_", States_code[i])
-  assign(Plot_Name, ggplot(data = subset(d2, LEVEL == "UF" & CODE == States_code[i]), 
+UF_Plots <- foreach(i = 1:length(States_sivep)) %do% {
+  Plot_Name = paste0("TS_Plot_", States_sivep[i])
+  assign(Plot_Name, ggplot(data = subset(d2, LEVEL == "UF" & STATE == States_sivep[i]), 
                            aes(DATE, CASES, color = TYPE)) +
            stat_summary(fun.y = sum, geom = "line") +
            scale_x_date(breaks = "year", 
-                        date_labels = "%Y") +
+                        date_labels = "%Y",
+               limits = c(min(d2$DATE), max(d2$DATE)),
+               expand = c(0.01, 0)) +
            scale_color_manual(values = c("#31a354","#3182bd")) +
            facet_wrap(~NAME) +
            labs(title = paste0("P. vivax and P. falciparum cases from ", 
@@ -463,22 +470,24 @@ UF_Plots <- foreach(i = 1:length(States_code)) %do% {
                   legend.margin = margin(0,0,0,0), 
                   plot.title = element_text(size = 8),
                   axis.title = element_text(size = 7),
-                  axis.text = element_text(size = 7))
-  )
+                  axis.text = element_text(size = 7)))
 
-  }
-
-ggsave(UF_Plots[[9]], filename = paste0("P. vivax and P. falciparum cases in Brazil per State", StartYear, "-", EndYear, "_", States_code[9], ".png"), width = 2500/300, height = 2000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png")  
-
+ggsave(UF_Plots[[i]], filename = paste0("P. vivax and P. falciparum cases in Brazil per State", StartYear, "-", EndYear, "_", States_sivep[[i]], ".png"), width = 2500/300, height = 2000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png")  
+  
+}
 
 
-UF_PlotsAPI <- foreach(i = 1:length(States_code)) %do% {
-  Plot_Name = paste0("TS_Plot_API", States_code[i])
-  assign(Plot_Name, ggplot(data = subset(d2, LEVEL == "UF" & CODE == States_code[i]), 
-                           aes(DATE, API, color = TYPE)) +
+
+
+UF_PlotsAPI <- foreach(i = 1:length(States_sivep)) %do% {
+  Plot_Name = paste0("TS_Plot_API", States_sivep[i])
+  assign(Plot_Name, ggplot(data = subset(d2, LEVEL == "UF" & STATE == States_sivep[i]), 
+                           aes(DATE, APIw, color = TYPE)) +
            stat_summary(fun.y = sum, geom = "line") +
            scale_x_date(breaks = "year", 
-                        date_labels = "%Y") +
+                        date_labels = "%Y",
+                        limits = c(min(d2$DATE), max(d2$DATE)),
+                        expand = c(0.01, 0)) +
            scale_color_manual(values = c("#31a354","#3182bd")) +
            facet_wrap(~NAME) +
            labs(title = paste0("P. vivax and P. falciparum API from ", 
@@ -496,13 +505,10 @@ UF_PlotsAPI <- foreach(i = 1:length(States_code)) %do% {
          
   )
 
-#ggsave(UF_PlotsAPI[[i]], filename = paste0("P. vivax and P. falciparum API in Brazil per State", StartYear, "-", EndYear, "_", States_code[[i]], ".png"), width = 2500/300, height = 2000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png")  
+ggsave(UF_PlotsAPI[[i]], filename = paste0("P. vivax and P. falciparum API in Brazil per State", StartYear, "-", EndYear, "_", States_sivep[[i]], ".png"), width = 2500/300, height = 2000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png")  
          
 }
 
-
-# Save
-ggsave(UF_PlotsAPI[[9]], filename = paste0("P. vivax and P. falciparum API in Brazil per State", StartYear, "-", EndYear, "_", States_code[[9]], ".png"), width = 2500/300, height = 2000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png")  
 
 ```
 
@@ -544,6 +550,7 @@ MUN_Plots[1]
 - um painel com todos os estados- somatório de todos os anos.
 - Para suplementar, seria interessante ter uma figura para cada estado mostrando por ano- facet_wrap por ano.
 
+- Não gerei outro banco para essa parte. Não creio que precisa acrescentar aqui todas as semanas como feito no banco acima. VER DIREITO.
 ```{r}
 
 getSTRAT_AGE_GENDER <- function(SIVEPFilePath, StartYear, EndYear, AgTimeUnit){
@@ -790,16 +797,19 @@ ggsave(Age_Gender_Plot_State_Year[[i]], filename = paste0("P. vivax cases strati
 ```
 
 
+Plotando matrix de intensidade para estratificação idade e sexo. -- fazendo ainda, não achei o exemplo, estou tentando!
+```{r}
+ggplot(data = subset(Sivep_strat, LEVEL == "UF" & STATE == "AC" & TYPE == "Vivax"), 
+                           aes(x = AGE_CAT, y = CASES, fill = GENDER)) +
+                           geom_raster() + facet_wrap(.~GENDER)
+
+```
+
+
+
 - see pictures to do the figures for the paper
 - figure age-gender use the script for pregnancy in PTR proposal- ask Narimane.
 - figure por pv/pf- ask Narimane for the script
 
 - For the Pv/Pf figure, you can find it in the "MALARIA_TS_PLOTS" script, lines 1422-1446
-
-
-
-```{r}
-
-
-```
 
