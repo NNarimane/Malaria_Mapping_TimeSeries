@@ -22,11 +22,16 @@ load("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Ana
 
 ### Filling weeks without cases
 ```{r}
+#Precisamoss ter todas as semanas em todos os municípios por tipo de malária. Quando não houver registros de casos naquela semana naquele municipio, admite-se valor zero em casos.
+
+# Vetor para os códigos dos níveis administrativos
 d3 <- unique(d2$CODE)
+# Vetor para semanas 
 week.comp <- unique(d2$DATE)
 week.comp <- week.comp[-784]
+# Vetor para tipo de malária
 type <- c("Falciparum", "Vivax")
-
+# Replicando e salvando em data.frame
 d4 <- data.frame(CODE = rep(d3, each = length(week.comp) * length(type)),
               DATE = rep(week.comp),
               TYPE = rep(type),
@@ -34,6 +39,7 @@ d4 <- data.frame(CODE = rep(d3, each = length(week.comp) * length(type)),
 
 ## d4= 818 CODES * 783 weeks = 640494
 
+# Armazenando o código dos níveis adm, datas, ano e tipo de malária com notificações no banco SIVEP.
 d5 <- d2 %>%
       mutate(STATE = ifelse(STATE == "NA", "BR", STATE)) %>% 
       select(CODE, DATE, YEAR, TYPE) %>% 
@@ -41,7 +47,7 @@ d5 <- d2 %>%
       unique()
 # d5 = 818 CODES
 
-## Merge d4 e d5
+## Merge d4 e d5 para que todos tenham todas as semanas, códigos e tipo de malária
 d6 <- left_join(d4, d5)
 head(d6)
 
@@ -51,18 +57,18 @@ d7 <- d2 %>% select(CODE, DATE, TYPE, YEAR, CASES)
 ## Separando a população
 pop <- d2 %>% select(CODE, YEAR, POP_SIZE) %>% unique() 
 
-## Merge para ter todas as semanas e todos os municípios em todos os anos...
+## Merge para ter todas as semanas e todos os municípios em todos os anos com os casos registrados em cada
 d8 <- left_join(d6, d7) %>% 
   mutate(CASES = replace(CASES, is.na(CASES), 0))
-
+# Inserindo a população
 d8 <- left_join(d8, pop)
-
+# Salvando os nomes em um objeto
 nomes <- d2 %>% select(LEVEL, CODE, STATE, NAME) %>% drop_na() %>% unique() %>% mutate(STATE = ifelse(STATE == "NA", "BR", STATE))
-
+# Inserindo os nomes.
 d8 <- left_join(d8, nomes)
-
+# Rearranjando a ordem das variáveis e organização
 d8 <- d8 %>% select(LEVEL, CODE, STATE, NAME, DATE, YEAR, TYPE, CASES, POP_SIZE) %>% arrange(LEVEL, CODE, DATE, TYPE)
-
+# calculando o IPA por semana
 d8 <- d8 %>% mutate(APIw = CASES/POP_SIZE * 1000 * 52)
     
 save(d8, file = "/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/AnaliseExploratoria/API_Noti_week_state_final.Rdata")
