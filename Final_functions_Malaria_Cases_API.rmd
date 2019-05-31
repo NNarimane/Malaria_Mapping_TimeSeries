@@ -797,11 +797,18 @@ ggsave(Age_Gender_Plot_State_Year[[i]], filename = paste0("P. vivax cases strati
 ```
 
 
-Plotando matrix de intensidade para estratificação idade e sexo. -- fazendo ainda, não achei o exemplo, estou tentando!
+Plotando matrix de intensidade para estratificação idade e sexo. TESTAR
 ```{r}
-ggplot(data = subset(Sivep_strat, LEVEL == "UF" & STATE == "AC" & TYPE == "Vivax"), 
-                           aes(x = AGE_CAT, y = CASES, fill = GENDER)) +
-                           geom_raster() + facet_wrap(.~GENDER)
+Sivep_strat %>% filter(LEVEL == "UF") %>% group_by(STATE, YEAR, AGE_CAT, GENDER, TYPE) %>%
+  mutate(SUMCASES = sum(CASES, na.rm=TRUE)) -> dAge
+
+ggplot(aes(x=YEAR, y=AGE_CAT, fill=SUMCASES), data=subset(dAge, TYPE=="Falciparum" & STATE== "AC")) + 
+  geom_raster() + facet_grid( GENDER ~ .)
+
+
+#ggplot(data = subset(Sivep_strat, LEVEL == "UF" & STATE == "AC" & TYPE == "Vivax"), 
+#                           aes(x = AGE_CAT, y = CASES, fill = GENDER)) +
+#                           geom_raster() + facet_wrap(.~GENDER)
 
 ```
 
