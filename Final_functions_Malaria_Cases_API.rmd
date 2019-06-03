@@ -455,6 +455,8 @@ ggsave(API_Plot_State, filename = paste0("P. vivax and P. falciparum API in Braz
 
 ### State plots - each state separetely
 
+- Refazer utilizando o modelo do último plot
+
 ```{r}
 States_sivep = c("AC","AM","AP","MA","MT","PA","RO","RR","TO")
 States_code = c(11, 12, 13, 14, 15, 16, 17, 21, 51)  
@@ -524,10 +526,9 @@ ggsave(UF_PlotsAPI[[i]], filename = paste0("P. vivax and P. falciparum API in Br
 ```
 
 ### Municipalities plots for each state
-####Rever junto com o de cima
-- Não consegui salvar ainda, mas funciona!!!! 
-- Aqui teria que ver se faremos mesmo, se vamos colcoar no suplementar. Para alguns estados, os que tem mais municípios, fica ruim.  
-- Se colocarmos no nível de município tb no supp file, talvez fosse melhor usar somente os que tem muitos casos..
+
+- Refazer utilizando o modelo do último plot
+
 ```{r}
 # States
 States_sivep = c("AC","AM","AP","MA","MT","PA","RO","RR","TO")
@@ -740,7 +741,9 @@ save(Sivep_strat , file = "/home/rlana/Dados/Age_gender_Noti_weekly.Rdata")
 
 ```  
   
-### Plot age and gender per state
+# Age and gender
+
+- Importando o banco
 ```{r}  
 envNN = F
 
@@ -748,10 +751,18 @@ if(envNN){
   load("./Age_gender_Noti_weekly.Rdata") # Daniel
 } else{load("/home/rlana/Dados/Age_gender_Noti_weekly.Rdata")} # Raquel
 
-#Removendo NA de gender
+```
+
+
+- Removendo NA de gender se for usar idade e sexo
+```{r}
 Sivep_strat <- Sivep_strat %>% 
   drop_na(GENDER)
 
+```
+
+### Plot age and gender per state
+```{r}  
 Plot_Folder = "/home/rlana/Plots/Age_Gender/BR"
 
 Age_Gender_Plot_State <- ggplot(data = subset(Sivep_strat, LEVEL == "UF" & TYPE == "Falciparum"), aes(x = AGE_CAT, y = CASES, fill = GENDER)) + 
@@ -779,10 +790,7 @@ ggsave(Age_Gender_Plot_State, filename = paste0("P. falciparum cases in Brazil p
 ```
 
 
-### Plot age and gender per state per year - automatizar
-
-### Daniel,
-Para conseguir salvar novamente, tenho que limpar o Environment e rodar de novo...não sei como resolver isso aqui. De qq forma consegui fazer para todos os estados, por ano e por tipo de malária. Está salvo no servidor.
+### Plot age and gender per state per year - refazer usando o modelo do último plot
 
 ```{r}  
 #Removendo NA de gender
@@ -822,7 +830,7 @@ ggsave(Age_Gender_Plot_State_Year[[i]], filename = paste0("P. vivax cases strati
 ### Plotando matrix de intensidade de casos por FE e sexo por estado
 - repensar a agregação das faixas etárias e talvez repensar em usar o API.  
 
-- Agregando o banco para o plot: somando os casos por estado por ano  
+#### Agregando o banco para o plot: somando os casos por estado por ano  
 ```{r}
 dAge <- Sivep_strat %>% 
   filter(LEVEL == "UF") %>% 
@@ -862,25 +870,36 @@ ggplot(aes(x = YEAR, y = AGE_CAT, fill = SUMCASES), data = subset(dAge, TYPE == 
 # Automatizado - atualizar o restante dos gráficos quando for salvar novamente a partir desse modelo
 Para conseguir salvar tenho que rodar sem o ggsave primeiro. Depois que salvar, tenho que remover o objeto para conseguir rodar e salvar novamente.
 ```{r}
-Plot_Folder <- "/home/rlana/Plots/Age_Gender/Matrix/Vixax" #Falciparum
 States_sivep <- c("AC","AM","AP","MA","MT","PA","RO","RR","TO")
-tipo <- "Vivax" #Falciparum
-tipomin <- "vivax" #falciparum
+StartYear <- 2004 # (inferior limit = 2004)
+EndYear <- 2018 # (superior limit = 2018)
+
+# Tipo de malária
+typemalaria <- F # T = Vivax, F = Falciparum
+if(typemalaria){
+  Plot_Folder <- "/home/rlana/Plots/Age_Gender/Matrix/Vixax" 
+  tipo <- "Vivax"
+  tipomin <- "vivax" 
+  cor <- "Blues"
+}else{
+  Plot_Folder <- "/home/rlana/Plots/Age_Gender/Matrix/Falciparum" 
+  tipo <- "Falciparum"
+  tipomin <- "falciparum" 
+  cor <- "Greens"}
+
 
 for (uf in States_sivep){
-  Plot_Name = paste0("AG_Matrix_", uf)
   plt <- ggplot(data = dAge[dAge$LEVEL == "UF" & dAge$STATE == uf & dAge$TYPE == tipo,], 
                 aes(x = YEAR, y = AGE_CAT, fill = SUMCASES)) +
     geom_raster() + 
     facet_grid(GENDER ~ .) +
-    scale_x_continuous(breaks = c(2004:2018)) +
-    scale_fill_distiller(palette = "Blues") + # Vivax
-#    scale_fill_distiller(palette = "Greens") + # Falciparum
+    scale_x_continuous(breaks = c(2004:2018),
+                      expand = c(0.01, 0)) +
+    scale_fill_distiller(palette = cor) +   
     labs(title = paste0("P."," ", tipomin," ", "cases intensity stratified by age and gender in ", uf, " ",  
-                        #            StartYear, "-", EndYear), x = "Age categories", y = "Cases intensity by year") +  
                         StartYear, "-", EndYear), x = "Cases intensity by year", y = "Age categories") +  
-#    guides(color = guide_legend(title = "Cases Intensity")) +
-    theme(panel.grid.minor.x = element_blank(),
+    guides(fill = guide_colourbar(title = "Cases Intensity", reverse = T)) + ### Decidir se quer deixar o reverse T ou F- falci está T
+    theme(panel.grid.minor.x = element_blank(),   ### Refazer os tamanhos de letra
           axis.text.x = element_text(angle = 90, hjust = 1),
           legend.position="right",
           legend.text = element_text(size = 7),
@@ -895,3 +914,40 @@ ggsave(plt, filename = paste0("P."," ", tipomin," ", "cases stratified by age an
 }
 
 ```
+
+### Testando outra agregação para Faixa Etária
+
+- Pensando: primeiro crio uma variavel nova e recategorizo, depois uso summarize?- ver funções para recategorizar variáveis.
+```{r}
+dAgen <- dAge %>%
+  mutate() %>% 
+  summarise() #ou será qua dá pra usar aqui direto?
+
+library(tidyverse)
+library(forcats)
+
+#recode.variables()
+#mapvalues()
+
+# gss_cat %>%
+#   mutate(partyid = fct_recode(partyid,
+#                            "Republican, strong"    = "Strong republican",
+#                            "Republican, weak"      = "Not str republican",
+#                            "Independent, near rep" = "Ind,near rep",
+#                            "Independent, near dem" = "Ind,near dem",
+#                            "Democrat, weak"        = "Not str democrat",
+#                            "Democrat, strong"      = "Strong democrat",
+#                            "Other"                 = "No answer",         ##Talvez isso resolva, mas acho que tem que somar depois as linhas
+#                            "Other"                 = "Don't know",
+#                            "Other"                 = "Other party"
+#   ))
+
+#Sometimes you just want to lump together all the small groups to make a plot or table simpler. That’s the job of fct_lump(). [...] The default behaviour is to progressively lump together the smallest groups, ensuring that the aggregate is still the smallest group.
+# gss_cat %>%
+#   mutate(relig = fct_lump(relig, n = 10)) %>%
+#   count(relig, sort = TRUE) %>%
+#   print(n = Inf)
+
+```
+
+
