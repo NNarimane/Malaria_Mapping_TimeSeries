@@ -40,7 +40,13 @@ library("rgdal")
 ```{r}
 # Get SIVEP data cleaned up and by species
 #SIVEPFilePath = "~/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Pasteur/SIVEP_clean.RData"
-SIVEPFilePath = "/home/rlana/Dados/SIVEP_clean_2003_2018.RData"
+envNN = F
+
+if(envNN){
+  SIVEPFilePath = "./API_Noti_weeklyAPI_state.Rdata" # Daniel
+} else{SIVEPFilePath = "/home/rlana/Dados/API_Noti_weeklyAPI_state.Rdata"} # Raquel
+
+#SIVEPFilePath = "/home/rlana/Dados/SIVEP_clean_2003_2018.RData"
 #SIVEPFilePath = "/home/daniel/temp/Malaria_mapping"
 StartYear = 2004 # (inferior limit = 2003)
 EndYear = 2018 # (superior limit = 2018)
@@ -321,8 +327,13 @@ Não consegui cortar o 2019 do gráfico.
 #Move to header
 # Date type (by day == "Daily" , week == "Weekly", month == "Monthly", year == "Yearly")
 Date_Type = "Weekly"
-Plot_Folder = "/home/rlana/Plos_new/TimeSeries/STATE"
-#Plot_Folder = "/home/daniel/temp/Malaria_mapping"
+
+envNN = F
+
+if(envNN){
+  Plot_Folder = "/home/daniel/temp/Malaria_mapping" # Daniel
+} else{Plot_Folder = "/home/rlana/Plos_new/TimeSeries/STATE"} # Raquel
+
 
 #Cases
 Cases_TS_BR <- ggplot(data = subset(d2, LEVEL == "BR"), aes(DATE, CASES, color = TYPE)) +
@@ -687,7 +698,13 @@ d4 <- getSTRAT_AGE_GENDER(SIVEPFilePath, StartYear, EndYear, AgTimeUnit)
 
 - join with names
 ```{r}
-load("/home/rlana/Dados/Age_gender_Noti_weekly.Rdata")
+envNN = F
+
+if(envNN){
+  load("./Age_gender_Noti_weekly.Rdata") # Daniel
+} else{load("/home/rlana/Dados/Age_gender_Noti_weekly.Rdata")} # Raquel
+
+
 
  # Get names
   ADMIN_NAMES <- read.table("/home/rlana/Dados/BRA_ADMIN_NAMES.csv", sep = " ")
@@ -725,7 +742,11 @@ save(Sivep_strat , file = "/home/rlana/Dados/Age_gender_Noti_weekly.Rdata")
   
 ### Plot age and gender per state
 ```{r}  
-load("/home/rlana/Dados/Age_gender_Noti_weekly.Rdata")
+envNN = F
+
+if(envNN){
+  load("./Age_gender_Noti_weekly.Rdata") # Daniel
+} else{load("/home/rlana/Dados/Age_gender_Noti_weekly.Rdata")} # Raquel
 
 #Removendo NA de gender
 Sivep_strat <- Sivep_strat %>% 
@@ -838,31 +859,37 @@ ggplot(aes(x = YEAR, y = AGE_CAT, fill = SUMCASES), data = subset(dAge, TYPE == 
 
 ```
 
-- Automatizando
+- Semi-automatizado  
+Para conseguir salvar tenho que rodar sem o ggsave primeiro. Depois que salvar, tenho que remover o objeto para conseguir rodar e salvar novamente.
 ```{r}
-#ggplot(aes(x = AGE_CAT, y = YEAR, fill = SUMCASES), data = subset(dAge, TYPE == "Vivax" & STATE == "RO")) + 
-ggplot(aes(x = YEAR, y = AGE_CAT, fill = SUMCASES), data = subset(dAge, TYPE == "Vivax" & STATE == "RO")) +   
-  geom_raster() + 
-  facet_grid(GENDER ~ .) +
-#  facet_wrap(.~NAME, ncol = 3) + # ver se consigo gerar para todos os estados na mesma figura- ver se dessa forma fica bom.
-#  scale_fill_manual(values = c("#31a354","#3182bd")) +
-#  scale_y_continuous(breaks = c(2004:2018)) +
-  scale_x_continuous(breaks = c(2004:2018)) +
-#  scale_fill_gradient(low = "blue", high =  "darkblue") +
-  scale_fill_distiller(palette = "Blues") +  # type if a number, pallete if a string. 
-  labs(title = paste0("P. vivax cases intensity stratified by age and gender in ", "RO", " ",  
-  #            StartYear, "-", EndYear), x = "Age categories", y = "Cases intensity by year") +  
-              StartYear, "-", EndYear), x = "Cases intensity by year", y = "Age categories") +  
-  guides(color = guide_legend(title = "Cases Intensity")) +
-  theme(panel.grid.minor.x = element_blank(),
-        axis.text.x = element_text(angle = 90, hjust = 1),
-        legend.position="right",
-        legend.text = element_text(size = 7),
-        legend.title = element_text(size = 8, face = "italic"),
-        legend.margin = margin(0,0,0,0), 
-        plot.title = element_text(size = 8),
-        axis.title = element_text(size = 7),
-        axis.text = element_text(size = 7))
+Plot_Folder = "/home/rlana/Plots/Age_Gender/Matrix/Falciparum"
+States_sivep = c("AC","AM","AP","MA","MT","PA","RO","RR","TO")
 
+Age_Gender_Matrix_State_Year <- foreach(i = 1:length(States_sivep)) %do% {
+  Plot_Name = paste0("AG_Matrix_", States_sivep[i])
+  assign(Plot_Name, ggplot(data = subset(dAge, LEVEL == "UF" & STATE == States_sivep[i] & TYPE == "Falciparum"), 
+                           aes(x = YEAR, y = AGE_CAT, fill = SUMCASES))) +
+                          geom_raster() + 
+                          facet_grid(GENDER ~ .) +
+                          scale_x_continuous(breaks = c(2004:2018)) +
+#                          scale_fill_distiller(palette = "Blues") + # Vivax
+                          scale_fill_distiller(palette = "Greens") + # Falciparum
+                          labs(title = paste0("P. falciparum cases intensity stratified by age and gender in ", States_sivep[i], " ",  
+                          #            StartYear, "-", EndYear), x = "Age categories", y = "Cases intensity by year") +  
+                                      StartYear, "-", EndYear), x = "Cases intensity by year", y = "Age categories") +  
+                          guides(color = guide_legend(title = "Cases Intensity")) +
+                          theme(panel.grid.minor.x = element_blank(),
+                                axis.text.x = element_text(angle = 90, hjust = 1),
+                                legend.position="right",
+                                legend.text = element_text(size = 7),
+                                legend.title = element_text(size = 8, face = "italic"),
+                                legend.margin = margin(0,0,0,0), 
+                                plot.title = element_text(size = 8),
+                                axis.title = element_text(size = 7),
+                                axis.text = element_text(size = 7))
+  
+ggsave(Age_Gender_Matrix_State_Year[[i]], filename = paste0("P. falciparum cases stratified by age and gender in ", States_sivep[[i]], " ", StartYear, "-", EndYear, ".png"), width = 2500/300, height = 2000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png") 
+
+}
 
 ```
