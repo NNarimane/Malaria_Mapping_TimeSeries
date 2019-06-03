@@ -800,24 +800,31 @@ ggsave(Age_Gender_Plot_State_Year[[i]], filename = paste0("P. vivax cases strati
 
 ### Plotando matrix de intensidade de casos por FE e sexo por estado
 - repensar a agregação das faixas etárias e talvez repensar em usar o API.  
+
+- Agregando o banco para o plot: somando os casos por estado por ano  
 ```{r}
 dAge <- Sivep_strat %>% 
   filter(LEVEL == "UF") %>% 
   group_by(STATE, YEAR, AGE_CAT, GENDER, TYPE) %>%
   mutate(SUMCASES = sum(CASES, na.rm = TRUE))
 
-ggplot(aes(x = AGE_CAT, y = YEAR, fill = SUMCASES), data = subset(dAge, TYPE == "Vivax" & STATE == "RO")) + 
-#ggplot(aes(x = YEAR, y = AGE_CAT, fill = SUMCASES), data = subset(dAge, TYPE == "Vivax" & STATE == "RO")) +   
+```
+
+- Plot por estado: ver qual variável fica melhor no eixo x ou y. Gostei mais do jeito que está.  
+```{r}
+#ggplot(aes(x = AGE_CAT, y = YEAR, fill = SUMCASES), data = subset(dAge, TYPE == "Vivax" & STATE == "RO")) + 
+ggplot(aes(x = YEAR, y = AGE_CAT, fill = SUMCASES), data = subset(dAge, TYPE == "Vivax" & STATE == "RO")) +   
   geom_raster() + 
   facet_grid(GENDER ~ .) +
-#  facet_wrap(.~NAME, ncol = 3) + # ver se consigo gerar para todos os estados na mesma figura- ver se dessa forma fica bom.
 #  scale_fill_manual(values = c("#31a354","#3182bd")) +
-  scale_y_continuous(breaks = c(2004:2018)) +
-#  scale_x_continuous(breaks = c(2004:2018)) +
+#  scale_y_continuous(breaks = c(2004:2018)) +
+  scale_x_continuous(breaks = c(2004:2018)) +
+  scale_y_log10() +
 #  scale_fill_gradient(low = "blue", high =  "darkblue") +
   scale_fill_distiller(palette = "Blues") +  # type if a number, pallete if a string. 
   labs(title = paste0("P. vivax cases intensity stratified by age and gender in ", "RO", " ",  
-              StartYear, "-", EndYear), x = "Age categories", y = "Cases intensity by year") +  
+  #            StartYear, "-", EndYear), x = "Age categories", y = "Cases intensity by year") +  
+              StartYear, "-", EndYear), x = "Cases intensity by year", y = "Age categories") +  
   guides(color = guide_legend(title = "Cases Intensity")) +
   theme(panel.grid.minor.x = element_blank(),
         axis.text.x = element_text(angle = 90, hjust = 1),
@@ -831,7 +838,31 @@ ggplot(aes(x = AGE_CAT, y = YEAR, fill = SUMCASES), data = subset(dAge, TYPE == 
 
 ```
 
+- Automatizando
+```{r}
+#ggplot(aes(x = AGE_CAT, y = YEAR, fill = SUMCASES), data = subset(dAge, TYPE == "Vivax" & STATE == "RO")) + 
+ggplot(aes(x = YEAR, y = AGE_CAT, fill = SUMCASES), data = subset(dAge, TYPE == "Vivax" & STATE == "RO")) +   
+  geom_raster() + 
+  facet_grid(GENDER ~ .) +
+#  facet_wrap(.~NAME, ncol = 3) + # ver se consigo gerar para todos os estados na mesma figura- ver se dessa forma fica bom.
+#  scale_fill_manual(values = c("#31a354","#3182bd")) +
+#  scale_y_continuous(breaks = c(2004:2018)) +
+  scale_x_continuous(breaks = c(2004:2018)) +
+#  scale_fill_gradient(low = "blue", high =  "darkblue") +
+  scale_fill_distiller(palette = "Blues") +  # type if a number, pallete if a string. 
+  labs(title = paste0("P. vivax cases intensity stratified by age and gender in ", "RO", " ",  
+  #            StartYear, "-", EndYear), x = "Age categories", y = "Cases intensity by year") +  
+              StartYear, "-", EndYear), x = "Cases intensity by year", y = "Age categories") +  
+  guides(color = guide_legend(title = "Cases Intensity")) +
+  theme(panel.grid.minor.x = element_blank(),
+        axis.text.x = element_text(angle = 90, hjust = 1),
+        legend.position="right",
+        legend.text = element_text(size = 7),
+        legend.title = element_text(size = 8, face = "italic"),
+        legend.margin = margin(0,0,0,0), 
+        plot.title = element_text(size = 8),
+        axis.title = element_text(size = 7),
+        axis.text = element_text(size = 7))
 
 
-
-
+```
