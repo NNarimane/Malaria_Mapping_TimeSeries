@@ -859,36 +859,38 @@ ggplot(aes(x = YEAR, y = AGE_CAT, fill = SUMCASES), data = subset(dAge, TYPE == 
 
 ```
 
-- Semi-automatizado  
+# Automatizado - atualizar o restante dos gráficos quando for salvar novamente a partir desse modelo
 Para conseguir salvar tenho que rodar sem o ggsave primeiro. Depois que salvar, tenho que remover o objeto para conseguir rodar e salvar novamente.
 ```{r}
-Plot_Folder = "/home/rlana/Plots/Age_Gender/Matrix/Falciparum"
-States_sivep = c("AC","AM","AP","MA","MT","PA","RO","RR","TO")
+Plot_Folder <- "/home/rlana/Plots/Age_Gender/Matrix/Vixax" #Falciparum
+States_sivep <- c("AC","AM","AP","MA","MT","PA","RO","RR","TO")
+tipo <- "Vivax" #Falciparum
+tipomin <- "vivax" #falciparum
 
-Age_Gender_Matrix_State_Year <- foreach(i = 1:length(States_sivep)) %do% {
-  Plot_Name = paste0("AG_Matrix_", States_sivep[i])
-  assign(Plot_Name, ggplot(data = subset(dAge, LEVEL == "UF" & STATE == States_sivep[i] & TYPE == "Falciparum"), 
-                           aes(x = YEAR, y = AGE_CAT, fill = SUMCASES))) +
-                          geom_raster() + 
-                          facet_grid(GENDER ~ .) +
-                          scale_x_continuous(breaks = c(2004:2018)) +
-#                          scale_fill_distiller(palette = "Blues") + # Vivax
-                          scale_fill_distiller(palette = "Greens") + # Falciparum
-                          labs(title = paste0("P. falciparum cases intensity stratified by age and gender in ", States_sivep[i], " ",  
-                          #            StartYear, "-", EndYear), x = "Age categories", y = "Cases intensity by year") +  
-                                      StartYear, "-", EndYear), x = "Cases intensity by year", y = "Age categories") +  
-                          guides(color = guide_legend(title = "Cases Intensity")) +
-                          theme(panel.grid.minor.x = element_blank(),
-                                axis.text.x = element_text(angle = 90, hjust = 1),
-                                legend.position="right",
-                                legend.text = element_text(size = 7),
-                                legend.title = element_text(size = 8, face = "italic"),
-                                legend.margin = margin(0,0,0,0), 
-                                plot.title = element_text(size = 8),
-                                axis.title = element_text(size = 7),
-                                axis.text = element_text(size = 7))
+for (uf in States_sivep){
+  Plot_Name = paste0("AG_Matrix_", uf)
+  plt <- ggplot(data = dAge[dAge$LEVEL == "UF" & dAge$STATE == uf & dAge$TYPE == tipo,], 
+                aes(x = YEAR, y = AGE_CAT, fill = SUMCASES)) +
+    geom_raster() + 
+    facet_grid(GENDER ~ .) +
+    scale_x_continuous(breaks = c(2004:2018)) +
+    scale_fill_distiller(palette = "Blues") + # Vivax
+#    scale_fill_distiller(palette = "Greens") + # Falciparum
+    labs(title = paste0("P."," ", tipomin," ", "cases intensity stratified by age and gender in ", uf, " ",  
+                        #            StartYear, "-", EndYear), x = "Age categories", y = "Cases intensity by year") +  
+                        StartYear, "-", EndYear), x = "Cases intensity by year", y = "Age categories") +  
+#    guides(color = guide_legend(title = "Cases Intensity")) +
+    theme(panel.grid.minor.x = element_blank(),
+          axis.text.x = element_text(angle = 90, hjust = 1),
+          legend.position="right",
+          legend.text = element_text(size = 7),
+          legend.title = element_text(size = 8, face = "italic"),
+          legend.margin = margin(0,0,0,0), 
+          plot.title = element_text(size = 8),
+          axis.title = element_text(size = 7),
+          axis.text = element_text(size = 7))
   
-ggsave(Age_Gender_Matrix_State_Year[[i]], filename = paste0("P. falciparum cases stratified by age and gender in ", States_sivep[[i]], " ", StartYear, "-", EndYear, ".png"), width = 2500/300, height = 2000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png") 
+ggsave(plt, filename = paste0("P."," ", tipomin," ", "cases stratified by age and gender in ", uf, " ", StartYear, "-", EndYear, ".png"), width = 2500/300, height = 2000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png") 
 
 }
 
