@@ -196,7 +196,7 @@ IBGEFilePath = "/home/daniel/temp/Malaria_mapping"
 #AgTimeUnit = "week" # ("week", "month")
 unitTime <- ifelse(AgTimeUnit == "week", 52, 12) # If AgTimeUnit == "week", unitTime == 52
 
-```
+ ```
 
 - NAME: name of the administrative levels.  
 - YEAR: year of the notification and population estimated.  
@@ -550,7 +550,9 @@ MUN_Plots[1]
 - um painel com todos os estados- somatório de todos os anos.
 - Para suplementar, seria interessante ter uma figura para cada estado mostrando por ano- facet_wrap por ano.
 
-- Não gerei outro banco para essa parte. Não creio que precisa acrescentar aqui todas as semanas como feito no banco acima. VER DIREITO.
+- Não gerei outro banco para essa parte. Não creio que precisa acrescentar aqui todas as semanas como feito no banco acima. VER DIREITO.  
+- Se for usar somente idade, não precisa retirar os NAs de gender.  
+
 ```{r}
 
 getSTRAT_AGE_GENDER <- function(SIVEPFilePath, StartYear, EndYear, AgTimeUnit){
@@ -721,8 +723,10 @@ save(Sivep_strat , file = "/home/rlana/Dados/Age_gender_Noti_weekly.Rdata")
 
 ```  
   
-### Plot  age and gender per state
+### Plot age and gender per state
 ```{r}  
+load("/home/rlana/Dados/Age_gender_Noti_weekly.Rdata")
+
 #Removendo NA de gender
 Sivep_strat <- Sivep_strat %>% 
   drop_na(GENDER)
@@ -754,7 +758,7 @@ ggsave(Age_Gender_Plot_State, filename = paste0("P. falciparum cases in Brazil p
 ```
 
 
-Plot  age and gender per state per year - automatizar
+### Plot age and gender per state per year - automatizar
 
 ### Daniel,
 Para conseguir salvar novamente, tenho que limpar o Environment e rodar de novo...não sei como resolver isso aqui. De qq forma consegui fazer para todos os estados, por ano e por tipo de malária. Está salvo no servidor.
@@ -763,6 +767,7 @@ Para conseguir salvar novamente, tenho que limpar o Environment e rodar de novo.
 #Removendo NA de gender
 Sivep_strat <- Sivep_strat %>% 
   drop_na(GENDER)
+
 Plot_Folder = "/home/rlana/Plots/Age_Gender/State"
 States_sivep = c("AC","AM","AP","MA","MT","PA","RO","RR","TO")
 
@@ -790,33 +795,43 @@ ggsave(Age_Gender_Plot_State_Year[[i]], filename = paste0("P. vivax cases strati
 
   }
 
-
-
-
-
 ```
 
 
-Plotando matrix de intensidade para estratificação idade e sexo. TESTAR
+### Plotando matrix de intensidade de casos por FE e sexo por estado
+- repensar a agregação das faixas etárias e talvez repensar em usar o API.  
 ```{r}
-Sivep_strat %>% filter(LEVEL == "UF") %>% group_by(STATE, YEAR, AGE_CAT, GENDER, TYPE) %>%
-  mutate(SUMCASES = sum(CASES, na.rm=TRUE)) -> dAge
+dAge <- Sivep_strat %>% 
+  filter(LEVEL == "UF") %>% 
+  group_by(STATE, YEAR, AGE_CAT, GENDER, TYPE) %>%
+  mutate(SUMCASES = sum(CASES, na.rm = TRUE))
 
-ggplot(aes(x=YEAR, y=AGE_CAT, fill=SUMCASES), data=subset(dAge, TYPE=="Falciparum" & STATE== "AC")) + 
-  geom_raster() + facet_grid( GENDER ~ .)
-
-
-#ggplot(data = subset(Sivep_strat, LEVEL == "UF" & STATE == "AC" & TYPE == "Vivax"), 
-#                           aes(x = AGE_CAT, y = CASES, fill = GENDER)) +
-#                           geom_raster() + facet_wrap(.~GENDER)
+ggplot(aes(x = AGE_CAT, y = YEAR, fill = SUMCASES), data = subset(dAge, TYPE == "Vivax" & STATE == "RO")) + 
+#ggplot(aes(x = YEAR, y = AGE_CAT, fill = SUMCASES), data = subset(dAge, TYPE == "Vivax" & STATE == "RO")) +   
+  geom_raster() + 
+  facet_grid(GENDER ~ .) +
+#  facet_wrap(.~NAME, ncol = 3) + # ver se consigo gerar para todos os estados na mesma figura- ver se dessa forma fica bom.
+#  scale_fill_manual(values = c("#31a354","#3182bd")) +
+  scale_y_continuous(breaks = c(2004:2018)) +
+#  scale_x_continuous(breaks = c(2004:2018)) +
+#  scale_fill_gradient(low = "blue", high =  "darkblue") +
+  scale_fill_distiller(palette = "Blues") +  # type if a number, pallete if a string. 
+  labs(title = paste0("P. vivax cases intensity stratified by age and gender in ", "RO", " ",  
+              StartYear, "-", EndYear), x = "Age categories", y = "Cases intensity by year") +  
+  guides(color = guide_legend(title = "Cases Intensity")) +
+  theme(panel.grid.minor.x = element_blank(),
+        axis.text.x = element_text(angle = 90, hjust = 1),
+        legend.position="right",
+        legend.text = element_text(size = 7),
+        legend.title = element_text(size = 8, face = "italic"),
+        legend.margin = margin(0,0,0,0), 
+        plot.title = element_text(size = 8),
+        axis.title = element_text(size = 7),
+        axis.text = element_text(size = 7))
 
 ```
 
 
 
-- see pictures to do the figures for the paper
-- figure age-gender use the script for pregnancy in PTR proposal- ask Narimane.
-- figure por pv/pf- ask Narimane for the script
 
-- For the Pv/Pf figure, you can find it in the "MALARIA_TS_PLOTS" script, lines 1422-1446
 
