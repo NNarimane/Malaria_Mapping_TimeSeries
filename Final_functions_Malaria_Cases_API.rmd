@@ -839,7 +839,7 @@ dAge <- Sivep_strat %>%
 
 ```
 
-- Plot por estado: ver qual variável fica melhor no eixo x ou y. Gostei mais do jeito que está.  
+- Plot por estado: ver qual variável fica melhor no eixo x ou y. Gostei mais do jeito que está.
 ```{r}
 #ggplot(aes(x = AGE_CAT, y = YEAR, fill = SUMCASES), data = subset(dAge, TYPE == "Vivax" & STATE == "RO")) + 
 ggplot(aes(x = YEAR, y = AGE_CAT, fill = SUMCASES), data = subset(dAge, TYPE == "Vivax" & STATE == "RO")) +   
@@ -875,7 +875,7 @@ StartYear <- 2004 # (inferior limit = 2004)
 EndYear <- 2018 # (superior limit = 2018)
 
 # Tipo de malária
-typemalaria <- F # T = Vivax, F = Falciparum
+typemalaria <- T # T = Vivax, F = Falciparum
 if(typemalaria){
   Plot_Folder <- "/home/rlana/Plots/Age_Gender/Matrix/Vixax" 
   tipo <- "Vivax"
@@ -918,39 +918,60 @@ ggsave(plt, filename = paste0("P."," ", tipomin," ", "cases stratified by age an
 ### Testando outra agregação para Faixa Etária
 
 - Pensando: primeiro crio uma variavel nova e recategorizo, depois uso summarize?- ver funções para recategorizar variáveis.
+- Testes:  
+0-9, 10-19, 20-39, 40-49, 50-59, 60+ e de 10 em 10 com 60+
+
+#### Testar os outros plots de age and gender com o banco antigo que tem IPA estratificado- testar isso depois de recategorizar igual aqui.
+
 ```{r}
 dAgen <- dAge %>%
-  mutate() %>% 
-  summarise() #ou será qua dá pra usar aqui direto?
+  mutate(AGE_CAT_N = fct_collapse(AGE_CAT,
+                                  '0-9' = c("0-4", "5-9"),
+                                  '10-19' = c("10-14", "15-19"),
+                                  '20-39' = c("20-24", "25-29", "30-34", "35-39"),
+                                  '40-49' = c("40-44", "45-49"),
+                                  '50-59' = c("50-54", "55-59"),
+                                  '60+' = c("60-64", "65-69", "70-74", "75-79", "80+"))) 
 
-library(tidyverse)
-library(forcats)
+fct_count(dAge$AGE_CAT)
 
-#recode.variables()
-#mapvalues()
+dAgen <- dAgen %>% 
+   mutate(AGE_CAT_N10 = fct_collapse(AGE_CAT,
+                                  '0-9' = c("0-4", "5-9"),
+                                  '10-19' = c("10-14", "15-19"),
+                                  '20-29' = c("20-24", "25-29"),
+                                  '30-39' = c("30-34", "35-39"),
+                                  '40-49' = c("40-44", "45-49"),
+                                  '50-59' = c("50-54", "55-59"),
+                                  '60+' = c("60-64", "65-69", "70-74", "75-79", "80+")))
 
-library(dplyr)
-#my_data %>% group_by(category) %>% summarise_each(funs(max)) # max por sum aqui
 
-# gss_cat %>%
-#   mutate(partyid = fct_recode(partyid,
-#                            "Republican, strong"    = "Strong republican",
-#                            "Republican, weak"      = "Not str republican",
-#                            "Independent, near rep" = "Ind,near rep",
-#                            "Independent, near dem" = "Ind,near dem",
-#                            "Democrat, weak"        = "Not str democrat",
-#                            "Democrat, strong"      = "Strong democrat",
-#                            "Other"                 = "No answer",         ##Talvez isso resolva, mas acho que tem que somar depois as linhas
-#                            "Other"                 = "Don't know",
-#                            "Other"                 = "Other party"
-#   ))
+Plot_Folder = "/home/rlana/Plots/Age_Gender/Matrix/testes"
 
-#Sometimes you just want to lump together all the small groups to make a plot or table simpler. That’s the job of fct_lump(). [...] The default behaviour is to progressively lump together the smallest groups, ensuring that the aggregate is still the smallest group.
-# gss_cat %>%
-#   mutate(relig = fct_lump(relig, n = 10)) %>%
-#   count(relig, sort = TRUE) %>%
-#   print(n = Inf)
+for (uf in States_sivep){
+  plt <- ggplot(data = dAgen[dAgen$LEVEL == "UF" & dAgen$STATE == uf & dAgen$TYPE == tipo,], 
+                aes(x = YEAR, y = AGE_CAT_N10, fill = SUMCASES)) +
+    geom_raster() + 
+    facet_grid(GENDER ~ .) +
+    scale_x_continuous(breaks = c(2004:2018),
+                      expand = c(0.01, 0)) +
+    scale_fill_distiller(palette = cor) +   
+    labs(title = paste0("P."," ", tipomin," ", "cases intensity stratified by age and gender in ", uf, " ",  
+                        StartYear, "-", EndYear), x = "Cases intensity by year", y = "Age categories") +  
+    guides(fill = guide_colourbar(title = "Cases Intensity", reverse = T)) + ### Decidir se quer deixar o reverse T ou F- falci está T
+    theme(panel.grid.minor.x = element_blank(),   ### Refazer os tamanhos de letra
+          axis.text.x = element_text(angle = 90, hjust = 1),
+          legend.position="right",
+          legend.text = element_text(size = 7),
+          legend.title = element_text(size = 8, face = "italic"),
+          legend.margin = margin(0,0,0,0), 
+          plot.title = element_text(size = 8),
+          axis.title = element_text(size = 7),
+          axis.text = element_text(size = 7))
+  
+ggsave(plt, filename = paste0("TESTE2_P."," ", tipomin," ", "cases stratified by age and gender in ", uf, " ", StartYear, "-", EndYear, ".png"), width = 2500/300, height = 2000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png") 
 
+}
 ```
 
 
