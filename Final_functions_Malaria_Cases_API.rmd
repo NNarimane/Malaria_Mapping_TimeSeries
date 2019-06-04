@@ -929,6 +929,9 @@ library(forcats)
 #recode.variables()
 #mapvalues()
 
+library(dplyr)
+#my_data %>% group_by(category) %>% summarise_each(funs(max)) # max por sum aqui
+
 # gss_cat %>%
 #   mutate(partyid = fct_recode(partyid,
 #                            "Republican, strong"    = "Strong republican",
