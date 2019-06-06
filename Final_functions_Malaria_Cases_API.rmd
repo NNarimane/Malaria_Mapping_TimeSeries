@@ -202,12 +202,13 @@ IBGEFilePath = "/home/daniel/temp/Malaria_mapping"
 #AgTimeUnit = "week" # ("week", "month")
 unitTime <- ifelse(AgTimeUnit == "week", 52, 12) # If AgTimeUnit == "week", unitTime == 52
 
- ```
+```
 
 - NAME: name of the administrative levels.  
 - YEAR: year of the notification and population estimated.  
 - POP_SIZE: population estimated by year and administrative levels
-- API: annual parasite index - ver se tem que multiplicar por semanas pois se chama annual p. in.
+- API: annual parasite index 
+ 
 ```{r}
 getWEEKLY_SIVEP_API <- function(IBGEFilePath, StartYear, EndYear, AgTimeUnit){
   
@@ -332,7 +333,7 @@ envNN = F
 
 if(envNN){
   Plot_Folder = "/home/daniel/temp/Malaria_mapping" # Daniel
-} else{Plot_Folder = "/home/rlana/Plos_new/TimeSeries/STATE"} # Raquel
+} else{Plot_Folder = "/home/rlana/Plots/TimeSeries/BR"} # Raquel
 
 
 #Cases
@@ -397,58 +398,69 @@ ggsave(API_TS_BR, filename = paste0("P. vivax and P. falciparum API in Brazil ",
 - supp file  
 
 ```{r}
+envNN = F
+
+if(envNN){
+  Plot_Folder = "/home/daniel/temp/Malaria_mapping" # Daniel
+} else{Plot_Folder = "/home/rlana/Plots/TimeSeries/BR"} # Raquel
+
+
 Cases_Plot_State <- ggplot(data = subset(d2, LEVEL == "UF"), aes(DATE, CASES, color = TYPE)) +
   stat_summary(fun.y = sum, geom = "line") +
-  scale_x_date(breaks = "year",
+  scale_x_date(breaks = "2 years",
                date_labels = "%Y",
                limits = c(min(d2$DATE), max(d2$DATE)),
                expand = c(0.01, 0)) +
   facet_wrap(.~NAME, ncol = 3) +
-  scale_color_manual(values = c("#31a354","#3182bd")) +
-  labs(title = paste0("P. vivax and P. falciparum ", "cases in Brazil, ", 
+  scale_color_manual(values = c("#31a354","#3182bd"), label = c("falciparum", "vivax")) +
+  labs(title = paste0("Malaria ", "cases in Brazil, ", 
                       StartYear, "-", EndYear), x = "Year", y = paste(Date_Type,"cases")) +
   guides(color = guide_legend(title = "Plasmodium")) +
   theme(panel.grid.minor.x = element_blank(),
-        axis.text.x = element_text(angle = 90, hjust = 1),
-        legend.position="bottom",
-        legend.text = element_text(size = 7),
-        legend.title = element_text(size = 8, face = "italic"),
+        axis.text.x = element_text(angle = 90, hjust = 1, size = 12),
+        axis.text.y = element_text(size = 12),
+        legend.position = "bottom",
+        legend.text = element_text(size = 12, face = "italic"),
+        legend.title = element_text(size = 12, face = "italic"),
         legend.margin = margin(0,0,0,0), 
-        plot.title = element_text(size = 8),
-        axis.title = element_text(size = 7),
-        axis.text = element_text(size = 7))
+        plot.title = element_text(size = 12),
+        axis.title = element_text(size = 12),
+        plot.margin = unit(c(0.1,0.3,0,0.15),"cm"), #top, right, bottom and left
+        strip.text.x = element_text(size = 11)) 
 
 Cases_Plot_State
 
 # Save
-ggsave(Cases_Plot_State, filename = paste0("P. vivax and P. falciparum cases in Brazil per State", StartYear, "-", EndYear, ".png"), width = 2500/300, height = 2000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png")
+ggsave(Cases_Plot_State, filename = paste0("Teste3_P. vivax and P. falciparum cases in Brazil per State", StartYear, "-", EndYear, ".png"), width = 2500/300, height = 2000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png")
 
 
 API_Plot_State <- ggplot(data = subset(d2, LEVEL == "UF"), aes(DATE, APIw, color = TYPE)) +
   stat_summary(fun.y = sum, geom = "line") +
-  scale_x_date(breaks = "year",
+  scale_x_date(breaks = "2 years",
                date_labels = "%Y",
                limits = c(min(d2$DATE), max(d2$DATE)),
                expand = c(0.01, 0)) +
   facet_wrap(.~NAME, ncol = 3) +
-  scale_color_manual(values = c("#31a354","#3182bd")) +
-  labs(title = paste0("P. vivax and P. falciparum ", "API in Brazil, ", 
+  scale_color_manual(values = c("#31a354","#3182bd"), label = c("falciparum", "vivax")) +
+  labs(title = paste0("API ", "in Brazil, ", 
                       StartYear, "-", EndYear), x = "Year", y = paste(Date_Type,"API")) +
- guides(color = guide_legend(title = "Plasmodium")) +
-  theme(panel.grid.minor.x = element_blank(),
-        axis.text.x = element_text(angle = 90, hjust = 1),
-        legend.position="bottom",
-        legend.text = element_text(size = 7),
-        legend.title = element_text(size = 8, face = "italic"),
+  guides(color = guide_legend(title = "Plasmodium")) +
+ theme(panel.grid.minor.x = element_blank(),
+        axis.text.x = element_text(angle = 90, hjust = 1, size = 12),
+        axis.text.y = element_text(size = 12),
+        legend.position = "bottom",
+        legend.text = element_text(size = 12, face = "italic"),
+        legend.title = element_text(size = 12, face = "italic"),
         legend.margin = margin(0,0,0,0), 
-        plot.title = element_text(size = 8),
-        axis.title = element_text(size = 7),
-        axis.text = element_text(size = 7))
+        plot.title = element_text(size = 12),
+        axis.title = element_text(size = 12),
+        plot.margin = unit(c(0.1,0.3,0,0.15),"cm"), #top, right, bottom and left
+        strip.text.x = element_text(size = 11)) 
 
 API_Plot_State
 
 # Save
-ggsave(API_Plot_State, filename = paste0("P. vivax and P. falciparum API in Brazil per State", StartYear, "-", EndYear, ".png"), width = 2500/300, height = 2000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png")
+ggsave(API_Plot_State, filename = paste0("Teste2_P. vivax and P. falciparum API in Brazil per State", StartYear, "-", EndYear, ".png"), width = 2500/300, height = 2000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png")
 
 ```
 
@@ -456,6 +468,7 @@ ggsave(API_Plot_State, filename = paste0("P. vivax and P. falciparum API in Braz
 ### State plots - each state separetely
 
 - Refazer utilizando o modelo do último plot
+- Aumentar os textos também usando o de cima, depois testar em A4.
 
 ```{r}
 States_sivep = c("AC","AM","AP","MA","MT","PA","RO","RR","TO")
@@ -773,19 +786,32 @@ Age_Gender_Plot_State <- ggplot(data = subset(Sivep_strat, LEVEL == "UF" & TYPE 
                       StartYear, "-", EndYear), x = "Age profile", y = "Cases") +
   guides(color = guide_legend(title = "Plasmodium")) +
   theme(panel.grid.minor.x = element_blank(),
-        axis.text.x = element_text(angle = 90, hjust = 1),
-        legend.position="bottom",
-        legend.text = element_text(size = 7),
-        legend.title = element_text(size = 8, face = "italic"),
+        axis.text.x = element_text(angle = 90, hjust = 1, size = 11),
+        axis.text.y = element_text(size = 12),
+        legend.position = "bottom",
+        legend.text = element_text(size = 12),
+        legend.title = element_text(size = 12),
         legend.margin = margin(0,0,0,0), 
-        plot.title = element_text(size = 8),
-        axis.title = element_text(size = 7),
-        axis.text = element_text(size = 7))
+        plot.title = element_text(size = 12),
+        axis.title = element_text(size = 12),
+        plot.margin = unit(c(0.1,0.3,0,0.15),"cm"), #top, right, bottom and left
+        strip.text.x = element_text(size = 11)) 
 
 Age_Gender_Plot_State
 
+  # theme(panel.grid.minor.x = element_blank(),
+  #       axis.text.x = element_text(angle = 90, hjust = 1),
+  #       legend.position="bottom",
+  #       legend.text = element_text(size = 7),
+  #       legend.title = element_text(size = 8, face = "italic"),
+  #       legend.margin = margin(0,0,0,0), 
+  #       plot.title = element_text(size = 8),
+  #       axis.title = element_text(size = 7),
+  #       axis.text = element_text(size = 7))
+  
+
 # Save
-ggsave(Age_Gender_Plot_State, filename = paste0("P. falciparum cases in Brazil per State", StartYear, "-", EndYear, ".png"), width = 2500/300, height = 2000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png")
+ggsave(Age_Gender_Plot_State, filename = paste0("Teste_P. falciparum cases in Brazil per State", StartYear, "-", EndYear, ".png"), width = 2500/300, height = 2000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png")
 
 ```
 
