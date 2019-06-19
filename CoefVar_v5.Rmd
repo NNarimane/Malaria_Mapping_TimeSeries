@@ -67,6 +67,7 @@ dNoti %>% group_by(LEVEL, YEAR, POP_SIZE, NAME, TYPE) %>%
 ## First, an update on API and Cases time series up to the end of 2018
 
 - Cases
+
 ```{r gr1, echo=FALSE}
 #include_graphics("./Cases/P. vivax and P. falciparum cases in Brazil 2004-2018.png")
 include_graphics("/home/rlana/Plots/TimeSeries/BR/Cases/P. vivax and P. falciparum cases in Brazil 2004-2018.png") #Raquel-
@@ -75,6 +76,7 @@ include_graphics("/home/rlana/Plots/TimeSeries/BR/Cases/P. vivax and P. falcipar
 
 
 - API (computed on weekly number of cases, but scaled to yearly values)
+
 ```{r gr2, echo=FALSE}
 #include_graphics("./API/P. vivax and P. falciparum API in Brazil 2004-2018.png")
 include_graphics("/home/rlana/Plots/TimeSeries/BR/API/P. vivax and P. falciparum API in Brazil 2004-2018.png") # Raquel
@@ -85,6 +87,7 @@ include_graphics("/home/rlana/Plots/TimeSeries/BR/API/P. vivax and P. falciparum
 ## Comparing the states
 
 - Cases
+
 ```{r gr3, echo=FALSE, out.width="80%"}
 #include_graphics("./Cases/P. vivax and P. falciparum cases in Brazil per State2004-2018.png")
 include_graphics("/home/rlana/Plots/TimeSeries/BR/Cases/Teste3_P. vivax and P. falciparum cases in Brazil per State2004-2018.png") #Raquel
@@ -93,6 +96,7 @@ include_graphics("/home/rlana/Plots/TimeSeries/BR/Cases/Teste3_P. vivax and P. f
 
 
 - API
+
 ```{r gr4, echo=FALSE, out.width="80%"}
 #include_graphics("./API/P. vivax and P. falciparum API in Brazil per State2004-2018.png")
 include_graphics("/home/rlana/Plots/TimeSeries/BR/API/TimeSeries.png") #Raquel
@@ -137,6 +141,7 @@ dNoti %>% group_by(LEVEL, MONTH, YEAR, POP_SIZE, NAME, TYPE) %>%
   mutate(SDEV = VARAPI ^0.5) %>% mutate(CVAR = SDEV/MEANAPI) -> dNoti.mx
 
 ```
+
 
 Basically we observe the same effect as in the previous one.  
 It seems that the summer months exhibit greater variation.   
@@ -259,6 +264,7 @@ ggplot(aes(x=LEVEL_POP), data=dNoti.l1) + geom_histogram()
 
 ```
 
+
 Second, the histogram of population sizes given by the mean over the years in the studied period of time.  
 A lognormal distribution appears to fit quite nicely to describe the population in municipalities of the Brazilian Amazon.  
 ```{r coeflevelplot4, echo=FALSE, warning=FALSE}
@@ -286,6 +292,7 @@ ggplot(aes(x=CVAR, y=MEANAPI, color=NAME), data=dNoti.lpp) +
 ```
 
 
+
 ```{r coeflevelpath2, echo=FALSE, warning=FALSE}
 dNoti %>% filter (LEVEL == "MU") %>% group_by(STATE, POP_SIZE, NAME, TYPE) %>% 
   summarise(SUMCASES = sum(CASES, na.rm=TRUE),
@@ -301,13 +308,14 @@ ggplot(aes(x=CVAR, y=MEANAPI, color=STATE), data=dNoti.lpp) +
 
 ```
 
-Here we are investigating only municipalities, hence we calculated API and CV for all municipalities, across all years in the database, and grouped (shape and color) by state. Different patterns are hardly recognized.    
 
+Here we are investigating only municipalities, hence we calculated API and CV for all municipalities, across all years in the database, and grouped (shape and color) by state. Different patterns are hardly recognized.    
 ```{r coeflevelpath3, echo=FALSE, warning=FALSE}
 ggplot(aes(x=CVAR, y=MEANAPI, color=STATE), data=dNoti.lpp) + 
   geom_point() + facet_wrap(TYPE ~ STATE) + scale_y_log10()
 
 ```
+
 
 So we separated the point "clouds" by states and *falciparum/vivax*. Again not sure about states TO, RO, RR - we have to verify.  
 ```{r coefstatepath, echo=FALSE, warning=FALSE}
@@ -434,7 +442,7 @@ ggplot( aes(x=CWPOP, y = CPOT, color=YEAR, group=YEAR),
 
 
 ggplot( aes(x=CWPOP, y = CPOT, color=YEAR, group=YEAR), 
-        data=subset(dNoti.sx.2, TYPE=="Falciparum")) +
+        data=subset(dNoti.sx.2, TYPE=="Vivax")) +
   ylab("Cummulative Potential") +
     ggtitle("B. P. vivax") +
   xlab("Adjusted number of municipalities")+
