@@ -444,7 +444,7 @@ ggplot( aes(x=CWPOP, y = CPOT, color=YEAR, group=YEAR),
 ggplot( aes(x=CWPOP, y = CPOT, color=YEAR, group=YEAR), 
         data=subset(dNoti.sx.2, TYPE=="Vivax")) +
   ylab("Cummulative Potential") +
-    ggtitle("B. P. vivax") +
+    ggtitle("B) P. vivax") +
   xlab("Adjusted number of municipalities")+
   geom_step() + facet_wrap(STATE ~ ., scales = "free") +
   theme(panel.grid.minor.x = element_blank(),
