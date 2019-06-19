@@ -73,12 +73,14 @@ include_graphics("/home/rlana/Plots/TimeSeries/BR/Cases/P. vivax and P. falcipar
 
 ```
 
+
 - API (computed on weekly number of cases, but scaled to yearly values)
 ```{r gr2, echo=FALSE}
 #include_graphics("./API/P. vivax and P. falciparum API in Brazil 2004-2018.png")
 include_graphics("/home/rlana/Plots/TimeSeries/BR/API/P. vivax and P. falciparum API in Brazil 2004-2018.png") # Raquel
 
 ```
+
 
 ## Comparing the states
 
@@ -88,6 +90,7 @@ include_graphics("/home/rlana/Plots/TimeSeries/BR/API/P. vivax and P. falciparum
 include_graphics("/home/rlana/Plots/TimeSeries/BR/Cases/Teste3_P. vivax and P. falciparum cases in Brazil per State2004-2018.png") #Raquel
 
 ```
+
 
 - API
 ```{r gr4, echo=FALSE, out.width="80%"}
