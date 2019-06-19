@@ -6,10 +6,8 @@ output: pdf_document
 ---
 
 
-# Analysis of the coefficient of variation of API in the Amazon using SIVEP data with several political-adminstritive levels:   
-## municipality, state and Amazon Basin
-
-
+# Analysis of the coefficient of variation of API in the Amazon using SIVEP data with several political adminstritive levels:   
+## Municipality, state and Amazon Basin
 ```{r setup, include=FALSE, warning=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 require(ggplot2)
@@ -17,18 +15,17 @@ require(tidyverse)
 require(lubridate)
 require(knitr)
 
-#load("./API_Noti.RData") 
-#load("./API_Noti_weekly.Rdata")
-
 envNN = F
 
 if(envNN){
-  load("./API_Noti_weeklyAPI_state.Rdata") # Daniel
-} else{load("/home/rlana/Dados/API_Noti_weeklyAPI_state.Rdata")} # Raquel
-
-
+  load("./API_Noti_week_state_final.Rdata") # Daniel
+} else{load("/home/rlana/Dados/API_Noti_week_state_final.Rdata")} # Raquel
 #load("./API_Noti_weeklyAPI_state.Rdata")
 #load("/home/rlana/Dados/API_Noti_weeklyAPI_state.Rdata")
+
+# Quando salvei novamente o banco ele mudou de nome, então para não ter que adequar tudo fiz da forma abaixo.
+d2 <- d8
+rm(d8)
 
 d2 %>% group_by(NAME) %>% mutate(POP_MEAN = mean(POP_SIZE, na.rm=TRUE)) %>% mutate(MONTH = month(DATE, label=TRUE)) %>% 
   mutate(LEVEL_POP = case_when(
@@ -59,7 +56,7 @@ dNoti$LEVEL <- factor(dNoti$LEVEL, levels=c("MU", "UF", "BR"))
 
 dNoti %>% group_by(LEVEL, YEAR, POP_SIZE, NAME, TYPE) %>% 
   summarise(SUMCASES = sum(CASES, na.rm=TRUE),
-    MEAN = mean(API, na.rm=TRUE), VAR = var(API, na.rm=TRUE)) %>% ####Aqui eu acho que os NAs influenciam- teria que atribuir zero pelo menos uma vez para o município, pois está agregando por ano, entao bastaria ter o município, naquela ano, uma vez, com zero.
+    MEAN = mean(APIw, na.rm=TRUE), VAR = var(APIw, na.rm=TRUE)) %>%
   mutate(APIN = 1000*SUMCASES/POP_SIZE) %>% 
   group_by(LEVEL, TYPE) %>% summarise(MEANAPI = mean(APIN, na.rm=TRUE), 
                                          VARAPI = var(APIN, na.rm=TRUE)) %>%
@@ -70,28 +67,33 @@ dNoti %>% group_by(LEVEL, YEAR, POP_SIZE, NAME, TYPE) %>%
 ## First, an update on API and Cases time series up to the end of 2018
 
 - Cases
-
 ```{r gr1, echo=FALSE}
-include_graphics("./Cases/P. vivax and P. falciparum cases in Brazil 2004-2018.png")
+#include_graphics("./Cases/P. vivax and P. falciparum cases in Brazil 2004-2018.png")
+include_graphics("/home/rlana/Plots/TimeSeries/BR/Cases/P. vivax and P. falciparum cases in Brazil 2004-2018.png") #Raquel-
+
 ```
 
 - API (computed on weekly number of cases, but scaled to yearly values)
-
 ```{r gr2, echo=FALSE}
-include_graphics("./API/P. vivax and P. falciparum API in Brazil 2004-2018.png")
-```
+#include_graphics("./API/P. vivax and P. falciparum API in Brazil 2004-2018.png")
+include_graphics("/home/rlana/Plots/TimeSeries/BR/API/P. vivax and P. falciparum API in Brazil 2004-2018.png") # Raquel
 
+```
 
 ## Comparing the states
 
+- Cases
 ```{r gr3, echo=FALSE, out.width="80%"}
-include_graphics("./Cases/P. vivax and P. falciparum cases in Brazil per State2004-2018.png")
+#include_graphics("./Cases/P. vivax and P. falciparum cases in Brazil per State2004-2018.png")
+include_graphics("/home/rlana/Plots/TimeSeries/BR/Cases/Teste3_P. vivax and P. falciparum cases in Brazil per State2004-2018.png") #Raquel
+
 ```
 
-
-
+- API
 ```{r gr4, echo=FALSE, out.width="80%"}
-include_graphics("./API/P. vivax and P. falciparum API in Brazil per State2004-2018.png")
+#include_graphics("./API/P. vivax and P. falciparum API in Brazil per State2004-2018.png")
+include_graphics("/home/rlana/Plots/TimeSeries/BR/API/TimeSeries.png") #Raquel
+
 ```
 
 
@@ -109,59 +111,55 @@ This allows us to obtain the coefficient of variation which is the ratio between
 
 The coeficient of variation declines when we analyse APIs in the municipality level, state level and amazon level, in this order, which shows large variability of the API in the municipality level.  
 For falciparum, the standard deviation is about 4 times the mean.  
-
 ```{r coef, warning=FALSE}
 ggplot(aes(x=LEVEL, y=CVAR, color=TYPE, group=TYPE), data=dNotix) + 
   geom_point() + geom_line()
+
 ```
 
 
 ## Is this variability the same over all months of the year?
 
- The previous analysis was using the API in the years from 2004 (yearly values).  
- Here we analyze monthly values of API (scaled by 12 to consider what would be the value assuming this value constant).  
- Therefore, API of january, API of february etc.  
- This is to obtain the coefficient of variation separated by month.  
-
+The previous analysis was using the API in the years from 2004 (yearly values).  
+Here we analyze monthly values of API (scaled by 12 to consider what would be the value assuming this value constant).  
+Therefore, API of january, API of february etc.  
+This is to obtain the coefficient of variation separated by month.  
 ```{r monthcomp, echo = FALSE, warning=FALSE}
-
 dNoti %>% group_by(LEVEL, MONTH, YEAR, POP_SIZE, NAME, TYPE) %>% 
   summarise(SUMCASES = sum(CASES, na.rm=TRUE),
-            MEAN = mean(API, na.rm=TRUE), VAR = var(API, na.rm=TRUE)) %>% 
+            MEAN = mean(APIw, na.rm=TRUE), VAR = var(APIw, na.rm=TRUE)) %>% 
   mutate(APIN = 1000*12*SUMCASES/POP_SIZE) %>% 
-  drop_na(TYPE) %>% group_by(LEVEL, MONTH, TYPE) %>% summarise(MEANAPI = mean(APIN, na.rm=TRUE),   ####Aqui tb eu acho que os NAs impactam. Agregou por mês, teria que aparecer 12 vezes. Mas isso fosse resolvido na origem, que é a gregação por semana, já resolve tudo. PEnso que talvez seja o melhor.
+  drop_na(TYPE) %>% group_by(LEVEL, MONTH, TYPE) %>% summarise(MEANAPI = mean(APIN, na.rm=TRUE),   
                                                         VARAPI = var(APIN, na.rm=TRUE)) %>%
   mutate(SDEV = VARAPI ^0.5) %>% mutate(CVAR = SDEV/MEANAPI) -> dNoti.mx
+
 ```
 
-
- Basically we observe the same effect as in the previous one.  
- It seems that the summer months exhibit greater variation.   
-
-
+Basically we observe the same effect as in the previous one.  
+It seems that the summer months exhibit greater variation.   
 ```{r coefmonth, warning=FALSE}
 ggplot(aes(x=LEVEL, y=CVAR, color=MONTH, group=MONTH), 
        data=dNoti.mx) + facet_grid(TYPE ~ .) +
   geom_point() + geom_line()
+
 ```
 
 
 ## STATE
 
- Now were are going to analyze the coefficient of variation but separating into groups of states.  
-
+Now were are going to analyze the coefficient of variation but separating into groups of states.  
 ```{r coefstate, echo=FALSE, warning=FALSE}
 dNoti %>% group_by(LEVEL, STATE, YEAR, POP_SIZE, NAME, TYPE) %>% 
   summarise(SUMCASES = sum(CASES, na.rm=TRUE),
-            MEAN = mean(API, na.rm=TRUE), VAR = var(API, na.rm=TRUE)) %>% 
-  mutate(APIN = 1000*12*SUMCASES/POP_SIZE) %>%   ##### Vc agrega por ano, não precisa multiplicar por 12.
+            MEAN = mean(APIw, na.rm=TRUE), VAR = var(APIw, na.rm=TRUE)) %>% 
+  mutate(APIN = 1000*SUMCASES/POP_SIZE) %>%   ##### Vc agrega por ano, não precisa multiplicar por 12. RETIREI 
   drop_na(TYPE) %>% group_by(LEVEL, STATE, TYPE) %>% summarise(MEANAPI = mean(APIN, na.rm=TRUE), 
                                                         VARAPI = var(APIN, na.rm=TRUE)) %>%
   mutate(SDEV = VARAPI ^0.5) %>% mutate(CVAR = SDEV/MEANAPI) -> dNoti.sx
 
 dNoti.sx$STATE = as.factor(dNoti.sx$STATE)
-dNoti.sx.f <- data.frame(dNoti.sx[dNoti.sx$LEVEL=="BR" &dNoti.sx$TYPE=="Falciparum",], STATENEW = levels(dNoti.sx$STATE)) 
-dNoti.sx.v <- data.frame(dNoti.sx[dNoti.sx$LEVEL=="BR" &dNoti.sx$TYPE=="Vivax",], STATENEW = levels(dNoti.sx$STATE)) 
+dNoti.sx.f <- data.frame(dNoti.sx[dNoti.sx$LEVEL=="BR" & dNoti.sx$TYPE=="Falciparum",], STATENEW = levels(dNoti.sx$STATE)) 
+dNoti.sx.v <- data.frame(dNoti.sx[dNoti.sx$LEVEL=="BR" & dNoti.sx$TYPE=="Vivax",], STATENEW = levels(dNoti.sx$STATE)) 
 
 dNoti.sx <- bind_rows(dNoti.sx, dNoti.sx.f, dNoti.sx.v)
 dNoti.sx[dNoti.sx$LEVEL=="BR",]$STATE = dNoti.sx[dNoti.sx$LEVEL=="BR",]$STATENEW 
@@ -174,39 +172,32 @@ dNoti.sx %>% drop_na(STATE) -> dNoti.sx
  So we are going to repeat lines of the BR level, one for each state, so we can make lines in the plots. Probably not the most elegant solution, but it works.  
 -->
 
- We see about the same effect but it is useful to see which states have great variability in the municipality level.  
-
+We see about the same effect but it is useful to see which states have great variability in the municipality level.  
 ```{r coefmonthplot, warning=FALSE}
 ggplot(aes(x=LEVEL, y=CVAR, color=STATE, group=STATE), 
        data=dNoti.sx) + facet_grid(TYPE ~ .) +
   geom_point() + geom_line()
+
 ```
 
 
 ## Levels of Population sizes
  
 Since we had defined different population levels:  
-
- Another option of levels of population sizes is by the limits in each stratum  
+Another option of levels of population sizes is by the limits in each stratum  
 
     above 100000  ~ 100000,
-
     50000 - 100000 ~ 50000,
-
     20000 - 50000 ~ 20000,
-
     10000 - 2000 ~ 10000,
-    
     1000 - 10000 ~ 1000
 
- We analyzed the coefficient of variation in these levels.  
- This makes possible to separate municipalities into different groups, but puts together state and municipality (problem solved ahead).  
-
+We analyzed the coefficient of variation in these levels.  
+This makes possible to separate municipalities into different groups, but puts together state and municipality (problem solved ahead).  
 ```{r coeflevel,echo=FALSE, warning=FALSE}
-
 dNoti %>% group_by(LEVEL_POP, YEAR, POP_SIZE, NAME, TYPE) %>% 
   summarise(SUMCASES = sum(CASES, na.rm=TRUE),
-            MEAN = mean(API, na.rm=TRUE), VAR = var(API, na.rm=TRUE)) %>% 
+            MEAN = mean(APIw, na.rm=TRUE), VAR = var(APIw, na.rm=TRUE)) %>% 
   mutate(APIN = 1000*SUMCASES/POP_SIZE) %>% 
   drop_na(TYPE) %>% group_by(LEVEL_POP, TYPE) %>% summarise(MEANAPI = mean(APIN, na.rm=TRUE), 
                                                         VARAPI = var(APIN, na.rm=TRUE)) %>%
@@ -214,21 +205,20 @@ dNoti %>% group_by(LEVEL_POP, YEAR, POP_SIZE, NAME, TYPE) %>%
 
 ```
 
- Now it is interesting that we observe the coefficient of variation to be approximately constant, but we still have some municipalities together with some states and the BR level.  
-
+Now it is interesting that we observe the coefficient of variation to be approximately constant, but we still have some municipalities together with some states and the BR level.  
 ```{r coeflevelplot, warning=FALSE}
+options(scipen = 10000) # to be numeric
 ggplot(aes(x=LEVEL_POP, y=CVAR, color=TYPE, group=TYPE), #color=MONTH, group=MONTH), 
        data=dNoti.lx) + #facet_grid(TYPE ~ .) +
   geom_point() + geom_line() + ylim(c(0,5))
+
 ```
 
- So we excluded the UF and BR levels.  
-
+So we excluded the UF and BR levels.  
 ```{r coeflevel2, echo=FALSE ,warning=FALSE}
-
 dNoti %>% filter(LEVEL=="MU") %>% group_by(LEVEL_POP, YEAR, POP_SIZE, NAME, TYPE) %>% 
   summarise(SUMCASES = sum(CASES, na.rm=TRUE),
-            MEAN = mean(API, na.rm=TRUE), VAR = var(API, na.rm=TRUE)) %>% 
+            MEAN = mean(APIw, na.rm=TRUE), VAR = var(APIw, na.rm=TRUE)) %>% 
   mutate(APIN = 1000*SUMCASES/POP_SIZE) %>% drop_na(TYPE) %>% 
   group_by(LEVEL_POP, TYPE) %>% summarise(MEANAPI = mean(APIN, na.rm=TRUE), 
                                                      VARAPI = var(APIN, na.rm=TRUE)) %>%
@@ -237,9 +227,9 @@ dNoti %>% filter(LEVEL=="MU") %>% group_by(LEVEL_POP, YEAR, POP_SIZE, NAME, TYPE
 ```
 
 
- And we observe an interesting property: for all municipalities the coefficient of variation is constant. We observe the same variability in groups of municipality of 1000 inhabitants or groups of 100000 persons.  
- Very interesting. Even when we try to make homogeneous strata of municipalities, we still see great variability of API and pretty much constant! Standard deviation is greater than three times the mean for *P. falciparum* malaria and little less than three times the mean for vivax malaria.  
+And we observe an interesting property: for all municipalities the coefficient of variation is constant. We observe the same variability in groups of municipality of 1000 inhabitants or groups of 100000 persons.  
 
+Very interesting. Even when we try to make homogeneous strata of municipalities, we still see great variability of API and pretty much constant! Standard deviation is greater than three times the mean for *P. falciparum* malaria and little less than three times the mean for vivax malaria.  
 ```{r coeflevelplot2, warning=FALSE}
 ggplot(aes(x=LEVEL_POP, y=CVAR, color=TYPE, group=TYPE), #color=MONTH, group=MONTH), 
        data=dNoti.lx) + #facet_grid(TYPE ~ .) +
@@ -248,66 +238,62 @@ ggplot(aes(x=LEVEL_POP, y=CVAR, color=TYPE, group=TYPE), #color=MONTH, group=MON
 ```
 
 Just to check the population structure of municipalities.  
-
 ```{r coeflevel3, echo=FALSE, warning=FALSE}
 dNoti %>% filter(LEVEL=="MU") %>% 
   group_by(LEVEL_POP, YEAR, NAME, POP_SIZE, POP_MEAN, TYPE) %>% 
   summarise(SUMCASES = sum(CASES, na.rm=TRUE),
-            MEAN = mean(API, na.rm=TRUE), VAR = var(API, na.rm=TRUE)) %>% 
+            MEAN = mean(APIw, na.rm=TRUE), VAR = var(APIw, na.rm=TRUE)) %>% 
   mutate(APIN = 1000*SUMCASES/POP_SIZE) %>% 
   drop_na(TYPE) %>% add_count(LEVEL_POP) %>% ungroup() %>%
   select(NAME, LEVEL_POP, POP_MEAN) %>% 
   distinct(NAME, LEVEL_POP, POP_MEAN) -> dNoti.l1
+
 ```
 
 First, the counts in each stratum of municipalities.  
-
 ```{r coeflevelplot3, echo=FALSE, warning=FALSE}
 ggplot(aes(x=LEVEL_POP), data=dNoti.l1) + geom_histogram()
+
 ```
 
 Second, the histogram of population sizes given by the mean over the years in the studied period of time.  
 A lognormal distribution appears to fit quite nicely to describe the population in municipalities of the Brazilian Amazon.  
-
 ```{r coeflevelplot4, echo=FALSE, warning=FALSE}
 ggplot(aes(x=POP_MEAN), data=dNoti.l1) + geom_histogram() + xlim(c(0, 1000000)) + scale_x_log10()
+
 ```
 
 
 ## Analysis of Mean vs Coefficient of Variation
 
 We proceed to evaluate how the mean API and coefficient of variation varied at state and municipality level over time.  
-
 ```{r coeflevelpath,echo=FALSE, warning=FALSE}
-
 dNoti %>% filter (LEVEL == "UF") %>% group_by(POP_SIZE, NAME, TYPE) %>% 
   summarise(SUMCASES = sum(CASES, na.rm=TRUE),
-            MEAN = mean(API, na.rm=TRUE), VAR = var(API, na.rm=TRUE)) %>% 
+            MEAN = mean(APIw, na.rm=TRUE), VAR = var(APIw, na.rm=TRUE)) %>% 
   mutate(APIN = 1000*SUMCASES/POP_SIZE) %>% 
   drop_na(TYPE) %>% group_by(NAME, TYPE) %>% summarise(MEANAPI = mean(APIN, na.rm=TRUE), 
                                                              VARAPI = var(APIN, na.rm=TRUE)) %>%
   mutate(SDEV = VARAPI ^0.5) %>% mutate(CVAR = SDEV/MEANAPI) -> dNoti.lpp
 
 
-ggplot(aes(x=CVAR, y=MEANAPI, shape=NAME, color=NAME), data=dNoti.lpp) + 
+ggplot(aes(x=CVAR, y=MEANAPI, color=NAME), data=dNoti.lpp) + 
   geom_point() + facet_grid(TYPE ~ .)
 
 ```
 
-Now investigating only at the state level. Not sure what happened to the states RO, RR, TO.  
 
 ```{r coeflevelpath2, echo=FALSE, warning=FALSE}
-
 dNoti %>% filter (LEVEL == "MU") %>% group_by(STATE, POP_SIZE, NAME, TYPE) %>% 
   summarise(SUMCASES = sum(CASES, na.rm=TRUE),
-            MEAN = mean(API, na.rm=TRUE), VAR = var(API, na.rm=TRUE)) %>% 
+            MEAN = mean(APIw, na.rm=TRUE), VAR = var(APIw, na.rm=TRUE)) %>% 
   mutate(APIN = 1000*SUMCASES/POP_SIZE) %>% 
   drop_na(TYPE) %>% group_by(NAME, TYPE, STATE) %>% summarise(MEANAPI = mean(APIN, na.rm=TRUE), 
                                                        VARAPI = var(APIN, na.rm=TRUE)) %>%
   mutate(SDEV = VARAPI ^0.5) %>% mutate(CVAR = SDEV/MEANAPI) -> dNoti.lpp
 
 
-ggplot(aes(x=CVAR, y=MEANAPI, shape=STATE, color=STATE), data=dNoti.lpp) + 
+ggplot(aes(x=CVAR, y=MEANAPI, color=STATE), data=dNoti.lpp) + 
   geom_point() + facet_wrap(TYPE ~ .) + scale_y_log10()
 
 ```
@@ -315,18 +301,16 @@ ggplot(aes(x=CVAR, y=MEANAPI, shape=STATE, color=STATE), data=dNoti.lpp) +
 Here we are investigating only municipalities, hence we calculated API and CV for all municipalities, across all years in the database, and grouped (shape and color) by state. Different patterns are hardly recognized.    
 
 ```{r coeflevelpath3, echo=FALSE, warning=FALSE}
-
-ggplot(aes(x=CVAR, y=MEANAPI, shape=STATE, color=STATE), data=dNoti.lpp) + 
+ggplot(aes(x=CVAR, y=MEANAPI, color=STATE), data=dNoti.lpp) + 
   geom_point() + facet_wrap(TYPE ~ STATE) + scale_y_log10()
 
 ```
 
 So we separated the point "clouds" by states and *falciparum/vivax*. Again not sure about states TO, RO, RR - we have to verify.  
-
 ```{r coefstatepath, echo=FALSE, warning=FALSE}
 dNoti %>% filter(LEVEL=="MU") %>% group_by(LEVEL, STATE, YEAR, POP_SIZE, NAME, TYPE) %>% 
   summarise(SUMCASES = sum(CASES, na.rm=TRUE),
-            MEAN = mean(API, na.rm=TRUE), VAR = var(API, na.rm=TRUE)) %>% 
+            MEAN = mean(APIw, na.rm=TRUE), VAR = var(APIw, na.rm=TRUE)) %>% 
   mutate(APIN = 1000*12*SUMCASES/POP_SIZE) %>% 
   drop_na(TYPE) %>% group_by(LEVEL, STATE, TYPE, YEAR) %>% summarise(MEANAPI = mean(APIN, na.rm=TRUE), 
                                                         VARAPI = var(APIN, na.rm=TRUE)) %>%
@@ -347,12 +331,19 @@ dNoti.sx %>% drop_na(STATE) -> dNoti.sx
  So we are going to repeat lines of the BR level, one for each state, so we can make lines in the plots. Probably not the most elegant solution, but it works.  
 -->
 
-
 ```{r coefmonthplotpath3, warning=FALSE, echo=FALSE}
 ggplot(aes(y=MEANAPI, x=CVAR, color=YEAR, group=STATE), 
        data=dNoti.sx) + facet_grid(TYPE ~ STATE ) +
   geom_point() + geom_path(aes(id=YEAR)) + scale_y_log10() +
-  theme(legend.position = "bottom")
+  theme(panel.grid.minor.x = element_blank(),
+        legend.position = "bottom", 
+        legend.text = element_text(angle = 45, hjust = 1, size = 8),
+        legend.title = element_text(size = 8),
+        legend.margin = margin(0,0,0,0), 
+        axis.title = element_text(size = 8),
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 7),
+        axis.text.y = element_text(size = 8),
+        plot.margin = unit(c(0.1,0.3,0,0.15),"cm")) #top, right, bottom and left)
 
 ```
 
@@ -361,10 +352,9 @@ We connect some dots, in this case connecting by the sequence of years.
 Now this plot is interesting to observe the patterns when we get to more recent years.  
 
 ```{r coefarea, warning=FALSE, echo=FALSE}
-
 dNoti %>% filter(LEVEL=="MU") %>% group_by(LEVEL, STATE, YEAR, POP_SIZE, NAME, TYPE) %>% 
   summarise(SUMCASES = sum(CASES, na.rm=TRUE),
-            MEAN = mean(API, na.rm=TRUE), VAR = var(API, na.rm=TRUE)) %>% 
+            MEAN = mean(APIw, na.rm=TRUE), VAR = var(APIw, na.rm=TRUE)) %>% 
   mutate(APIN = 1000*12*SUMCASES/POP_SIZE) %>% 
   drop_na(TYPE) %>% ungroup() %>% group_by(STATE, SUMCASES) %>%
   arrange(STATE, desc(SUMCASES)) -> dNoti.sx # %>%
@@ -398,8 +388,11 @@ Let us define the concept of the potential for an epidemic, which will tell us s
 Hence, for $C_{i, y}$ cases for municipality $i$ in year $y$ we have for potential $P_{i,y}$: $P_{i,y} = C_{i,y} f(C_{i,j}, N_{i,y})$.  
 We should use a function that is decreasing with $C_{i,y}$ and increasing with $N_{i,y}$.   
 An intuition here is that the potential number behaves close to an expected new flow of cases or a next expected API from $C_{i,y}$ cases and a population of $N_{i,y}$.  
+
 From a simple susceptible-infected model, we have an upper bound on expected number of new cases given by $C_{i,y} (N_{i,y}-C_{i,y})$.  
+
 Following this approach, when divided by $N_{i,y}$, we have $P_{i,y} = C_{i,y} (1- C_{i,y}/N_{i,y})$.   
+
 In this case, we can think about this potential as a product between the number of cases $C_{i,y}$ and a normalized number of susceptibles, given by $1-C_{i,y}/N_{i,y}$, scaled by the population size as the fraction of susceptibles.   
 
 The idea is that for tackling interventions we can sort municipalities by their potentials.   
@@ -410,7 +403,6 @@ It will be useful to sort municipalities by descending potential values. We also
 Therefore we will show some plots in which we show the potentials as a function of the cummulative pool of susceptibles as well as plot for the cummulative potential and normalized cummulative potential.  
 
 ```{r coefarea2, warning=FALSE, echo=FALSE}
-
 #ggplot( aes(x=NAMEf, y = CSUM, color=STATE, group=STATE), data=dNoti.sx.2) +
 #  geom_step() + facet_grid(STATE ~ .)
 
@@ -423,16 +415,37 @@ Therefore we will show some plots in which we show the potentials as a function 
 ggplot( aes(x=CWPOP, y = CPOT, color=YEAR, group=YEAR), 
         data=subset(dNoti.sx.2, TYPE=="Falciparum")) +
   ylab("Cummulative Potential") +
-    ggtitle("A. P. falciparum") +
+    ggtitle("A) P. falciparum") +
   xlab("Adjusted number of municipalities")+
-  geom_step() + facet_wrap(STATE ~ ., scales = "free")
+  geom_step() + facet_wrap(STATE ~ ., scales = "free") +
+  theme(panel.grid.minor.x = element_blank(),
+        legend.position = "bottom", 
+        legend.text = element_text(angle = 45, hjust = 1, size = 8),
+        legend.title = element_text(size = 8),
+        legend.margin = margin(0,0,0,0), 
+        axis.title = element_text(size = 8),
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 7),
+        axis.text.y = element_text(size = 8),
+        plot.margin = unit(c(0.1,0.3,0,0.15),"cm")) #top, right, bottom and left)
+
+
 
 ggplot( aes(x=CWPOP, y = CPOT, color=YEAR, group=YEAR), 
         data=subset(dNoti.sx.2, TYPE=="Falciparum")) +
   ylab("Cummulative Potential") +
     ggtitle("B. P. vivax") +
   xlab("Adjusted number of municipalities")+
-  geom_step() + facet_wrap(STATE ~ ., scales = "free")
+  geom_step() + facet_wrap(STATE ~ ., scales = "free") +
+  theme(panel.grid.minor.x = element_blank(),
+      legend.position = "bottom", 
+      legend.text = element_text(angle = 45, hjust = 1, size = 8),
+      legend.title = element_text(size = 8),
+      legend.margin = margin(0,0,0,0), 
+      axis.title = element_text(size = 8),
+      axis.text.x = element_text(angle = 45, hjust = 1, size = 7),
+      axis.text.y = element_text(size = 8),
+      plot.margin = unit(c(0.1,0.3,0,0.15),"cm")) #top, right, bottom and left)
+
 
 dNoti.sx.2 %>% group_by(STATE, YEAR, TYPE) %>% 
   mutate(MAXPOT = max(CPOT)) %>% 
@@ -442,10 +455,19 @@ dNoti.sx.2 %>% group_by(STATE, YEAR, TYPE) %>%
 
 
 ```{r coefarea3, warning=FALSE, echo=FALSE}
-                    
 ggplot(aes(x=YEAR, y=MAXPOT, group=STATE, color=STATE), data=dNoti.sx.3) + geom_line() + 
   ylab("Maximum Potential") + ggtitle("Maximum Potential per year") + 
-  facet_grid(TYPE ~ .)
+  facet_grid(TYPE ~ .) +
+  theme(panel.grid.minor.x = element_blank(),
+      legend.position = "right", 
+      legend.text = element_text(angle = 1, vjust = 1, size = 8),
+      legend.title = element_text(size = 8),
+      legend.margin = margin(0,0,0,0), 
+      axis.title = element_text(size = 8),
+      axis.text.x = element_text(angle = 1, vjust = 1, size = 8),
+      axis.text.y = element_text(size = 8),
+      plot.margin = unit(c(0.1,0.3,0,0.15),"cm")) #top, right, bottom and left)
+
 
 #ggplot( aes(x=CWPOP, y = CPOTN, color=YEAR, group=YEAR), data=dNoti.sx.3) +
 #  ylab("Cummulative Potential (Adjusted)") +
@@ -455,44 +477,81 @@ ggplot(aes(x=YEAR, y=MAXPOT, group=STATE, color=STATE), data=dNoti.sx.3) + geom_
 
 When we inspect the potential for states over time we see that in recent years, numbers stay more or less constant, despite an initial decrease in early years.  
 We proceed with the cummulative potential plots by normalized potentials and the potential plots.  
-
 ```{r coefarea4, warning=FALSE, echo=FALSE}
-
 ggplot( aes(x=CWPOP, y = CPOTN, color=YEAR, group=YEAR), data=subset(dNoti.sx.3, TYPE=="Falciparum")) +
   ylab("Cummulative Potential (normalized)") +
   xlab("Adjusted number of municipalities")+
-  geom_step() + facet_wrap(STATE ~ ., scales = "free") + scale_x_log10() + ggtitle("A. Falciparum")
+  geom_step() + facet_wrap(STATE ~ ., scales = "free") + scale_x_log10() + ggtitle("A) P. falciparum") +
+  theme(panel.grid.minor.x = element_blank(),
+      legend.position = "bottom", 
+      legend.text = element_text(angle = 45, hjust = 1, size = 8),
+      legend.title = element_text(size = 8),
+      legend.margin = margin(0,0,0,0), 
+      axis.title = element_text(size = 8),
+      axis.text.x = element_text(angle = 45, hjust = 1, size = 7),
+      axis.text.y = element_text(size = 8),
+      plot.margin = unit(c(0.1,0.3,0,0.15),"cm")) #top, right, bottom and left)
+
 
 ggplot( aes(x=CWPOP, y = CPOTN, color=YEAR, group=YEAR), data=subset(dNoti.sx.3, TYPE=="Vivax")) +
   ylab("Cummulative Potential (normalized)") +
   xlab("Adjusted number of municipalities")+
-  geom_step() + facet_wrap(STATE ~ ., scales = "free") + scale_x_log10() + ggtitle("B. Vivax")
+  geom_step() + facet_wrap(STATE ~ ., scales = "free") + scale_x_log10() + ggtitle("B) P. vivax") +
+  theme(panel.grid.minor.x = element_blank(),
+      legend.position = "bottom", 
+      legend.text = element_text(angle = 45, hjust = 1, size = 8),
+      legend.title = element_text(size = 8),
+      legend.margin = margin(0,0,0,0), 
+      axis.title = element_text(size = 8),
+      axis.text.x = element_text(angle = 45, hjust = 1, size = 7),
+      axis.text.y = element_text(size = 8),
+      plot.margin = unit(c(0.1,0.3,0,0.15),"cm")) #top, right, bottom and left)
+
 
 ggplot( aes(x=CWPOP, y = POTENTIAL, color=YEAR, group=YEAR), 
         data=subset(dNoti.sx.3, TYPE=="Falciparum")) +
   ylab("Potential") +
   xlab("Adjusted number of municipalities")+
-  geom_step() + facet_wrap(STATE ~ ., scales = "free") + scale_x_log10() + ggtitle("A. Falciparum")
+  geom_step() + facet_wrap(STATE ~ ., scales = "free") + scale_x_log10() + ggtitle("A) P. falciparum") +
+  theme(panel.grid.minor.x = element_blank(),
+        legend.position = "bottom", 
+        legend.text = element_text(angle = 45, hjust = 1, size = 8),
+        legend.title = element_text(size = 8),
+        legend.margin = margin(0,0,0,0), 
+        axis.title = element_text(size = 8),
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 7),
+        axis.text.y = element_text(size = 8),
+        plot.margin = unit(c(0.1,0.3,0,0.15),"cm")) #top, right, bottom and left)
+  
 
 ggplot( aes(x=CWPOP, y = POTENTIAL, color=YEAR, group=YEAR), 
         data=subset(dNoti.sx.3, TYPE=="Vivax")) +
     ylab("Potential") +
   xlab("Adjusted number of municipalities")+
-  geom_step() + facet_wrap(STATE ~ ., scales = "free") + scale_x_log10() + ggtitle("B. vivax")
+  geom_step() + facet_wrap(STATE ~ ., scales = "free") + scale_x_log10() + ggtitle("B) P. vivax") +
+  theme(panel.grid.minor.x = element_blank(),
+        legend.position = "bottom", 
+        legend.text = element_text(angle = 45, hjust = 1, size = 8),
+        legend.title = element_text(size = 8),
+        legend.margin = margin(0,0,0,0), 
+        axis.title = element_text(size = 8),
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 7),
+        axis.text.y = element_text(size = 8),
+        plot.margin = unit(c(0.1,0.3,0,0.15),"cm")) #top, right, bottom and left)
+  
 
 ```
 
 
 ## Potential related to the next expected number of cases
 
-Here we change the function to have $P_{i,y} = C_{i,y} (N_{i,y} - C_{i,y})$. Now the term $(N_{i,y} - C_{i,y})$ will be the adjusted number of susceptibles.  The potential in this case is related to the expected number of new cases and we apply a logarithm for convenience, $log(P_{i,y})$.  
+Here we change the function to have $P_{i,y} = C_{i,y} (N_{i,y} - C_{i,y})$. Now the term $(N_{i,y} - C_{i,y})$ will be the adjusted number of susceptibles. The potential in this case is related to the expected number of new cases and we apply a logarithm for convenience, $log(P_{i,y})$.  
+
 We again order municipalities by descending potentials.  
-
 ```{r coefareasusc, warning=FALSE, echo=FALSE}
-
 dNoti %>% filter(LEVEL=="MU") %>% group_by(LEVEL, STATE, YEAR, POP_SIZE, NAME, TYPE) %>% 
   summarise(SUMCASES = sum(CASES, na.rm=TRUE),
-            MEAN = mean(API, na.rm=TRUE), VAR = var(API, na.rm=TRUE)) %>% 
+            MEAN = mean(APIw, na.rm=TRUE), VAR = var(APIw, na.rm=TRUE)) %>% 
   mutate(APIN = 1000*12*SUMCASES/POP_SIZE) %>% 
   drop_na(TYPE) %>% ungroup() %>% group_by(STATE, SUMCASES) %>%
   arrange(STATE, desc(SUMCASES)) -> dNoti.sx # %>%
@@ -525,17 +584,36 @@ dNoti.sx.2 %>% group_by(STATE, YEAR, TYPE) %>%
 ```
 
 ```{r coefarea5, warning=FALSE, echo=FALSE}
-
 ggplot( aes(x=CWPOP, y = POTENTIAL, color=YEAR, group=YEAR), 
         data=subset(dNoti.sx.3, TYPE=="Falciparum")) +
   ylab("log(Potential)") +
   xlab("Adjusted number of potential susceptibles")+
-  geom_step() + facet_wrap(STATE ~ ., scales = "free") + scale_x_log10() + ggtitle("A. Falciparum")
+  geom_step() + facet_wrap(STATE ~ ., scales = "free") + scale_x_log10() + ggtitle("A) P. falciparum") +
+  theme(panel.grid.minor.x = element_blank(),
+        legend.position = "bottom", 
+        legend.text = element_text(angle = 45, hjust = 1, size = 8),
+        legend.title = element_text(size = 8),
+        legend.margin = margin(0,0,0,0), 
+        axis.title = element_text(size = 8),
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 7),
+        axis.text.y = element_text(size = 8),
+        plot.margin = unit(c(0.1,0.3,0,0.15),"cm")) #top, right, bottom and left)
+  
 
 ggplot( aes(x=CWPOP, y = POTENTIAL, color=YEAR, group=YEAR), 
         data=subset(dNoti.sx.3, TYPE=="Vivax")) +
     ylab("log(Potential)") +
   xlab("Adjusted number of potential susceptibles")+
-  geom_step() + facet_wrap(STATE ~ ., scales = "free") + scale_x_log10() + ggtitle("B. vivax")
+  geom_step() + facet_wrap(STATE ~ ., scales = "free") + scale_x_log10() + ggtitle("B) P. vivax") +
+  theme(panel.grid.minor.x = element_blank(),
+        legend.position = "bottom", 
+        legend.text = element_text(angle = 45, hjust = 1, size = 8),
+        legend.title = element_text(size = 8),
+        legend.margin = margin(0,0,0,0), 
+        axis.title = element_text(size = 8),
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 7),
+        axis.text.y = element_text(size = 8),
+        plot.margin = unit(c(0.1,0.3,0,0.15),"cm")) #top, right, bottom and left)
+
 
 ```
