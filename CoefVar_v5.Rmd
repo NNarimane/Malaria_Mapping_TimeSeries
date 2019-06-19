@@ -594,6 +594,7 @@ dNoti.sx.2 %>% group_by(STATE, YEAR, TYPE) %>%
 
 ```
 
+
 ```{r coefarea5, warning=FALSE, echo=FALSE}
 ggplot( aes(x=CWPOP, y = POTENTIAL, color=YEAR, group=YEAR), 
         data=subset(dNoti.sx.3, TYPE=="Falciparum")) +
