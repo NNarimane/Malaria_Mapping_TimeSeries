@@ -853,7 +853,7 @@ ggsave(Age_Gender_Plot_State_Year[[i]], filename = paste0("P. vivax cases strati
 ```
 
 ##Heatmap
-
+###Age and gender cases
 ### Plotando matrix de intensidade de casos por FE e sexo por estado
 - repensar a agregação das faixas etárias e talvez repensar em usar o API.  
 
@@ -1001,4 +1001,79 @@ ggsave(plt, filename = paste0("TESTE2_P."," ", tipomin," ", "cases stratified by
 }
 ```
 
+
+##Heatmap - TOP STATES API
+```{r}
+load("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/AnaliseExploratoria/API_Noti_week_state_final.Rdata")
+
+```
+
+- Ranking states
+```{r}
+dRank <- d8 %>% 
+  filter(LEVEL == "UF") %>% 
+  select(STATE, NAME, YEAR, TYPE, CASES, POP_SIZE) %>% 
+  group_by(STATE, NAME, YEAR, TYPE, POP_SIZE) %>% 
+  mutate(SUMCASES = sum(CASES, na.rm = TRUE)) %>%
+  select(-CASES) %>% 
+  distinct() %>% 
+  mutate(API = SUMCASES/POP_SIZE * 1000) %>% 
+  arrange(YEAR, TYPE, API)
+
+
+dRank <- dRank %>% 
+  mutate(ONE = 1) %>% 
+  group_by(YEAR, TYPE) %>% 
+  mutate(RANK = cumsum(ONE)) %>% 
+  mutate(DSRANK = 10 - RANK)
+  
+```
+
+- Rank plot per State by year
+```{r}
+StartYear <- 2004 # (inferior limit = 2004)
+EndYear <- 2018 # (superior limit = 2018)
+
+ggplot(aes(x = YEAR, y = DSRANK, group = STATE, color = STATE), data = subset(dRank, TYPE == "Vivax")) +   
+  geom_line() + 
+  scale_x_continuous(breaks = c(2004:2018)) +
+  labs(title = paste0("P. vivax API ranked by state", " ",  
+              StartYear, "-", EndYear), x = "Year", y = "Rank") +  
+  guides(color = guide_legend(title = "API")) +
+  theme(panel.grid.minor.x = element_blank(),
+        axis.text.x = element_text(angle = 90, hjust = 1),
+        legend.position="right",
+        legend.text = element_text(size = 7),
+        legend.title = element_text(size = 8, face = "italic"),
+        legend.margin = margin(0,0,0,0), 
+        plot.title = element_text(size = 8),
+        axis.title = element_text(size = 7),
+        axis.text = element_text(size = 7))
+
+```
+
+
+- API "intensity" per State by Year
+```{r}
+StartYear <- 2004 # (inferior limit = 2004)
+EndYear <- 2018 # (superior limit = 2018)
+
+ggplot(aes(x = YEAR, y = STATE, fill = API), data = subset(dRank, TYPE == "Vivax")) +   
+  geom_raster() + 
+  scale_x_continuous(breaks = c(2004:2018)) +
+  scale_fill_distiller(palette = "Blues") +  # type if a number, pallete if a string. 
+  labs(title = paste0("P. vivax API ranked by state", " ",  
+              StartYear, "-", EndYear), x = "Year", y = "States") +  
+  guides(color = guide_legend(title = "API")) +
+  theme(panel.grid.minor.x = element_blank(),
+        axis.text.x = element_text(angle = 90, hjust = 1),
+        legend.position="right",
+        legend.text = element_text(size = 7),
+        legend.title = element_text(size = 8, face = "italic"),
+        legend.margin = margin(0,0,0,0), 
+        plot.title = element_text(size = 8),
+        axis.title = element_text(size = 7),
+        axis.text = element_text(size = 7))
+
+```
 
