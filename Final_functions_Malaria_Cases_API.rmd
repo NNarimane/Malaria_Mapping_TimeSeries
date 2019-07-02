@@ -852,6 +852,7 @@ ggsave(Age_Gender_Plot_State_Year[[i]], filename = paste0("P. vivax cases strati
 
 ```
 
+##Heatmap
 
 ### Plotando matrix de intensidade de casos por FE e sexo por estado
 - repensar a agregação das faixas etárias e talvez repensar em usar o API.  
@@ -877,10 +878,10 @@ ggplot(aes(x = YEAR, y = AGE_CAT, fill = SUMCASES), data = subset(dAge, TYPE == 
   scale_y_log10() +
 #  scale_fill_gradient(low = "blue", high =  "darkblue") +
   scale_fill_distiller(palette = "Blues") +  # type if a number, pallete if a string. 
-  labs(title = paste0("P. vivax cases intensity stratified by age and gender in ", "RO", " ",  
+  labs(title = paste0("P. vivax cases stratified by age and gender in ", "RO", " ",  
   #            StartYear, "-", EndYear), x = "Age categories", y = "Cases intensity by year") +  
-              StartYear, "-", EndYear), x = "Cases intensity by year", y = "Age categories") +  
-  guides(color = guide_legend(title = "Cases Intensity")) +
+              StartYear, "-", EndYear), x = "Number of cases by year", y = "Age categories") +  
+  guides(color = guide_legend(title = "Cases")) +
   theme(panel.grid.minor.x = element_blank(),
         axis.text.x = element_text(angle = 90, hjust = 1),
         legend.position="right",
@@ -922,9 +923,9 @@ for (uf in States_sivep){
     scale_x_continuous(breaks = c(2004:2018),
                       expand = c(0.01, 0)) +
     scale_fill_distiller(palette = cor) +   
-    labs(title = paste0("P."," ", tipomin," ", "cases intensity stratified by age and gender in ", uf, " ",  
-                        StartYear, "-", EndYear), x = "Cases intensity by year", y = "Age categories") +  
-    guides(fill = guide_colourbar(title = "Cases Intensity", reverse = T)) + ### Decidir se quer deixar o reverse T ou F- falci está T
+    labs(title = paste0("P."," ", tipomin," ", "cases stratified by age and gender in ", uf, " ",  
+                        StartYear, "-", EndYear), x = "Number of cases by year", y = "Age categories") +  
+    guides(fill = guide_colourbar(title = "Cases", reverse = T)) + ### Decidir se quer deixar o reverse T ou F- falci está T
     theme(panel.grid.minor.x = element_blank(),   ### Refazer os tamanhos de letra
           axis.text.x = element_text(angle = 90, hjust = 1),
           legend.position="right",
@@ -982,9 +983,9 @@ for (uf in States_sivep){
     scale_x_continuous(breaks = c(2004:2018),
                       expand = c(0.01, 0)) +
     scale_fill_distiller(palette = cor) +   
-    labs(title = paste0("P."," ", tipomin," ", "cases intensity stratified by age and gender in ", uf, " ",  
-                        StartYear, "-", EndYear), x = "Cases intensity by year", y = "Age categories") +  
-    guides(fill = guide_colourbar(title = "Cases Intensity", reverse = T)) + ### Decidir se quer deixar o reverse T ou F- falci está T
+    labs(title = paste0("P."," ", tipomin," ", "cases stratified by age and gender in ", uf, " ",  
+                        StartYear, "-", EndYear), x = "Number of cases by year", y = "Age categories") +  
+    guides(fill = guide_colourbar(title = "Cases", reverse = T)) + ### Decidir se quer deixar o reverse T ou F- falci está T
     theme(panel.grid.minor.x = element_blank(),   ### Refazer os tamanhos de letra
           axis.text.x = element_text(angle = 90, hjust = 1),
           legend.position="right",
