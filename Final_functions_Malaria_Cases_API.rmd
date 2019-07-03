@@ -1004,8 +1004,10 @@ ggsave(plt, filename = paste0("TESTE2_P."," ", tipomin," ", "cases stratified by
 }
 ```
 
-
+### REVER AQUI, automatização, etc.
 ##Heatmap - TOP STATES API
+Check all legends title and plot title. Optimize plots by state and muncipality
+
 ```{r}
 load("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/AnaliseExploratoria/API_Noti_week_state_final.Rdata")
 
@@ -1089,25 +1091,21 @@ ggplot(aes(x = YEAR, y = STATE, fill = API), data = subset(dRank, TYPE == "Vivax
 ```
 
 
-Exemplo pacote:
-# Create data:
-year=rep(seq(1990,2016) , each=10)
-name=rep(letters[1:10] , 27)
-value=sample( seq(0,1,0.0001) , length(year))
-data=data.frame(year, name, value)
-# Type 1 (default)
-streamgraph(data, key="name", value="value", date="year", offset="silhouette")
-# Type 2
-streamgraph(data, key="name", value="value", date="year", offset="zero")
-# Type 3.
-streamgraph(data, key="name", value="value", date="year", offset="expand")
- 
+
 ### Cases contribution per year by state 
 ```{r}
 # Falciparum
-streamgraph(dRank[dRank$TYPE == "Falciparum",], key = "NAME", value = "SUMCASES", date = "YEAR", offset = "expand")
+dRank %>% 
+  filter(TYPE == "Falciparum") %>% 
+  streamgraph(key = "NAME", value = "SUMCASES", date = "YEAR", offset = "expand") %>% 
+  sg_axis_x(1, "YEAR", "%Y") 
+  
 # Vivax
-streamgraph(dRank[dRank$TYPE == "Vivax",], key = "NAME", value = "SUMCASES", date = "YEAR", offset = "expand")
+dRank %>% 
+  filter(TYPE == "Vivax") %>% 
+  streamgraph(key = "NAME", value = "SUMCASES", date = "YEAR", offset = "expand") %>% 
+  sg_axis_x(1, "YEAR", "%Y") 
+
 
 ```
 
@@ -1262,7 +1260,7 @@ ggplot(aes(x = YEAR, y = NAME, fill = API), data = subset(dRankms, TYPE == "Viva
   geom_raster() + 
   scale_x_continuous(breaks = c(2004:2018)) +
   scale_fill_distiller(palette = "RdYlGn") +  # type if a number, pallete if a string. #"RdYlGn"
-  labs(title = paste0("P. vivax API ranked by state", " ",  
+  labs(title = paste0("P. vivax API by state", " ",  
               StartYear, "-", EndYear), x = "Year", y = "States") +  
   guides(color = guide_legend(title = "API")) +
   theme(panel.grid.minor.x = element_blank(),
@@ -1279,10 +1277,29 @@ ggplot(aes(x = YEAR, y = NAME, fill = API), data = subset(dRankms, TYPE == "Viva
 
 
 ```{r}
+# base
 # Falciparum
 streamgraph(dRankms[dRankms$TYPE == "Falciparum" & dRankms$STATE == "AM",], key = "NAME", value = "SUMCASES", date = "YEAR", offset = "expand")
 # Vivax
-streamgraph(dRank[dRank$TYPE == "Vivax",], key = "NAME", value = "SUMCASES", date = "YEAR", offset = "expand")
+streamgraph(dRankms[dRankms$TYPE == "Vivax" & dRankms$STATE == "AM",], key = "NAME", value = "SUMCASES", date = "YEAR", offset = "expand")
 
+# Tidyverse - ver se consigo automatizar
+# Falciparum
+dRankms %>% 
+  filter(TYPE == "Falciparum" & STATE == "AM") %>% 
+  streamgraph(key = "NAME", value = "SUMCASES", date = "YEAR", offset = "expand") %>% 
+  sg_axis_x(1, "YEAR", "%Y") %>% 
+  sg_legend(show = TRUE, label = "Municipalities: ")
+
+  
+# Vivax
+dRankms %>% 
+  filter(TYPE == "Vivax" & STATE == "AM") %>% 
+  streamgraph(key = "NAME", value = "SUMCASES", date = "YEAR", offset = "expand") %>% 
+  sg_axis_x(1, "YEAR", "%Y") %>% 
+  sg_legend(show=TRUE, label="Municipalities: ")
+
+  
+  
 ```
 
