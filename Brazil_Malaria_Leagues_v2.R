@@ -1,13 +1,36 @@
 ##################################
 ########## 
-
+library(tidyverse)
 
 ###############################################################
 ## Read in data on case numbers of Amazonas State municipality.
 ## Based on csv file provided by Raquel.
 
-BML <- read.csv("AM_municipality.csv")
+#BML <- read.csv("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/AnaliseExploratoria/AM_municipality.csv")
+load("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/AnaliseExploratoria/API_Noti_week_state_final.Rdata")
 
+## Rank by Year, State and Type
+dRankms <- d8 %>% 
+  filter(LEVEL == "MU") %>% 
+  select(CODE, STATE, NAME, YEAR, TYPE, CASES, POP_SIZE) %>% 
+  group_by(CODE, STATE, YEAR, TYPE, POP_SIZE) %>% 
+  mutate(SUMCASES = sum(CASES, na.rm = TRUE)) %>%
+  select(-CASES) %>% 
+  distinct() %>% 
+  mutate(API = SUMCASES/POP_SIZE * 1000) %>% 
+  arrange(YEAR, TYPE, API)
+
+
+dRankms <- dRankms %>% 
+  mutate(ONE = 1) %>% 
+  group_by(YEAR, STATE, TYPE) %>% 
+  mutate(RANK = cumsum(ONE)) 
+
+## Filter by state
+BML <- dRankms %>% 
+  filter(STATE == "MT")
+
+#"RO" "AC" "AM" "RR" "PA" "AP" "TO" "MA" "MT"
 
 ###############################################################
 ## Define years & municipalities, and create matrices for
@@ -145,10 +168,11 @@ munic_labels <- names( 0.5*(AM_league_upper[key_index,N_years] + AM_league_lower
 
 munic_at <- 0.5*(AM_league_upper[key_index,N_years] + AM_league_lower[key_index,N_years])
 
+### State name
+SNAME = "Mato Grosso"
 
 
-
-tiff( file="Amazonas_State_Vivax_League_v2.tif", width=18, height=14, units="cm", res=500)
+tiff( file="/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Plots_Michael/MatoGrosso_State_Vivax_League_v2.tif", width=18, height=14, units="cm", res=500)
 
 par(mfrow=c(1,1))
 par(mar = c(2.5,2.5,1,4))
@@ -158,7 +182,8 @@ plot(x=1e10, y=1e10,
 xlim=c(0, max(year_seq_upper)), ylim=c(0,1),
 xaxs="i", yaxs="i", xaxt="n", yaxt="n", bty='n',
 xlab="time (years)", ylab="proportion of cases",
-main="Amazonas State Vivax League" )
+#main="Acre State Vivax League" )
+main= paste0(SNAME, " ", "State Vivax League"))
 
 
 for(j in 1:N_years)
@@ -228,7 +253,7 @@ dev.off()
 ## taking a cross-section from each year
 
 
-tiff( file="Vivax_Case_Heterogeneity.tif", width=12, height=12, units="cm", res=500)
+tiff( file="/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Plots_Michael/MT_Vivax_Case_Heterogeneity.tif", width=12, height=12, units="cm", res=500)
 
 par(mfrow=c(1,1))
 par(mar = c(2.5,2.5,1,1.75))
@@ -242,8 +267,8 @@ plot(x=c(0,1), y=c(0,1), type='l', lty="dashed",
 xlim=c(0,1.002), ylim=c(0,1.002),
 xaxs='i', yaxs='i', xaxt='n', yaxt='n',
 xlab="proportion of population", ylab="proportion of cases",
-main="Vivax cases within Amazonas state")
-
+#main="Vivax cases within Acre state")
+main= paste0("Vivax cases within", " ", SNAME, " ", "state"))
 
 axis(1, at=c(0.0, 0.2, 0.4, 0.6, 0.8, 1), 
         labels=c("0%", "20%", "40%", "60%", "80%", "100%"), cex.axis=1.0 ) 
@@ -313,7 +338,7 @@ for(j in 1:N_years)
 
 
 
-tiff( file="API_and_Gini.tif", width=10, height=20, units="cm", res=500)
+tiff( file="/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Plots_Michael/MatoGrosso_API_and_Gini.tif", width=10, height=20, units="cm", res=500)
 
 par(mfrow=c(1,1))
 par(mar = c(2.5,2.5,1,1.75))
@@ -327,9 +352,10 @@ par(mfrow=c(3,1))
 
 plot(x=years, y=Amazonas_API, 
 type='l', lwd=2,
-ylim=c(0,60),
+ylim=c(0,3),
 xlab="time (years)", ylab="API (cases/1000 population)",
-main="API in Amazonas state")
+#main="API in Acre state")
+main= paste0("API in", " ", SNAME, " ", "state"))
 
 points(x=years, y=Amazonas_API, 
 pch=19, cex=2, col=year_cols)
@@ -342,8 +368,8 @@ plot(x=years, y=Gini_coef,
 type='l', lwd=2,
 ylim=c(0,1),
 xlab="time (years)", ylab="Gini coefficient",
-main="Gini coefficient in Amazonas state municipalities")
-
+#main="Gini coefficient in Acre state municipalities")
+main= paste0("Gini coefficient in", " ", SNAME, " ", "state municipalities"))
 
 points(x=years, y=Gini_coef, 
 pch=19, cex=2, col=year_cols)
