@@ -33,9 +33,11 @@ library("foreign")
 library("tidyverse")
 library("maptools")
 library("rgdal")
-#devtools::install_github("hrbrmstr/streamgraph")
+#devtools::install_github("hrbrmstr/streamgraph") 
 library("streamgraph")
-
+library(webshot)
+#install phantom:
+webshot::install_phantomjs()
 
 ```
 
@@ -1009,7 +1011,8 @@ ggsave(plt, filename = paste0("TESTE2_P."," ", tipomin," ", "cases stratified by
 Check all legends title and plot title. Optimize plots by state and muncipality
 
 ```{r}
-load("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/AnaliseExploratoria/API_Noti_week_state_final.Rdata")
+#load("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/AnaliseExploratoria/API_Noti_week_state_final.Rdata")
+load("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/AnaliseExploratoria/API_Noti_week_state_final.Rdata")
 
 ```
 
@@ -1043,13 +1046,119 @@ dRank <- dRank %>%
 ```{r}
 StartYear <- 2004 # (inferior limit = 2004)
 EndYear <- 2018 # (superior limit = 2018)
+Plot_Folder = "/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Plost_RML_DV"
 
-ggplot(aes(x = YEAR, y = RANK, group = STATE, color = STATE), data = subset(dRank, TYPE == "Vivax")) +   
+rankAPI <- ggplot(aes(x = YEAR, y = RANK, group = STATE, color = STATE), data = subset(dRank, TYPE == "Vivax")) +   
+            geom_line(size = 2) + 
+            scale_x_continuous(breaks = c(2004:2018)) +
+            labs(title = paste0("P. vivax API ranked by state", " ",  
+                        StartYear, "-", EndYear), x = "Year", y = "API Rank") +  
+            guides(color = guide_legend(title = "States")) +
+            theme(panel.grid.minor.x = element_blank(),
+                  axis.text.x = element_text(angle = 90, hjust = 1),
+                  legend.position="right",
+                  legend.text = element_text(size = 10),
+                  legend.title = element_text(size = 11, face = "italic"),
+                  legend.margin = margin(0,0,0,0), 
+                  plot.title = element_text(size = 11),
+                  axis.title = element_text(size = 10),
+                  axis.text = element_text(size = 10))
+
+ggsave(rankAPI, filename = paste0("APIrankedStates", ".png"), width = 2500/300, height = 2000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png") 
+
+```
+
+
+- API "intensity" per State by Year
+##FAZER
+- Fazer agregado por mês, mas plotar o eixo y com label de ano mesmo, no gráfico de série temporal temos isso. - depois
+```{r}
+StartYear <- 2004 # (inferior limit = 2004)
+EndYear <- 2018 # (superior limit = 2018)
+Plot_Folder = "/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Plost_RML_DV"
+dRank$STATE <- factor(dRank$STATE, levels=c("AC", "AM", "RR", "RO", "AP", "PA", "MT", "MA", "TO"))
+
+intAPI <- ggplot(aes(x = YEAR, y = STATE, fill = API), data = subset(dRank, TYPE == "Vivax")) +   
+          geom_raster() + 
+          scale_x_continuous(breaks = c(2004:2018)) +
+          scale_fill_distiller(palette = "RdYlGn") +  # type if a number, pallete if a string. #"RdYlGn"
+          labs(title = paste0("P. vivax API ranked by state", " ",  
+                      StartYear, "-", EndYear), x = "Year", y = "States") +  
+          guides(color = guide_legend(title = "API")) +
+          theme(panel.grid.minor.x = element_blank(),
+                axis.text.x = element_text(angle = 90, hjust = 1),
+                legend.position="right",
+                legend.text = element_text(size = 10),
+                legend.title = element_text(size = 11, face = "italic"),
+                legend.margin = margin(0,0,0,0), 
+                plot.title = element_text(size = 11),
+                axis.title = element_text(size = 10),
+                axis.text = element_text(size = 10))
+
+ggsave(intAPI, filename = paste0("APIintStates", ".png"), width = 2500/300, height = 2000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png") 
+
+```
+
+
+
+### Cases contribution per year by state 
+
+#Daniel, ainda não consegui descobrir como salvar esse tipo de figura. Por enquanto salvei o html.
+
+```{r}
+# Falciparum
+dRank %>% 
+  filter(TYPE == "Falciparum") %>% 
+  streamgraph(key = "NAME", value = "SUMCASES", date = "YEAR", offset = "expand") %>% 
+  sg_axis_x(1, "YEAR", "%Y") 
+
+#webshot(teste, "/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Plost_RML_DV/output.png", delay = 0.2 , cliprect = c(440, 0, 1000, 10))
+
+  
+# Vivax
+dRank %>% 
+  filter(TYPE == "Vivax") %>% 
+  streamgraph(key = "NAME", value = "SUMCASES", date = "YEAR", offset = "expand") %>% 
+  sg_axis_x(1, "YEAR", "%Y") 
+
+
+```
+
+- ver ajuda, blog etc paraa ajusta a escala do eixo x e como salvar. https://hrbrmstr.github.io/streamgraph/
+
+
+#### Ranking municipalities group by state
+
+```{r}
+dRankms <- d8 %>% 
+  filter(LEVEL == "MU") %>% 
+  select(CODE, STATE, NAME, YEAR, TYPE, CASES, POP_SIZE) %>% 
+  group_by(CODE, STATE, YEAR, TYPE, POP_SIZE) %>% 
+  mutate(SUMCASES = sum(CASES, na.rm = TRUE)) %>%
+  select(-CASES) %>% 
+  distinct() %>% 
+  mutate(API = SUMCASES/POP_SIZE * 1000) %>% 
+  arrange(YEAR, TYPE, API)
+
+
+dRankms <- dRankms %>% 
+  mutate(ONE = 1) %>% 
+  group_by(YEAR, STATE, TYPE) %>% 
+  mutate(RANK = cumsum(ONE)) 
+  
+```
+
+- All municipalities colored by estado
+```{r}
+StartYear <- 2004 # (inferior limit = 2004)
+EndYear <- 2018 # (superior limit = 2018)
+
+ggplot(aes(x = YEAR, y = RANK, group = NAME, color = NAME), data = subset(dRankms, TYPE == "Vivax" & STATE == "AM")) +   
   geom_line(size = 2) + 
   scale_x_continuous(breaks = c(2004:2018)) +
   labs(title = paste0("P. vivax API ranked by state", " ",  
               StartYear, "-", EndYear), x = "Year", y = "Rank") +  
-  guides(color = guide_legend(title = "API")) +
+  guides(color = guide_legend(title = "Municipalities")) +
   theme(panel.grid.minor.x = element_blank(),
         axis.text.x = element_text(angle = 90, hjust = 1),
         legend.position="right",
@@ -1063,19 +1172,81 @@ ggplot(aes(x = YEAR, y = RANK, group = STATE, color = STATE), data = subset(dRan
 ```
 
 
-- API "intensity" per State by Year
-##FAZER
-- Mudar a ordem dos estados, colocando igual o da figura de linhas. -relevel aqui, ver direito.
-- Fazer agregado por mês, mas plotar o eixo y com label de ano mesmo, no gráfico de série temporal temos isso.
+#### Automatizado, mas sem legenda
+```{r}
+States_sivep <- c("AC","AM","AP","MA","MT","PA","RO","RR","TO")
+StartYear <- 2004 # (inferior limit = 2004)
+EndYear <- 2018 # (superior limit = 2018)
+
+# Tipo de malária
+typemalaria <- F # T = Vivax, F = Falciparum
+if(typemalaria){
+  Plot_Folder <- "/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Plost_RML_DV/Vivax" 
+  tipo <- "Vivax"
+  tipomin <- "vivax" 
+#  cor <- "Blues"
+}else{
+  Plot_Folder <- "/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Plost_RML_DV/Falciparum" 
+  tipo <- "Falciparum"
+  tipomin <- "falciparum" 
+#  cor <- "Greens"
+  }
+
+# retirar a legenda
+for (uf in States_sivep){
+ rankMuni <- ggplot(aes(x = YEAR, y = RANK, group = NAME, color = NAME), data = dRankms[dRankms$STATE == uf & dRankms$TYPE == tipo,]) +   
+  geom_line(size = 2) + 
+  scale_x_continuous(breaks = c(2004:2018)) +
+  labs(title = paste0("P. ", tipomin," ", "API ranked by municipality in ", uf, " ",  
+                        StartYear, "-", EndYear), x = "Year", y = "Rank") +  
+#  guides(color = guide_legend(title = "Municipalities")) +
+  theme(panel.grid.minor.x = element_blank(),
+        legend.position = "none",
+        axis.text.x = element_text(angle = 90, hjust = 1),
+        plot.title = element_text(size = 8),
+        axis.title = element_text(size = 7),
+        axis.text = element_text(size = 7))
+ 
+ggsave(rankMuni, filename = paste0("P.",tipomin,"API_muni", uf, StartYear, "-", EndYear, ".png"), width = 2500/300, height = 2000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png") 
+  
+}
+
+```
+
+- grid by municipality
 ```{r}
 StartYear <- 2004 # (inferior limit = 2004)
 EndYear <- 2018 # (superior limit = 2018)
 
-ggplot(aes(x = YEAR, y = STATE, fill = API), data = subset(dRank, TYPE == "Vivax")) +   
+ggplot(aes(x = YEAR, y = RANK, group = NAME, color = NAME), data = subset(dRankms, TYPE == "Vivax" & STATE == "AM")) +   
+  geom_line(size = 2) + 
+  facet_wrap(NAME ~ ., ncol = 3) +
+  scale_x_continuous(breaks = c(2004:2018)) +
+  labs(title = paste0("P. vivax API ranked by state", " ",  
+              StartYear, "-", EndYear), x = "Year", y = "Rank") +  
+  guides(color = guide_legend(title = "Municipalities")) +
+  theme(panel.grid.minor.x = element_blank(),
+        axis.text.x = element_text(angle = 90, hjust = 1),
+        legend.position="right",
+        legend.text = element_text(size = 7),
+        legend.title = element_text(size = 8, face = "italic"),
+        legend.margin = margin(0,0,0,0), 
+        plot.title = element_text(size = 8),
+        axis.title = element_text(size = 7),
+        axis.text = element_text(size = 7))
+
+```
+
+- Matrix
+```{r}
+StartYear <- 2004 # (inferior limit = 2004)
+EndYear <- 2018 # (superior limit = 2018)
+
+ggplot(aes(x = YEAR, y = NAME, fill = API), data = subset(dRankms, TYPE == "Vivax" & STATE == "AM")) + 
   geom_raster() + 
   scale_x_continuous(breaks = c(2004:2018)) +
   scale_fill_distiller(palette = "RdYlGn") +  # type if a number, pallete if a string. #"RdYlGn"
-  labs(title = paste0("P. vivax API ranked by state", " ",  
+  labs(title = paste0("P. vivax API by state", " ",  
               StartYear, "-", EndYear), x = "Year", y = "States") +  
   guides(color = guide_legend(title = "API")) +
   theme(panel.grid.minor.x = element_blank(),
@@ -1090,26 +1261,77 @@ ggplot(aes(x = YEAR, y = STATE, fill = API), data = subset(dRank, TYPE == "Vivax
 
 ```
 
-
-
-### Cases contribution per year by state 
+#### Matriz automatizada
 ```{r}
-# Falciparum
-dRank %>% 
-  filter(TYPE == "Falciparum") %>% 
-  streamgraph(key = "NAME", value = "SUMCASES", date = "YEAR", offset = "expand") %>% 
-  sg_axis_x(1, "YEAR", "%Y") 
-  
-# Vivax
-dRank %>% 
-  filter(TYPE == "Vivax") %>% 
-  streamgraph(key = "NAME", value = "SUMCASES", date = "YEAR", offset = "expand") %>% 
-  sg_axis_x(1, "YEAR", "%Y") 
+States_sivep <- c("AC","AM","AP","MA","MT","PA","RO","RR","TO")
+StartYear <- 2004 # (inferior limit = 2004)
+EndYear <- 2018 # (superior limit = 2018)
 
+# Tipo de malária
+typemalaria <- T # T = Vivax, F = Falciparum
+if(typemalaria){
+  Plot_Folder <- "/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Plost_RML_DV/Vivax" 
+  tipo <- "Vivax"
+  tipomin <- "vivax" 
+#  cor <- "Blues"
+}else{
+  Plot_Folder <- "/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/Plost_RML_DV/Falciparum" 
+  tipo <- "Falciparum"
+  tipomin <- "falciparum" 
+#  cor <- "Greens"
+  }
+
+# retirar a legenda
+for (uf in States_sivep){
+ intMuni <- ggplot(aes(x = YEAR, y = NAME, fill = API), data = dRankms[dRankms$STATE == uf & dRankms$TYPE == tipo,]) +   
+  geom_raster() + 
+  scale_x_continuous(breaks = c(2004:2018)) +
+  scale_fill_distiller(palette = "RdYlGn") + 
+  labs(title = paste0("P. ", tipomin," ", "API by municipality in ", uf, " ",  
+                        StartYear, "-", EndYear), x = "Year", y = "States") +  
+  guides(color = guide_legend(title = "API")) +
+  theme(panel.grid.minor.x = element_blank(),
+        axis.text.x = element_text(angle = 90, hjust = 1),
+        legend.position="right",
+        legend.text = element_text(size = 7),
+        legend.title = element_text(size = 8, face = "italic"),
+        legend.margin = margin(0,0,0,0), 
+        plot.title = element_text(size = 8),
+        axis.title = element_text(size = 7),
+        axis.text = element_text(size = 7))
+ 
+ggsave(intMuni, filename = paste0("P.",tipomin,"API_muni_intensity", uf, StartYear, "-", EndYear, ".png"), width = 2500/300, height = 2000/300, dpi = 300, path = Plot_Folder, units = "in", device = "png") 
+  
+}
 
 ```
 
-- ver ajuda, blog etc paraa ajusta a escala do eixo x e como salvar. https://hrbrmstr.github.io/streamgraph/
+
+```{r}
+# base
+# Falciparum
+streamgraph(dRankms[dRankms$TYPE == "Falciparum" & dRankms$STATE == "AM",], key = "NAME", value = "SUMCASES", date = "YEAR", offset = "expand")
+# Vivax
+streamgraph(dRankms[dRankms$TYPE == "Vivax" & dRankms$STATE == "AM",], key = "NAME", value = "SUMCASES", date = "YEAR", offset = "expand")
+
+# Tidyverse - ver se consigo automatizar
+# Falciparum
+dRankms %>% 
+  filter(TYPE == "Falciparum" & STATE == "AM") %>% 
+  streamgraph(key = "NAME", value = "SUMCASES", date = "YEAR", offset = "expand") %>% 
+  sg_axis_x(1, "YEAR", "%Y") %>% 
+  sg_legend(show = TRUE, label = "Municipalities: ")
+
+  
+# Vivax
+dRankms %>% 
+  filter(TYPE == "Vivax" & STATE == "AM") %>% 
+  streamgraph(key = "NAME", value = "SUMCASES", date = "YEAR", offset = "expand") %>% 
+  sg_axis_x(1, "YEAR", "%Y") %>% 
+  sg_legend(show=TRUE, label="Municipalities: ")
+
+  
+```
 
 
 ### Rank by municipality
@@ -1183,123 +1405,5 @@ ggplot(aes(x = YEAR, y = NAME, fill = API), data = subset(dRankm, TYPE == "Vivax
 
 
 
-#### Ranking municipalities group by state
 
-```{r}
-dRankms <- d8 %>% 
-  filter(LEVEL == "MU") %>% 
-  select(CODE, STATE, NAME, YEAR, TYPE, CASES, POP_SIZE) %>% 
-  group_by(CODE, STATE, YEAR, TYPE, POP_SIZE) %>% 
-  mutate(SUMCASES = sum(CASES, na.rm = TRUE)) %>%
-  select(-CASES) %>% 
-  distinct() %>% 
-  mutate(API = SUMCASES/POP_SIZE * 1000) %>% 
-  arrange(YEAR, TYPE, API)
-
-
-dRankms <- dRankms %>% 
-  mutate(ONE = 1) %>% 
-  group_by(YEAR, STATE, TYPE) %>% 
-  mutate(RANK = cumsum(ONE)) 
-  
-```
-
-- All municipalities colored by estado
-```{r}
-StartYear <- 2004 # (inferior limit = 2004)
-EndYear <- 2018 # (superior limit = 2018)
-
-ggplot(aes(x = YEAR, y = RANK, group = NAME, color = NAME), data = subset(dRankms, TYPE == "Vivax" & STATE == "AM")) +   
-  geom_line(size = 2) + 
-  scale_x_continuous(breaks = c(2004:2018)) +
-  labs(title = paste0("P. vivax API ranked by state", " ",  
-              StartYear, "-", EndYear), x = "Year", y = "Rank") +  
-  guides(color = guide_legend(title = "Municipalities")) +
-  theme(panel.grid.minor.x = element_blank(),
-        axis.text.x = element_text(angle = 90, hjust = 1),
-        legend.position="right",
-        legend.text = element_text(size = 7),
-        legend.title = element_text(size = 8, face = "italic"),
-        legend.margin = margin(0,0,0,0), 
-        plot.title = element_text(size = 8),
-        axis.title = element_text(size = 7),
-        axis.text = element_text(size = 7))
-
-```
-
-- grid by municipality
-```{r}
-StartYear <- 2004 # (inferior limit = 2004)
-EndYear <- 2018 # (superior limit = 2018)
-
-ggplot(aes(x = YEAR, y = RANK, group = NAME, color = NAME), data = subset(dRankms, TYPE == "Vivax" & STATE == "AM")) +   
-  geom_line(size = 2) + 
-  facet_wrap(NAME ~ ., ncol = 3) +
-  scale_x_continuous(breaks = c(2004:2018)) +
-  labs(title = paste0("P. vivax API ranked by state", " ",  
-              StartYear, "-", EndYear), x = "Year", y = "Rank") +  
-  guides(color = guide_legend(title = "Municipalities")) +
-  theme(panel.grid.minor.x = element_blank(),
-        axis.text.x = element_text(angle = 90, hjust = 1),
-        legend.position="right",
-        legend.text = element_text(size = 7),
-        legend.title = element_text(size = 8, face = "italic"),
-        legend.margin = margin(0,0,0,0), 
-        plot.title = element_text(size = 8),
-        axis.title = element_text(size = 7),
-        axis.text = element_text(size = 7))
-
-```
-
-- Matrix
-```{r}
-StartYear <- 2004 # (inferior limit = 2004)
-EndYear <- 2018 # (superior limit = 2018)
-
-ggplot(aes(x = YEAR, y = NAME, fill = API), data = subset(dRankms, TYPE == "Vivax" & STATE == "AM")) + 
-  geom_raster() + 
-  scale_x_continuous(breaks = c(2004:2018)) +
-  scale_fill_distiller(palette = "RdYlGn") +  # type if a number, pallete if a string. #"RdYlGn"
-  labs(title = paste0("P. vivax API by state", " ",  
-              StartYear, "-", EndYear), x = "Year", y = "States") +  
-  guides(color = guide_legend(title = "API")) +
-  theme(panel.grid.minor.x = element_blank(),
-        axis.text.x = element_text(angle = 90, hjust = 1),
-        legend.position="right",
-        legend.text = element_text(size = 7),
-        legend.title = element_text(size = 8, face = "italic"),
-        legend.margin = margin(0,0,0,0), 
-        plot.title = element_text(size = 8),
-        axis.title = element_text(size = 7),
-        axis.text = element_text(size = 7))
-
-```
-
-
-```{r}
-# base
-# Falciparum
-streamgraph(dRankms[dRankms$TYPE == "Falciparum" & dRankms$STATE == "AM",], key = "NAME", value = "SUMCASES", date = "YEAR", offset = "expand")
-# Vivax
-streamgraph(dRankms[dRankms$TYPE == "Vivax" & dRankms$STATE == "AM",], key = "NAME", value = "SUMCASES", date = "YEAR", offset = "expand")
-
-# Tidyverse - ver se consigo automatizar
-# Falciparum
-dRankms %>% 
-  filter(TYPE == "Falciparum" & STATE == "AM") %>% 
-  streamgraph(key = "NAME", value = "SUMCASES", date = "YEAR", offset = "expand") %>% 
-  sg_axis_x(1, "YEAR", "%Y") %>% 
-  sg_legend(show = TRUE, label = "Municipalities: ")
-
-  
-# Vivax
-dRankms %>% 
-  filter(TYPE == "Vivax" & STATE == "AM") %>% 
-  streamgraph(key = "NAME", value = "SUMCASES", date = "YEAR", offset = "expand") %>% 
-  sg_axis_x(1, "YEAR", "%Y") %>% 
-  sg_legend(show=TRUE, label="Municipalities: ")
-
-  
-  
-```
 
