@@ -8,6 +8,7 @@ library(tidyverse)
 
 #BML <- read.csv("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/AnaliseExploratoria/AM_municipality.csv")
 load("/home/claudia/Documentos/PosDoc_PROCC/malaria/AnalisesRaquel/AnaliseExploratoria/API_Noti_week_state_final.Rdata")
+load("/home/rlana/Dados/API_Noti_week_state_final.Rdata")
 
 ## Rank by Year, State and Type
 dRankms <- d8 %>% 
