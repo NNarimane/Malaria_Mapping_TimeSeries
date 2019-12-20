@@ -23,11 +23,11 @@ library('maptools')
 library(rgdal)
 
 #load("~/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/Pasteur/RData_full.RData") #until first weeks of 2018
-#load("/home/rlana/Dados/RData_full_new.RData") #until the end of 2018 and a update of 2017.
-load("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/AnaliseExploratoria/RData_full_new.RData")
+load("/home/rlana/Dados/RData_full_new.RData") #until the end of 2018 and a update of 2017.
+#load("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/AnaliseExploratoria/RData_full_new.RData")
 
-#pop <-fread("/home/rlana/Dados/BRA_POP_EST.csv", encoding = "UTF-8")
-pop <-fread("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/AnaliseExploratoria/BRA_POP_EST.csv", encoding = "UTF-8")
+pop <-fread("/home/rlana/Dados/BRA_POP_EST.csv", encoding = "UTF-8")
+#pop <-fread("/home/raquel/Documentos/PosDoc_PROCC/OwncloudPD/malaria/AnalisesRaquel/AnaliseExploratoria/BRA_POP_EST.csv", encoding = "UTF-8")
 
 ```
 
@@ -81,28 +81,13 @@ Others (Ovale + Not Falciparum): 19980 (0.335 %)
 
 
 ### RES_EXAM categories, absolute number and percentages from 2004 to 2018:  
-2 - Falciparum: 897411 (15.0 %)      
-3 - F+FG: 151502  (2.54 %)      
-4 - Vivax: 4782306 (80.1 %)      
-5 - F+V: 44389  (0.743 %)     
-6 - V+FG: 28042  (0.469 %)    
-7 - FG: 46786  (0.783 %)      
-8 - Malariae: 1928  (0.0323 %)       
-9 - F+M: 577  (0.00966 %)      
-10 – Ovale: 69 (0.00116 %)      
-11 – Não F: 19911  (0.333 %)    
-
-
-
-- Recategorization for paper description:  
-Falciparum: 1095699 (18.3 %)      
-Vivax: 4810348 (80.5 %)  
-Falciparum + Malariae: 577  (0.00966 %)  
-Falciparum + Vivax: 44389  (0.743 %)     
-Malariae: 1928 (0.0323 %)   
-Others (Ovale + Not Falciparum): 19980 (0.335 %)    
-
-
+F (Falciparum + F+FG + FG): 990280 (18.0 %)      
+V (Vivax + V+FG): 4443459 (80.8 %)      
+F+V: 40829  (0.743 %)     
+Malariae: 1613  (0.0293 %)       
+F+M: 538  (0.00979 %)      
+Ovale: 43 (0.000782 %)      
+Not F: 19911  (0.362 %) It can be all types except falciparum    
 
 ### Brazil 2018:  
 ```{r}
@@ -142,13 +127,24 @@ df %>%
 
 
 ### Cases per year only vivax and falci- double counting for mixed infection:  
+2 - Falciparum: 
+3 - F+FG: 151502  (2.54 %)      
+4 - Vivax: 4782306 (80.1 %)      
+5 - F+V: 44389  (0.743 %)     
+6 - V+FG: 28042  (0.469 %)    
+7 - FG: 46786  (0.783 %)      
+8 - Malariae: 1928  (0.0323 %)       
+9 - F+M: 577  (0.00966 %)      
+10 – Ovale: 69 (0.00116 %)      
+11 – Não F: 19911  (0.333 %)    
+
 ```{r}
-## Vivax
+## Vivax (vivax + mixed + vivax+FG)
 vyear <- df %>%
   filter(RES_EXAM == "4" | RES_EXAM == "5" | RES_EXAM == "6") %>%   
   group_by(ANO) %>%
   count()
-
+## Falci (falciparum + falciparum+FG + mixed + FG + mixedF+M)
 fyear <- df %>%
   filter(RES_EXAM == "2" | RES_EXAM == "3" | RES_EXAM == "5" | RES_EXAM == "7" | RES_EXAM == "9") %>%   
   group_by(ANO) %>%
